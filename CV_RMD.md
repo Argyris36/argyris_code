@@ -18,7 +18,7 @@ Date: May 2022
 
 ### Overview
 
-I am a clinician and neuroscientist. I was appointed Chair of Child and Adolescent Psychiatry at UCL in January 2022. Until then, I was Senior Investigator and Chief of the Section of Clinical and Computational Psychiatry at NIMH/NIH in the USA and before that a Senior Lecturer and a Wellcome Trust Fellow at the Institute of Psychiatry Psychology and Neuroscience, King's College London. I trained in Child and Adolescent Psychiatry at the Maudsley Hospital.
+I am a clinician and a neuroscientist. I was appointed Chair of Child and Adolescent Psychiatry at UCL in January 2022. Until then, I was Senior Investigator and Chief of the Section of Clinical and Computational Psychiatry at NIMH/NIH in the USA and before that a Senior Lecturer and a Wellcome Trust Fellow at the Institute of Psychiatry Psychology and Neuroscience, King's College London. I trained in Child and Adolescent Psychiatry at the Maudsley Hospital.
 
 I have two main research aims.
 
