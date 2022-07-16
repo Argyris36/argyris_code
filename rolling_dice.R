@@ -3,7 +3,7 @@
 # row she was asked to calculate the min, max and average of the difference. 
 # I didn't get the point of the exercise, but thought we could do it here. 
 # I simulated it and recorded the outcomes. 
-# the difference converges to 5, as you one would expect. 
+# the difference converges to 5, as you one would expect 
 n_rounds <- 10
 n_rolls <- 100
 
