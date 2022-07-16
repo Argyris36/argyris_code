@@ -1,0 +1,717 @@
+---
+title: "Social Phobia Experiments by Eleanor Leigh. PE analyses by Argyris"
+author: "Argyris Stringaris"
+date: "09/07/2022"
+output:
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overview
+
+This is an analysis of data that Eleanor sent me yesterday (08/07/2022). They are based on her experiment described here: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7909699/ 
+  
+  
+It is a within-subject experiment where adolescents with high and low social anxiety were asked to take part in a conversations with stooges (psychology students). They were instructed--in a counter-balanced fashion--to either focus on themselves and to use safety behaviours (denoted "with" in EL's data), or not to (denoted "without"in EL's data).  
+
+
+The key variables are the following:
+  
+  
+- Prediction1Rating_Study2 -> Belief in original prediction Study 2 (0-100). For the purposes of analyses I have relablled it as expectation in code chunks below.
+  
+  
+- Anxiety_with_Study2 -> How anxious did you feel during the WITH conversation (0-100)
+  
+  
+- Belief_With_Study2 -> How much did your feared prediction happen (0-100) WITH
+  
+  
+- Anxiety_WithOUT_Study2 -> How anxious did you feel during the WITHOUT conversation (0-100)
+  
+  
+- Belief_WithOUT_Study2 -> How much did your feared prediction happen (0-100) WITHOUT
+
+  
+These also allow us to build prediction errors with and without safety behaviours.
+  
+   
+  
+A short **Executive Summary** follows here before the analyses
+  
+  
+1. _Prediction error_ is minimally related to anxiety. **This makes it very unlikely that PE is a mediator of the relationship between experimental condition and anxiety as an outcome.**
+  
+  
+2. _Belief_ is fairly strongly related to anxiety in both experimental conditions. **Thierefore belief may a possible mediator of the relationship between experimental condition and anxiety** Although, because belief and anxiety are measured at the same time (and may be hard to measure separately from each other), it may be hard to exclude the possibility of reverse causality, or of a common third factor(s).
+
+3. _Expectation_, that is, how people think at the beginning of the experiment about the outcome seems to play an important for the outcomes of both anxiety and belief. **The higher the expectation about the outcome, the higher the change in both the outcomes across both conditions**.  
+
+
+  
+  
+
+```{r,include=FALSE}
+library(ggplot2)
+library(patchwork)
+library(tidyverse)
+library(tidyr)
+library(dplyr)
+library (lmerTest) 
+library(broom)
+library(ggthemes)
+library(SuppDists)
+library(questionr)
+library(installr)
+library(corrr)
+library(corrplot)
+library(mediation)
+library(lavaan)
+library(bmlm)
+library(qgraph)
+```
+
+
+
+
+**Load data**
+```{r}
+el_soph_exp_pe <- read.csv("~/Downloads/Aim1.Database Stage 2_11.2019.csv")
+View(el_soph_exp_pe)
+```
+
+  
+    
+
+**Keep only Study 2 as per Eleanor's instruction, create a PE variable, and keep necessary columns** 
+```{r}
+el_soph_exp_pe <- el_soph_exp_pe %>% 
+filter(Study ==2) %>% 
+mutate (pe_with = Belief_With_Study2 - Prediction1Rating_Study2,
+pe_without = Belief_WithOUT_Study2 - Prediction1Rating_Study2) 
+
+```
+
+  
+    
+
+**Check effect of order (this was a within person cross-over experiment)**
+```{r}
+el_soph_exp_pe %>% 
+group_by(ConditionOrder_2) %>% 
+  summarise_at(c("Prediction1Rating_Study2", "Anxiety_with_Study2", "Anxiety_WithOUT_Study2", "Belief_With_Study2", "Belief_WithOUT_Study2", "pe_with", "pe_without" ),  list(avg = mean, st_dev = sd), na.rm = TRUE)
+```
+*Question to EL: I don't know how condition is coded. There seems to be some effect on the predictions
+
+  
+  
+
+**Create a long dataset too in order to do some plotting**
+```{r}
+el_soph_exp_pe_long <- el_soph_exp_pe %>%      
+dplyr:: select(Prediction1Rating_Study2, ConditionOrder_2, Anxiety_with_Study2, Belief_With_Study2, Anxiety_WithOUT_Study2, Belief_WithOUT_Study2, pe_with ,pe_without)
+  
+el_soph_exp_pe_long  <- el_soph_exp_pe_long  %>% 
+  pivot_longer(colnames(el_soph_exp_pe_long)) %>% 
+  as.data.frame()
+head(el_soph_exp_pe_long)  
+
+```
+
+  
+  
+**Now plot the distributions of the main variables**
+```{r, echo = FALSE}
+plots_main_vars <- ggplot(el_soph_exp_pe_long, aes(x = value)) +    # Draw each column as histogram
+  geom_histogram() + 
+  facet_wrap(~ name, scales = "free")
+plots_main_vars
+```
+There is a clear shift through the experimental manipulation in both anxiety and belief, as well as PE. Interestingly, predictions follow a nearly bimodal distribution, possibly influenced by the group distributions (high vs low SoPh)
+
+  
+  
+
+**I am creating a more principled long dataset to test our hypotheses in regression**
+```{r}
+anxiety <- el_soph_exp_pe  %>%
+ dplyr:: select(ID, LSAS_St2_T,  Anxiety_with_Study2,Prediction1Rating_Study2, Anxiety_WithOUT_Study2) 
+anxiety <- anxiety %>% 
+  pivot_longer(
+    cols = starts_with("Anx"),
+    names_to = "condition",
+    names_prefix = "anx",
+    values_to = "anx_value",
+    values_drop_na = TRUE
+  )
+
+pe <- el_soph_exp_pe  %>%
+ dplyr:: select(ID, pe_with, pe_without)
+pe <- pe %>% 
+  pivot_longer(
+    cols = starts_with("pe"),
+    names_to = "condition",
+    names_prefix = "pe",
+    values_to = "pe_value",
+    values_drop_na = TRUE
+  )
+
+pe_anx_merged <- cbind(anxiety, pe)
+
+belief <- el_soph_exp_pe  %>%
+ dplyr:: select(ID, Belief_With_Study2, Belief_WithOUT_Study2 )
+belief <- belief %>% 
+  pivot_longer(
+    cols = starts_with("Belief"),
+    names_to = "condition",
+    names_prefix = "belief",
+    values_to = "belief_value",
+    values_drop_na = TRUE
+  )
+
+pe_anx_merged <- cbind(pe_anx_merged, belief)
+pe_anx_merged <-pe_anx_merged [,c(-4,-6, -9, -10)]
+pe_anx_merged <- pe_anx_merged %>% 
+rename(exp_value = Prediction1Rating_Study2) 
+
+
+```
+  
+  
+  
+**Let's plot anxiety change**  
+
+```{r, echo = FALSE}
+anx_change_plot <- ggplot(data = pe_anx_merged, aes(x = condition, y = anx_value, group = ID, color=ID,alpha=1)) +
+  geom_line( size = 2) +
+  geom_point( size = 4) +
+  xlab("Condition") + ylab("Anxiety") +
+  ggtitle("Per Subject Anxiety Change Across Conditions")
+legend.position = "none"
+anx_change_plot <- anx_change_plot +
+  theme(legend.position = "none")
+anx_change_plot
+```
+
+There is a clear change in anxiety across experimental conditions: it drops when safetey behaviours are dropped. 
+  
+    
+  
+
+**Let's plot belief change**  
+
+```{r,echo = FALSE}
+belief_change_plot <- ggplot(data = pe_anx_merged, aes(x = condition, y = belief_value, group = ID, color=ID,alpha=1)) +
+  geom_line( size = 2) +
+  geom_point( size = 4) +
+  xlab("Condition") + ylab("Belief") +
+  ggtitle("Per Subject Belief Change Across Conditions")
+legend.position = "none"
+belief_change_plot <- belief_change_plot +
+  theme(legend.position = "none")
+belief_change_plot
+```
+
+There is a clear change in belief across experimental conditions: it drops when safetey behaviours are dropped. 
+  
+  
+    
+  
+**Let's plot pe change**  
+
+```{r, echo = FALSE}
+pe_change_plot <- ggplot(data = pe_anx_merged, aes(x = condition, y = pe_value, group = ID, color=ID,alpha=1)) +
+  geom_line( size = 2) +
+  geom_point( size = 4) +
+  xlab("Condition") + ylab("PE") +
+  ggtitle("Per Subject PE Change Across Conditions")
+legend.position = "none"
+pe_change_plot <- pe_change_plot +
+  theme(legend.position = "none")
+pe_change_plot
+```
+
+There is a clear change in pe across experimental conditions: it drops when safetey behaviours are dropped. 
+  
+  
+  
+ 
+    
+
+**Now let's look at a correlation matrix of all the variables**  
+
+```{r, echo = FALSE}
+for_corr_plot <- el_soph_exp_pe %>% 
+  dplyr:: select(c(Prediction1Rating_Study2, ConditionOrder_2, Anxiety_with_Study2, Belief_With_Study2, Anxiety_WithOUT_Study2, Belief_WithOUT_Study2, pe_with ,pe_without))
+M = cor(for_corr_plot)
+corrplot(M, method = 'number')
+```
+Belief and Anxiety are strongly correlated, perhaps unsurprisingly, but PE is not much. 
+*Eleanor, what column are the stooges' anxiety ratings? Do we have an end of session LSAS? I see lots of LSASs and MFQs there--are they related to St2?
+  
+   
+    
+
+**Now let's test formally that pe differs by condition to which subjects were randomised to**
+```{r}
+t_test_for_pe <- t.test(el_soph_exp_pe$pe_with , el_soph_exp_pe$pe_without, paired = TRUE, alternative = "two.sided")
+t_test_for_pe
+```
+It clearly does
+  
+  
+**The effect size can then be derived as follows, according to Lakens**
+```{r}
+d_pe <- t_test_for_pe$statistic/sqrt(57)
+print(as.numeric(d_pe))
+```
+Which is a pretty decent effect size. 
+
+  
+    
+  
+
+**Similarly, we can show that anxiety differs by the the condition to which participants were randomised to**
+```{r}
+t_test_for_anx <- t.test(el_soph_exp_pe$Anxiety_with_Study2 , el_soph_exp_pe$Anxiety_WithOUT_Study2, paired = TRUE, alternative = "two.sided")
+t_test_for_anx
+```
+
+  
+  
+**For which the effect size can be estimated as above**
+```{r}
+d_anx <- t_test_for_anx$statistic/sqrt(57)
+print(as.numeric(d_anx))
+```
+Which is also very big
+
+  
+  
+  
+  
+**And finally, let's show the direct relationship between PE and anxiety in the two different conditions**  
+
+
+**Let's now plot the relationship between PE and anxiety outcome across conditions**
+```{r}
+library(ggpubr)
+
+pe_anx_merged %>% 
+  ggplot(aes(x = pe_value, y = anx_value)) +
+  geom_point()+
+  labs(x= "PE", y="Anxiety")+
+  geom_smooth(method = lm) +
+  facet_grid(rows = vars(condition)) +
+    stat_regline_equation(label.y = 100, aes(label = ..eq.label..)) +
+  stat_regline_equation(label.y = 80, aes(label = ..rr.label..))
+```
+  
+This clearly shows that there is no relationship between PE and anxiety.
+    
+    
+ 
+  
+**Let's look at how PE relates to anxiety broken down by conditions**
+```{r}
+pe_anx_merged %>%
+  group_by(condition) %>% 
+summarize(cor_coef= stats:: cor.test(anx_value, pe_value)$estimate,
+          p_value = stats:: cor.test(anx_value, pe_value)$p.value)
+```
+Which is confirmed here
+  
+  
+
+**The findings from the last two regression models and the correlation matrix further up suggest to me that PE is not associated with anxiety ratings during the conversation. The pedestrian analyses above suggest not**
+
+  
+  
+**I am going to try it with mediation--these models do not take dependence into account, but this should if anything inflate the p-values because it underestimates the SEs**
+  
+  
+**Trying it with a standard mediation package in R**
+```{r, echo = FALSE}
+model_mediator <- lm(pe_value ~ condition , data = pe_anx_merged)
+model_outcome  <- lm(anx_value ~ condition + pe_value, data = pe_anx_merged)
+
+mediation_result <- mediate(
+  model_mediator, 
+  model_outcome, 
+  sims = 500,
+  treat = "condition",
+  mediator = "pe_value"
+)
+
+summary(mediation_result)
+plot(mediation_result)
+```
+This result suggests no mediation
+  
+  
+
+**Trying it also with SEM**
+```{r}
+sem_model = '
+  pe_value ~ a*condition 
+  anx_value ~ c*condition +  b*pe_value
+ 
+  # direct effect
+  direct := c
+ 
+  # indirect effect
+  indirect := a*b
+ 
+  # total effect
+  total := c + (a*b)
+'
+
+model_sem = sem(sem_model, data=pe_anx_merged, se='boot', bootstrap=500)
+summary(model_sem, rsq=T) 
+```
+This result confirms that there is no mediation.
+  
+  
+**More generally, it seems that the correlation between anxiety and pe is minimal across conditions**  
+```{r}
+cor.test(pe_anx_merged$anx_value, pe_anx_merged$pe_value )
+```
+
+  
+  
+
+**Check: just in case I have mis-construed the pe variable, I have also used the variable foundin Eleanor's database and correlated with mine
+```{r}
+el_soph_exp_pe_cor <- el_soph_exp_pe %>% 
+ dplyr:: select(c(PredErrorWITH ,PredErrorWITHOUT, pe_with, pe_without))%>% 
+  correlate()
+el_soph_exp_pe_cor
+```
+As can be seen Eleanor's and my pe variables are perfectly correlated. 
+
+  
+**Now let's try the mediation steps above to see whether we get anything with belief**
+  
+  
+**starting again using beliefs this time**
+  
+  
+**Here is the relatinoship between anxiety and belief broken down by condition
+```{r}
+pe_anx_merged %>%
+  group_by(condition) %>% 
+summarize(cor_coef= stats:: cor.test(anx_value, belief_value)$estimate,
+          p_value = stats:: cor.test(anx_value, belief_value)$p.value)
+```
+
+  
+  
+  
+**Here is the relatinoship between anxiety and belief in the "without"**
+```{r}
+lm_anx_pe_with <- lm(Anxiety_with_Study2 ~ Belief_With_Study2 , data = el_soph_exp_pe)
+summary(lm_anx_pe_with)
+```
+This clearly suggests a relationship
+
+
+  
+**Now let's check the standard mediation model for beliefs, instead of PE**
+```{r}
+model_mediator <- lm(belief_value ~ condition , data = pe_anx_merged)
+model_outcome  <- lm(anx_value ~ condition + belief_value, data = pe_anx_merged)
+
+mediation_result <- mediate(
+  model_mediator, 
+  model_outcome, 
+  sims = 500,
+  treat = "condition",
+  mediator = "belief_value"
+)
+
+summary(mediation_result)
+plot(mediation_result)
+```
+and there is a clear mediation here
+  
+  
+**And for confirmation, here is also the SEM mediation model for beliefs, instead of PE**
+```{r}
+sem_model = '
+  belief_value ~ a*condition 
+  anx_value ~ c*condition +  b*belief_value
+ 
+  # direct effect
+  direct := c
+ 
+  # indirect effect
+  indirect := a*b
+ 
+  # total effect
+  total := c + (a*b)
+'
+
+model_sem = sem(sem_model, data=pe_anx_merged, se='boot', bootstrap=500)
+summary(model_sem, rsq=T) 
+```
+This too confirms it, but remember that the p-value estimates will be biased because of the clustering.
+
+  
+  
+
+**Now let's examine the properties of prediction, i.e. the _expectation as such as opposed to the PE_. First some correlations**
+**First, between anxiety and expectation**
+```{r}
+pe_anx_merged %>%
+  group_by(condition) %>% 
+summarize(cor_coef= stats:: cor.test(anx_value, exp_value)$estimate,
+          p_value = stats:: cor.test(anx_value, exp_value)$p.value)
+
+```
+There is a fairly strong correlation with anxiety across both conditions
+  
+  
+
+   
+**Let's now plot the relationship between expectation and anxiety outcome across conditions**
+```{r}
+library(ggpubr)
+
+pe_anx_merged %>% 
+  ggplot(aes(x = exp_value, y = anx_value)) +
+  geom_point()+
+  labs(x= "Expectation", y="Anxiety")+
+  geom_smooth(method = lm) +
+  facet_grid(rows = vars(condition)) +
+    stat_regline_equation(label.y = 100, aes(label = ..eq.label..)) +
+  stat_regline_equation(label.y = 80, aes(label = ..rr.label..))
+```
+This indicates a consistent relationship across conditions, perhaps with a stronger one for the without.
+
+
+**Now let's examine whether expectation moderates outcomes in lme for anxiety (no strong indication from the plots)**
+```{r}
+mod_interaction_anxiety <- lmer(anx_value ~ exp_value*condition + (1|ID), data = pe_anx_merged)
+summary(mod_interaction_anxiety )
+```
+The interaction seems very weak. 
+  
+  
+**Perhaps a simple additive model will be just fine, where expectation simply predicts**
+```{r}
+mod_additive_anxiety <- lmer(anx_value ~ exp_value + condition + (1|ID), data = pe_anx_merged)
+anova(mod_additive_anxiety ,mod_interaction_anxiety )
+```
+The evidence of moderation seems extremely weak to me. 
+  
+**Now compare to a simple model with just condition**
+```{r}
+mod_simple_anxiety <- lmer(anx_value ~ condition + (1|ID), data = pe_anx_merged)
+anova(mod_simple_anxiety, mod_additive_anxiety)
+```
+The additive model seems clearly superior. People's expectation seems to play an important role in anxiety outcome.
+   
+**But is it just severity**
+```{r}
+mod_additive_anxiety <- lmer(anx_value ~ exp_value + condition +  (1|ID), data = pe_anx_merged)
+summary(mod_additive_anxiety)
+mod_additive_anxiety_lsas <- lmer(anx_value ~ exp_value + condition + LSAS_St2_T + (1|ID), data = pe_anx_merged)
+summary(mod_additive_anxiety_lsas)
+```
+
+
+
+
+
+**Now let's examine the relationship between  _belief and prediction_**
+```{r}
+pe_anx_merged %>%
+  group_by(condition) %>% 
+summarize(cor_coef= stats:: cor.test(belief_value, exp_value)$estimate,
+          p_value = stats:: cor.test(belief_value, exp_value)$p.value)
+
+```
+There is a strong correlation with belief across both conditions
+
+  
+**Let's now plot the relationship between expectation and anxiety outcome across conditions**
+```{r}
+library(ggpubr)
+
+pe_anx_merged %>% 
+  ggplot(aes(x = exp_value, y = belief_value)) +
+  geom_point()+
+  labs(x= "Expectation", y="Belief")+
+  geom_smooth(method = lm) +
+  facet_grid(rows = vars(condition)) +
+    stat_regline_equation(label.y = 100, aes(label = ..eq.label..)) +
+  stat_regline_equation(label.y = 80, aes(label = ..rr.label..))
+```
+This indicates a consistent relationship across conditions, perhaps with a stronger one for the without.
+
+
+
+**Now let's examine whether expectation moderates outcomes in lme for beliefs**
+```{r}
+mod_interaction_belief <- lmer(belief_value ~ exp_value*condition + (1|ID), data = pe_anx_merged)
+summary(mod_interaction_belief )
+```
+The interaction seems very weak. 
+  
+  
+**Perhaps a simple additive model will be just fine, where expectation simply predicts**
+```{r}
+mod_additive_belief <- lmer(belief_value ~ exp_value + condition + (1|ID), data = pe_anx_merged)
+anova(mod_additive_belief ,mod_interaction_belief )
+```
+The evidence of moderation seems pretty weak to me. 
+  
+**Now compare to a simple model with just condition**
+```{r}
+mod_simple_belief <- lmer(belief_value ~ condition + (1|ID), data = pe_anx_merged)
+anova(mod_simple_belief, mod_additive_belief)
+```
+The additive model seems clearly superior. People's expectation seems to play an important role in anxiety outcome.
+   
+
+## Conclusions 
+
+1. The experimental manipulation **impact all three of the following variables**:
+
+- anxiety
+  
+- beliefs 
+
+- prediction error
+
+- prediction, which I have termed _expectation_ here to differentiate from PE.
+  
+  
+2. The prediction error is minimally related to anxiety. **This makes it very unlikely that pe is a mediator of the relationship between experimental condition and anxiety as an outcome.**
+  
+  
+3. Belief is fairly strongly related to anxiety in both experimental conditions. **This makes belief change a possible mediator of the relationship between experimental condition and anxiety** Although, because belief and anxiety are measured at the same time (and may be hard to measure separately from each other), it may be hard to exclude the possibility of reverse causality, or of a common third factor(s).
+
+4. Expectation, that is, how people think at the beginning of the experiment seems to play an important for the outcomes of both anxiety and belief. The higher the expectation of outcome, the higher the change in both the outcomes across both conditions.  
+
+  
+    
+
+##Thoughts about the grant
+  
+I think that the manipulation in Eleanor's experiments are really powerful and I believe that we could make the most of them to be impactful with our grant application. Here are the main thoughts
+ 
+ 
+1. Social Anxiety works really well as a treatment. This satisfies Wellcome's condition of having something that is efficacious and therefore worth understanding its mechanism of action.
+  
+  
+2. Eleanor's experimental manipulation (and similar ones in adults I presume) are a powerful demonstration of the active ingredient that is self-focused attention, which is extremely important. It does not tell us what the responsible mechanism is for that active ingredient, which is part of what the point of this grant would be. 
+
+  
+3. The above allow us to use and expand the experiment to test what the mechanisms are that underlie the effects of diverting self-focused attention. Because we have a good experimental set up (that we can further tweak), we shouldn't need to run new case series. We could establish this using the experimental set up, to which we bring interoception, MEG etc to bear upon. 
+  
+  
+4. I think that it would be great if we tried to create a similar experimental set up as above for depression and also test mechanisms in a similar way. It would follow on nicely for two reasons: first, because depression and anxiety are cross-sectionally and longitudinally comorbid; second, because there is prior evidence suggesting that self-focused attention is a potential mechanism in depression. 
+Ideally, we should build something that involves mood or hedonic response and demonstrate the influence of self-focused attention (and any mechanisms we find) on it. One idea is that the mechanism that makes you socially anxious is the same as the one that makes you not appreciate/dislike something enjoyable.  
+  
+  
+5. By doing so, we will have a) isolated an active ingredient; b) shown its mechanisms; c) used it to make progress in another illness, depression, which is arguably more difficult. We could do all this without the need to do patient series, involve IAPT etc. 
+  
+  
+6. You may ask where all this leaves prediction errors. We could and should still include this as a mechanism but it won't be the sole candidate, but rather one of many. This would involve changing the title of the application too.
+
+
+**ADDITIONAL ANALYSES, TO BE OPTIMISED. I ran into problems with running within group mediation analyses as below, need to figure out the problems. I have commented out things for the moment**
+
+<!-- **Trying a Bayesian version of single experiment mediation analysis as described here: https://github.com/mvuorre/bmlm-ms Commenting it out as it takes very long to run -->
+<!-- ```{r} -->
+<!-- #fit <- mlm(d = pe_anx_merged_test, -->
+<!-- #id = "ID", -->
+<!-- #x = "condition", -->
+<!-- #m = "belief_value", -->
+<!-- #y = "anx_value", -->
+<!-- #iter = 10000, cores = 4) -->
+<!-- #mlm_summary(fit) -->
+<!-- #mlm_path_plot(fit, xlab = "condition", mlab = "belief", ylab = "anxiety") -->
+<!-- ``` -->
+<!-- This did not run properly, gives unrealistic SEs for certain variables. Haven't done diagnostics.  -->
+
+
+
+
+
+<!-- **Trying a multi-level SEM here** -->
+<!-- ```{r} -->
+<!--       model <- ' -->
+<!--         level: 1 -->
+<!--             # direct effect -->
+<!--                  anx_value ~ c*condition -->
+<!--                # mediator -->
+<!--                  belief_value ~ a*condition -->
+<!--                  anx_value ~ b*belief_value -->
+<!--                # indirect effect (a*b) -->
+<!--                  ab := a*b -->
+<!--                # total effect -->
+<!--                  total := c + (a*b) -->
+<!--         level: 2 -->
+<!--                      # direct effect -->
+<!--                  anx_value ~ c*condition -->
+<!--                # mediator -->
+<!--                  belief_value ~ a*condition -->
+<!--                  anx_value ~ b*belief_value -->
+<!--                # indirect effect (a*b) -->
+<!--                  ab := a*b -->
+<!--                # total effect -->
+<!--                  total := c + (a*b) -->
+<!--     ' -->
+
+<!--     fit <- sem(model = model, data = pe_anx_merged, cluster = "ID", se = "robust.huber.white",) -->
+<!--     summary(fit, std=T) -->
+<!-- ``` -->
+<!-- This doesnt run because of zero variance in some clusters. I therefore prepared a new dataset below. -->
+
+
+<!-- **excluding the zero variance in sluter subjects** -->
+<!-- ```{r} -->
+<!-- pe_anx_merged_test <- pe_anx_merged %>%  -->
+<!--   filter(!ID%in%c("7008", "8006", -->
+<!--     "9040", "9088", "17006", "17094", "17097", "17098", "17117", "17152", "18011", "18021", "7075", "8044")) -->
+
+<!-- ``` -->
+
+
+<!-- **Re-running it with the subjects above excluded** -->
+<!-- ```{r} -->
+<!--       model <- ' -->
+<!--         level: 1 -->
+<!--             # direct effect -->
+<!--                  anx_value ~ c*condition -->
+<!--                # mediator -->
+<!--                  belief_value ~ a*condition -->
+<!--                  anx_value ~ b*belief_value -->
+<!--                # indirect effect (a*b) -->
+<!--                  ab := a*b -->
+<!--                # total effect -->
+<!--                  total := c + (a*b) -->
+<!--         level: 2 -->
+<!--                      # direct effect -->
+<!--                  anx_value ~ c*condition -->
+<!--                # mediator -->
+<!--                  belief_value ~ a*condition -->
+<!--                  anx_value ~ b*belief_value -->
+<!--                # indirect effect (a*b) -->
+<!--                  ab := a*b -->
+<!--                # total effect -->
+<!--                  total := c + (a*b) -->
+<!--     ' -->
+
+<!--     fit <- sem(model = model, data = pe_anx_merged_test, cluster = "ID", se = "robust.huber.white",) -->
+<!--     summary(fit, std=T) -->
+<!-- ``` -->
+<!-- But this does not converge -->
+
+

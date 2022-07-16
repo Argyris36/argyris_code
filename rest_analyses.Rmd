@@ -1,0 +1,343 @@
+---
+title: "Resting State Analyses"
+author: "Argyris Stringaris"
+date: "1/24/2022"
+output:
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+library(Hmisc)
+library(lme4)
+```
+
+
+Load Data
+```{r}
+Mmi.AllOpeningRestAndRandom_pymerInput.full <- read.csv("~/Downloads/Mmi-AllOpeningRestAndRandom_pymerInput-full.csv")
+
+```
+
+
+Mmi.AllOpeningRestAndRandom_pymerInput.full <- read.csv("~/Downloads/Mmi-AllOpeningRestAndRandom_pymerInput-full.csv")
+
+
+```{r}
+cutpoints<-c(0,.5,.9999)
+table(cut_interval(1:100, 10))
+test <- Mmi.AllOpeningRestAndRandom_pymerInput.full$Mood[1]  %>% 
+  cut_interval()
+Mmi.AllOpeningRestAndRandom_pymerInput.full$  
+
+ids <- unique(Mmi.AllOpeningRestAndRandom_pymerInput.full$Subject)    
+initial_mood <-0  
+for (i in seq(unique(Mmi.AllOpeningRestAndRandom_pymerInput.full$Subject))){  
+initial_mood[i] <- Mmi.AllOpeningRestAndRandom_pymerInput.full[Mmi.AllOpeningRestAndRandom_pymerInput.full$Subject == ids[i],]$Mood[1]  
+}  
+initial_mood
+
+test <- cut_interval(initial_mood, 2)
+```
+
+
+1. get a sense of how different cohorts behave
+Summary stats per cohort
+```{r}
+
+rest_sum_stats_age_depression <- Mmi.AllOpeningRestAndRandom_pymerInput.full %>% 
+  group_by(Cohort) %>% 
+  summarise(n_rest = n(), avg_age = mean(age), std_age = sd(age), avg_dep = mean(fracRiskScore), std_de = sd(fracRiskScore) )
+rest_sum_stats_age_depression 
+
+
+```
+
+Plots of different cohorts
+```{r}
+
+annotation <- data.frame(
+ # x = rep(c(0.6,0.9),length(rest_sum_stats$Cohort)),
+ # y = c(400,500,length(rest_sum_stats$Cohort)),
+  label = paste0("dep = ",round(rest_sum_stats_age_depression$avg_dep, 2), "+/-", round(rest_sum_stats_age_depression$std_de, 2)), 
+  Cohort = rest_sum_stats_age_depression$Cohort, 
+  size = 0.5
+)  
+
+# see distribution by depression
+rest_distr_by_cohort <- Mmi.AllOpeningRestAndRandom_pymerInput.full %>% 
+  ggplot(aes(x = Mood )) +
+  ggtitle("mood distributions per cohort")+
+  geom_histogram() +
+  
+  facet_wrap(Cohort ~ ., strip.position="top") +
+ geom_text(data = annotation, aes( x = -Inf, y = 400, label = label,
+                                   hjust   = -0.1,
+                                   vjust   = -1,
+                                   #color="orange", 
+                                   
+ ))
+  
+ 
+rest_distr_by_cohort
+
+# Note: 1) NIMH sample seems to be the one with the lowest depression--we seem to have had a fair number of people participating  n = 116, 
+#would have expected that many of them would have been depressed; 
+#2) why is "recovery instructed" so flat?
+
+```
+
+2. get a sense of relationships between time and mood by group at the individual level
+```{r}
+Mmi.AllOpeningRestAndRandom_pymerInput.full$binary_dep <- ifelse(Mmi.AllOpeningRestAndRandom_pymerInput.full$fracRiskScore>=1.4375, 1, 0)
+
+#cohort_1 <- Mmi.AllOpeningRestAndRandom_pymerInput.full[Mmi.AllOpeningRestAndRandom_pymerInput.full$Cohort == "COVID01",]
+
+
+subsample_id <- sample(Mmi.AllOpeningRestAndRandom_pymerInput.full$Subject, 30) # this allows you to look at different random subsamples each time
+
+subsample_id <- Mmi.AllOpeningRestAndRandom_pymerInput.full[Mmi.AllOpeningRestAndRandom_pymerInput.full$Subject %in% subsample_id ,]
+
+subsample_id  %>% ggplot(aes(x = Time,y = Mood, colour = binary_dep)) +
+  geom_line() +
+  facet_wrap(~Subject, ncol = 3)
+```
+
+ 3. get a sense of relationships between time and mood by group at the cohort level
+```{r}
+rest_sum_stats_with_dep  <- Mmi.AllOpeningRestAndRandom_pymerInput.full %>% 
+  group_by(cohort = Cohort, time = iRating, depression = as.factor(binary_dep)) %>% 
+  summarise(n_rest = n(), avg_mood = mean(Mood), std_mood = sd(Mood), se_mood = std_mood/sqrt(n_rest), ci_mood = se_mood*qt(.975,n_rest-1)) 
+rest_sum_stats_with_dep  
+
+```
+
+```{r}
+mean_plot_per_cohort_by_dep <- ggplot(rest_sum_stats_with_dep , aes(x= time, y= avg_mood, colour = depression))+ 
+  geom_line(aes(linetype = depression))+
+  facet_wrap(~cohort)
+
+mean_plot_per_cohort_by_dep 
+
+mean_plot_per_cohort_by_dep + geom_ribbon(aes(x = time, y = avg_mood, ymin = avg_mood - ci_mood, ymax = avg_mood + ci_mood, xmin = min(time), xmax = max(time), 
+                fill = "grey70", alpha = 0.3)) + ggtitle("Rest Mood per Cohort by Depression (=1, top 20%)")
+```
+
+4. get each person's FRS scores and each person's first and last mood to create slopes
+
+Is the majority of slopes positive or negative? 
+```{r}
+ids <- unique(Mmi.AllOpeningRestAndRandom_pymerInput.full$Subject)
+
+unique_frac_risk_scores <- 0
+
+mood_dif_per_subject <- 0
+
+cohort_list <- 0
+
+for (i in seq(unique(Mmi.AllOpeningRestAndRandom_pymerInput.full$Subject))){
+  
+  unique_frac_risk_scores[i] <-   Mmi.AllOpeningRestAndRandom_pymerInput.full[Mmi.AllOpeningRestAndRandom_pymerInput.full$Subject == ids[i],]$fracRiskScore[1]
+  
+  
+  mood_dif_per_subject[i] <- tail(Mmi.AllOpeningRestAndRandom_pymerInput.full[Mmi.AllOpeningRestAndRandom_pymerInput.full$Subject == ids[i],]$Mood, 1) -
+          Mmi.AllOpeningRestAndRandom_pymerInput.full[Mmi.AllOpeningRestAndRandom_pymerInput.full$Subject == ids[i],]$Mood[1] 
+  
+
+  cohort_list[i] <-  Mmi.AllOpeningRestAndRandom_pymerInput.full[Mmi.AllOpeningRestAndRandom_pymerInput.full$Subject == ids[i],]$Cohort[1]
+    
+}
+
+
+df_first_last_slopes <- data.frame(cbind(cohort_list, unique_frac_risk_scores, mood_dif_per_subject))
+
+sum(mood_dif_per_subject<0)/length(mood_dif_per_subject) # Note: majority (68%) of slopes is negative
+```
+
+
+How do slopes correlate with depression risk?
+```{r}
+cor(as.numeric(unique_frac_risk_scores) , as.numeric(mood_dif_per_subject))
+
+df_first_last_slopes %>% 
+  
+  ggplot(aes(x =  as.numeric(unique_frac_risk_scores), y =  as.numeric(mood_dif_per_subject))) +
+  
+  geom_point() +
+  
+  geom_smooth(method = "lm") +
+  
+  ylim(-1,1) +
+  
+  annotate("text", x = 2.8, y = 0.5, label = paste0("Pearson's r = ", cor(as.numeric(unique_frac_risk_scores) , as.numeric(mood_dif_per_subject))[1])) +   
+  
+  ggtitle("relationship between depression risk and slope (dif btw 1 and last mood rating")
+
+```
+
+Also doing the above broken down by depression
+```{r}
+df_first_last_slopes$binary_dep <- ifelse(df_first_last_slopes$unique_frac_risk_scores>=1.4375, "dep", "non_dep") # binarise depression
+
+
+df_first_last_slopes %>% 
+  
+  ggplot(aes(x =  as.numeric(unique_frac_risk_scores), y =  as.numeric(mood_dif_per_subject), colour = as.factor(binary_dep))) +
+  
+  geom_point() +
+  
+  geom_smooth(method = "lm") +
+  
+  ylim(-1,1)
+```
+
+
+
+How do slopes relate to depression risk in a categorical analysis
+```{r, error = TRUE}
+df_first_last_slopes$what_slope <- ifelse(df_first_last_slopes$mood_dif_per_subject>0, "positive_slope", ifelse(df_first_last_slopes$mood_dif_per_subject==0,"zero_slope","negative_slope")) # binarise slopes
+
+
+cross_tab_dep_slopes <-table(df_first_last_slopes$binary_dep,df_first_last_slopes$what_slope)
+
+cross_tab_dep_slopes
+
+
+prop_dep_slope <- data.frame(prop.table(cross_tab_dep_slopes,2)*100)
+
+colnames(prop_dep_slope) <- c("depression", "slope", "percentage")
+
+prop_dep_slope$slope <- factor(prop_dep_slope$slope)
+
+slope_dep_chisq <- chisq.test(df_first_last_slopes$binary_dep,df_first_last_slopes$what_slope)
+slope_dep_chisq_stats <- round(with(slope_dep_chisq, c(statistic, parameter, p.value)), 4)
+
+
+
+```
+
+plot the above
+```{r, error = TRUE}
+prop_dep_slope %>% 
+  mutate(slope = fct_relevel(slope, #to show the progression of the slope direction
+                            "negative_slope", "zero_slope", "positive_slope")) %>%
+  ggplot(aes(x = slope, y = percentage, fill = depression)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  ggtitle("rest slope direction by depression level") +
+  annotate("text", x = 3, y = 75, label = paste0("χ2 = ", slope_dep_chisq_stats[1], ", df = ", slope_dep_chisq_stats[2], ", p = ", slope_dep_chisq_stats[3] ))
+```
+
+
+
+check how percentage of neg slopes varies by cohort
+```{r}
+neg_slope_per_cohort <- df_first_last_slopes %>% 
+  
+  group_by(cohort_list) %>% 
+  
+  summarise(neg_slopes = sum(mood_dif_per_subject<0), tot_slopes = length(cohort_list), avg_mood_per_cohort = mean(as.numeric(unique_frac_risk_scores))) %>% 
+  
+   mutate(perc_neg_slope = (neg_slopes/tot_slopes)*100)
+  
+   
+
+
+neg_slope_per_cohort 
+
+
+neg_slope_per_cohort %>% 
+  
+  ggplot(aes(x = cohort_list, y = perc_neg_slope))+
+  
+  geom_bar(stat = "identity") +
+  
+  ggtitle("percentage negative slopes by cohort") +
+  
+  theme(axis.text.x = element_text(angle = 90)) +
+  
+  geom_hline(yintercept = 50 , linetype = "dashed", color = "red") 
+```
+
+
+6. LMEs
+```{r}
+# Model 1 with random intercept and slope for subject
+mixed_rest_1 <- lmer (Mood~1+Time*(isMale+meanIRIOver20+totalWinnings+meanRPE+fracRiskScore+isAge0to16+isAge16to18+isAge40to100)+(Time|Subject), data = Mmi.AllOpeningRestAndRandom_pymerInput.full)
+summary(mixed_rest_1)
+```
+
+```{r}
+# Model 2 with random intercept and slope for subject and the same for cohort
+mixed_rest_2 <- lmer (Mood~1+Time*(isMale+meanIRIOver20+totalWinnings+meanRPE+fracRiskScore+isAge0to16+isAge16to18+isAge40to100)+(Time|Subject)+(0+Time|Cohort), data = Mmi.AllOpeningRestAndRandom_pymerInput.full)
+summary(mixed_rest_2)
+```
+
+```{r}
+
+```
+
+# Compare Models 1 & 2
+```{r}
+anova(mixed_rest_1, mixed_rest_2)
+```
+
+
+
+# Model 3 with random intercept and slope for subject nested within  cohort
+```{r}
+
+mixed_rest_3 <- lmer (Mood~1 + Time*(isMale+meanIRIOver20+totalWinnings+meanRPE+fracRiskScore+isAge0to16+isAge16to18+isAge40to100) + (Time|Cohort/Subject), data = Mmi.AllOpeningRestAndRandom_pymerInput.full)
+
+
+```
+
+# Compare Models 2 & 3
+```{r}
+anova(mixed_rest_2, mixed_rest_3)
+```
+
+# Model 4. Same as Model 1 without interaction
+```{r}
+mixed_rest_4 <- lmer (Mood~1 + fracRiskScore + Time*(isMale+meanIRIOver20+totalWinnings+meanRPE+isAge0to16+isAge16to18+isAge40to100)+(Time|Subject), data = Mmi.AllOpeningRestAndRandom_pymerInput.full)
+summary(mixed_rest_4)
+
+
+```
+
+# Compare Models 1 & 4
+```{r}
+anova(mixed_rest_1, mixed_rest_4)
+```
+
+
+
+# Fit model across cohorts to test for interaction effect
+```{r}
+interaction_t_value <- 0#list()
+Cohort <- unique(Mmi.AllOpeningRestAndRandom_pymerInput.full$Cohort)
+
+for (i in seq(Cohort)){
+
+interaction_t_value[i] <-  summary(lmer (Mood~1+Time*(isMale+meanIRIOver20+totalWinnings+meanRPE+fracRiskScore)+(Time|Subject), data = Mmi.AllOpeningRestAndRandom_pymerInput.full[Mmi.AllOpeningRestAndRandom_pymerInput.full$Cohort== Cohort[i],]))$coefficients[8,3]
+ 
+}
+t_values_interaction <- data.frame(cbind(Cohort, interaction_t_value))
+t_values_interaction 
+
+```
+
+
+# 
+```{r}
+
+```
+
+

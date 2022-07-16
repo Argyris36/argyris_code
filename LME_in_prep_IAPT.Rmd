@@ -1,0 +1,572 @@
+---
+title: "LME_IAPT_Prep"
+author: "Argyris Stringaris"
+date: "11/28/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### A test database
+```{r}
+
+id <- rep(1:20, each = 3)
+
+group<- rep(c("mdd", "hv"), each = 30)
+
+session <- rep(c(1:3),20)
+
+score <- runif(60, 0, 1)
+
+df_test_2 <- as.data.frame(cbind(id, group, session, score))
+
+
+df_test_2$score[df_test_2$group=="mdd"] <-  runif(30, 0.5, 1.5)
+
+
+df_test_2$score <- as.numeric(df_test_2$score)
+
+df_test_2
+
+
+```
+
+#### create another dataframe to test missingness
+```{r}
+###CREATE MISSINGNESS
+
+df_test_3 <- df_test_2
+
+df_test_3$score[1:3] <- NA
+
+```
+
+
+
+### HERE IS THE FUNCTION AT LAST IT GETS SUMMARY STATS BY GROUP
+```{r}
+
+
+
+sum_stats_by_group_1 <- function(outcome, time, group, df){
+  
+  # prepare the factor variables
+  
+  group_levels  <- levels(as.factor(group)) # turn this into a vector with two levels that you can loop through easily. NEED TO DO AN IF STATEMENT
+  
+  time_points <- levels(as.factor((time))) # turn this into a vector with two levels that you can loop through easily. NEED TO DO AN IF STATEMENT
+  
+  
+  labels_vector <- c("n", "mean", "sd", "median", "min", "max") # your statistics
+  
+  # initialise repositories for your statistics  
+  
+  n_by_group <- matrix(NA, length(group_levels), length(time_points)) 
+  
+  avg_by_group <- matrix(NA, length(group_levels), length(time_points))
+  
+  sd_by_group <- matrix(NA, length(group_levels), length(time_points))
+  
+  median_by_group <- matrix(NA, length(group_levels), length(time_points))
+  
+  min_by_group <- matrix(NA, length(group_levels), length(time_points))
+  
+  max_by_group <- matrix(NA, length(group_levels), length(time_points))
+  
+  result_trans <- 0
+  
+  
+  # the loop to create the statistics
+  
+  for (j in seq (group_levels)){
+    
+    for(i in seq (time_points)){
+      
+      n_by_group [j,i] <- 
+        
+        length(outcome[time==time_points[i] & 
+                         
+                         group==group_levels[j] & complete.cases(outcome)])
+      
+      avg_by_group [j,i] <- 
+        
+        mean(outcome[time==time_points[i] & 
+                       
+                       group==group_levels[j]], na.rm=T)
+      
+      sd_by_group [j,i] <- 
+        
+        sd(outcome[time==time_points[i] & 
+                     
+                     group==group_levels[j]], na.rm=T)
+      
+      
+      median_by_group [j,i] <- 
+        
+        median(outcome[time==time_points[i] & 
+                         
+                         group==group_levels[j]], na.rm=T)
+      
+      min_by_group [j,i] <- 
+        
+        min (outcome[time==time_points[i] & 
+                       
+                       group==group_levels[j]], na.rm=T)
+      
+      max_by_group [j,i] <- 
+        
+        max (outcome[time==time_points[i] & 
+                       
+                       group==group_levels[j]], na.rm=T)
+      
+      
+      result_trans <- as.data.frame(rbind(n_by_group, avg_by_group, sd_by_group, median_by_group, 
+                                          min_by_group, max_by_group))
+      
+      row_labels <- rep(levels(as.factor(group)), nrow(result_trans)/length(levels(as.factor(group))))
+      
+      
+      
+      result <- cbind(row_labels, result_trans)
+      
+      
+      
+      stats_labels <- rep(c("n", "avg", "sd", "median", 
+                            "min", "max"), each = 2)
+      
+      result <- as.data.frame(cbind(stats_labels, result))
+      
+      
+      
+      column_numbers <- seq(time_points) # get number of columns to label for sessions/time points 
+      
+      column_names <- paste0("session_", column_numbers) # create the labeels
+      
+      colnames(result)[3: ncol(result)] <- column_names # 3: ncol because of row labels and stats labels that come before it.
+      
+    }
+  }
+  
+  print(result)
+  
+}
+
+```
+
+# NOW USE FUNCTION
+```{r}
+sum_stats_by_group_1(outcome = df_test_3$score, 
+                     time = df_test_3$session, 
+                     group = df_test_3$group, 
+                     df = df_test_3)  
+
+```
+
+
+
+
+### HISTOGRAM PER OCCASION PER GROUP 
+```{r}
+
+hist_per_group <- function(df, outcome, session, outcome_label,  group, n_plot_columns){
+
+par(mfrow = c(2, n_plot_columns))
+
+session_lvls <- unique(session)
+
+grp_lvls <- unique(group)
+
+
+grp_lvl_1 <- grp_lvls[1]
+
+grp_lvl_2 <- grp_lvls[2]
+
+
+for (i in 1:length(unique(session))){
+
+  hist(outcome[session == session_lvls[i] & group == grp_lvl_1], main = paste(grp_lvl_1, "session", session_lvls[i]), xlab = outcome_label)
+
+}
+
+
+for (i in 1:length(unique(session))){
+  
+  hist(outcome[session == session_lvls[i] & group == grp_lvl_2], main = paste(grp_lvl_2, "session", session_lvls[i]), xlab = outcome_label)
+
+
+}
+
+
+
+}
+
+
+```
+
+```{r}
+hist_per_group (df = df_test_2, group = df_test_2$group, session = df_test_2$session, 
+                n_plot_columns = 3, outcome = df_test_2$score, outcome_label = "dep score")
+```
+
+
+#### SIMPLE SPAGHETTI PLOT
+```{r}
+simple_spaghetti_plot <- function(df, session, outcome, id, group,outcome_label, n_of_ids ){     #n_of_ids gives you the opportunity to make it more or less crowded
+  
+  dev.off() # to reset plot
+  
+  ids <- sample(unique(id), n_of_ids) # the sampling means that you can really get a good sense of the dataset by repeatedly calling the function
+  
+  plot(10,10,xlim = c(1, length(unique(session))),ylim = c(0,max(outcome) + 0.3*max(outcome)),type = "n", , xlab = "occasion", ylab = outcome_label, 
+       main = paste(outcome_label, "by session and person"), pch = c(17,19)) 
+  
+  
+  #if (group == "no")
+  
+  for (i in 1:length(ids)){
+    
+    #for (j in 1:length(session)){
+    
+    lines(session[id == ids[i]], outcome[id == ids[i]], type = 'b')
+  }
+  
+  
+  
+  #else
+  
+  #spaghetti_per_group () 
+  
+  #print("a")
+  
+}  
+
+
+
+```
+
+```{r}
+simple_spaghetti_plot (df = df_test_2, group = "no", id = df_test_2$id , session = df_test_2$session, 
+                       outcome = df_test_2$score, outcome_label = "dep score", n_of_ids = 15) #length(unique(ids)))
+```
+
+
+
+
+# SPAGHETTI PLOT PER GROUP FUNCTION
+```{r}
+
+
+
+spaghetti_per_group <- function(df, session, outcome, id, group,outcome_label, n_of_ids ){     #n_of_ids gives you the opportunity to make it more or less clouded
+ 
+dev.off() # to reset plot
+  
+ids <- sample(unique(id), n_of_ids) # the sampling means that you can really get a good sense of the dataset by repeatedly calling the function
+  
+grp_lvls <- unique(group)  
+  
+plot(10,10,xlim = c(1, length(unique(session))),ylim = c(0,max(outcome) + 0.3*max(outcome)),type = "n", , xlab = "occasion", ylab = outcome_label, 
+     main = paste(outcome_label, "by session and person"), pch = c(17,19)) 
+
+legend("top", legend = c(grp_lvls[1], grp_lvls[2]) ,col = c("#6699CC", "#333333"),  inset = c(0.01, 0.01), text.col = c("#6699CC", "#333333"), bty = "n", pch = c(17,19))
+
+cl <- c("#6699CC", "#333333")
+symb <- c(17,19)
+
+
+
+
+
+for (i in 1:length(ids)){
+  
+  for (j in 1:length(session)){
+    
+    lines(session[id == ids[i] & group ==  grp_lvls[j] ],
+          
+          outcome[id == ids[i] & group ==  grp_lvls[j]],
+          
+          col = cl[j], pch = symb[j], type = 'b')
+  }
+}  
+
+}
+
+```
+
+```{r}
+
+spaghetti_per_group (df = df_test_3, group = df_test_2$group, id = df_test_2$id , session = df_test_2$session, 
+                     outcome = df_test_2$score, outcome_label = "dep score", n_of_ids = 15 )#length(unique(ids)))
+
+dev.set(dev.next())
+dev.set(dev.next())
+```
+
+
+
+
+
+
+
+
+### A function for a line plot per person per group
+```{r}
+
+
+per_person_per_group_plots <- function(df, group, id, session, n_plot_columns, outcome, outcome_label){
+
+dev.off() # to reset plot
+par(mfrow = c(2, n_plot_columns)) 
+
+x<-0
+y<-0
+
+
+
+
+#if (group == "0")
+  
+#ids <- sample(unique(id), n_plot_columns)
+  
+#for (i in 1:n_plot_columns){
+    
+    
+#x <- session[id == ids[i]]
+#y <- outcome[id == ids[i]]
+    
+#plot (x, y, xlab = "occasion", ylab = outcome_label, type = "b")
+    
+#}
+
+#else
+
+
+
+grp_lvls <- unique(group)
+
+grp_lvl_1 <- grp_lvls[1]
+
+ids_grp_1 <- sample(unique(id[group == grp_lvl_1]),n_plot_columns)
+
+
+
+for (i in 1:n_plot_columns){
+  
+  
+  x <- session[id == ids_grp_1[i]]
+  y <- outcome[id == ids_grp_1[i]]
+  
+  plot (x, y, xlab = "occasion", ylab = outcome_label, type = "b", main = grp_lvl_1)
+  
+  
+}
+
+
+
+grp_lvl_2 <- grp_lvls[2]
+ids_grp_2 <- sample(unique(id[group == grp_lvl_2]),8)
+ids_grp_2
+
+
+for (i in 1:n_plot_columns){
+  # for (j in 1: length(grp_lvls)){
+  
+  x <- session[id == ids_grp_2[i]]
+  y <- score[id == ids_grp_2[i]]
+  
+  plot (x, y, xlab = "occasion", ylab = outcome_label, type = "b", main = grp_lvl_2)
+  
+  #  }
+}
+
+}
+
+
+```
+
+
+```{r}
+per_person_per_group_plots (df = df_test_3, group = df_test_2$group, id = df_test_2$id , session = df_test_2$session, 
+                            n_plot_columns = 6, outcome = df_test_2$score, outcome_label = "dep score")
+
+```
+
+
+
+#### use this if dev off causes trouble: dev.set(dev.next())
+
+
+
+
+# count missing  per time point #ALSO TURN INTO FUNCTION
+time_points <- levels(as.factor((time)))
+
+n_missing <- 0
+denominator <- 0
+perc_missing <- 0
+label <- 0 
+for (i in 1: length(unique(df_test$session))){
+  
+  n_missing[i] <- sum(is.na(df_test$session
+                            
+                            [df_test$session== i]))
+  
+  denominator[i] <- length(df_test$session
+                           
+                           [df_test$session == i])
+  
+  perc_missing[i] <- (n_missing[i]/denominator[i])*100
+  
+  label[i] <- paste0("occasion_",i)
+  
+}
+
+missingness <- as.data.frame(cbind(label, n_missing, denominator, perc_missing))
+missingness
+
+
+
+
+
+### The big missingness pattern function #########
+```{r}
+
+missing_data_pattern <- function(n_visits, df, session, id, score, label_score, label_id , label_session ){
+
+  
+### this is a function that tells you how many are people are missing data per each 
+### session or combinations, e.g. occasion 1 only, occasion 1 & 2 etc. 
+### n_visits is the maximum number of visits, label_xxx variables in the function denote the actual name of the variable in quotes, e.g. df$id has a label "id" for the reshape function
+  
+library(tidyr)
+
+# now test your loop works for the big dataset
+
+# create a pattern for missingness, for example for n = 3 occasions, this would be 
+# 1 O O, 1 1 O, 1 1 1, 0 1 1, O O 1, O O O , O 1 O, where 1 == TRUE , 0 == FALSE for missing
+
+#n_visits <- 3 # number of time points on this occasion.
+
+em <- rep(list(0:1), n_visits) # create the 0, 1 pattern to expand in next step
+
+df_missing_pattern <- expand.grid(em) # expand it
+
+# a loop to recode the 0,1 pattern to a TRUE and FALSE patterns
+transient_matrix <- matrix(NA, nrow = nrow(df_missing_pattern), ncol = ncol(df_missing_pattern))
+
+
+for (i in seq(1: ncol(df_missing_pattern))){
+  
+  transient_matrix[,i] <- recode(df_missing_pattern[,i], "0" = "FALSE", "1" = "TRUE")
+  
+  
+}
+
+
+df_missing_pattern <- transient_matrix
+
+
+df_missing_pattern
+
+
+# Now create a double loop to compare each row of your dataframe with each row of the pattern. 
+# Before doign this remember to strip down your dataset and keep only the relevant variables
+
+############################## Turn your dataset into wide
+
+
+
+my_vars <- c(label_score, label_id , label_session)
+
+df_long <- df[, my_vars]
+
+df_wide <- reshape(df_long, idvar = label_id  , timevar = label_session, direction = "wide")
+
+head(df_wide)
+
+df_wide <- df_wide[,-1 ] # keep only the variable in question, i.e. MFQ
+
+##############################
+
+# here is the loop
+each_row <-matrix(0, nrow = nrow(df_wide), ncol = nrow(df_missing_pattern) )
+
+for(j in seq(nrow(df_missing_pattern))){ 
+  for (i in seq(1:nrow(df_wide))){
+    
+    
+    each_row[i,j] <- identical(as.character(df_missing_pattern[j,]), as.character(is.na(df_wide[i,])))
+    
+    
+    each_row <<- each_row 
+    
+   
+  }
+}
+
+    
+ ##### now labelling   
+     col_labels_missing <- list() # important to initialise as list
+    
+      for (i in seq(1:nrow(df_missing_pattern))){
+      
+      col_labels_missing[[i]] <-  paste0("time_points_", which(df_missing_pattern[i,]=="TRUE"))
+      
+    }
+    colnames(each_row) <-  col_labels_missing
+    
+    
+    # get per column missing sums and percentages
+    
+    sum_of_missing <- 0
+    
+    perc_of_missing <- 0
+    
+    for (i in seq(1 : ncol(each_row))){ 
+      
+      sum_of_missing[i] <- sum(each_row[,i])
+      
+      
+      
+    }
+    
+    perc_of_missing <- round(sum_of_missing/sum(sum_of_missing),2)*100
+    
+    missingness_map <- as.data.frame(cbind(colnames(each_row), sum_of_missing, perc_of_missing))
+    
+  
+    ###improve on labels
+    
+     transient_labels <- missingness_map[,1]
+     
+     transient_labels <- extract_numeric(transient_labels)
+     
+     transient_labels[1] <- "_at_none"
+     
+     transient_labels <- paste0("TP", transient_labels)
+    
+     missingness_map[,1] <- transient_labels 
+     
+     names(missingness_map)[1] <- "missing_where"
+     
+     missingness_map # the final product 
+    
+    
+
+
+}
+
+
+
+```
+missing_data_pattern (n_visits = 3, df = df_test_3, session = df_test_3$session, id = df_test_3$id, score = df_test_3$session, label_id = "id", label_session = "session", label_score = "score") 
+
+
+
+
+#########IMPORTANT
+dev.set(dev.next())
+
+

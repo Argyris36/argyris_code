@@ -1,0 +1,313 @@
+---
+title: "Application to Wellcome"
+author: "Argyris Stringaris"
+date: "8/3/2021"
+output:
+  word_document: default
+  html_document: default
+---
+
+
+**To put in your token look at this website: https://gist.github.com/Z3tt/3dab3535007acf108391649766409421**
+**And USE the below**  
+
+## create a personal access token for authentication:
+usethis::create_github_token() 
+## in case usethis version < 2.0.0: usethis::browse_github_token() (or even better: update usethis!)
+
+## set personal access token:
+credentials::set_github_pat("YourPAT")
+
+## Draft Application for Wellcome  
+
+**Mainly notes for the moment**
+
+**possible projects**
+- Mood to integrate.   
+- Passage of time dysphoria--Dave’s project, Lucrezia’s extension with MEG  
+- Context and emotion--Song’s project  
+- Measuring mood--Bartuschek  
+- Measuring mood--qualitative  
+- Modify mood with closed loop--Hanna  
+- Modify mood--Vasili  
+
+
+- Mood important as core of depression.   
+- Mood/emotion typically understood as something passive. Should be better understood as something interacting with the environment. For example, negative mood is adaptive, not necessarily something wrong.    
+- How can we move/transform emotion and mood?   
+
+- Adolescents can have contra-hedonic motivation, why?   
+Can the contra-hedonic motivation get you into depression? Make it hard to get out of depression? 
+
+What are the fundamental questions about depression? 
+Think big:
+
+Bringing together qualitative (such as!?) and ML approaches to understanding mood. 
+Studying the calibration of mood with psychophysics experiments. 
+Spontaneous mood, dependent on opportunity cost, on what is out there. 
+Power-relationships and mood--neural correlates of Song’s experiments.
+Adolescence: why is there contra-hedonic motivation.
+Some experimental medicine approach with a drug or some other manipulation. 
+
+Rework these: 
+
+
+1) How do we learn about mood? Mainly through language. The rating of mood is not mood itself probably, it is a meta-function, but the one we depend on, as we do in pain. Two projects. 
+
+a) One to collect information from adolescents about mood online and then analyse with qualitative approaches [think whether you have the know-how to support this]. You should do this with children who are very ill. Why don't they get better? What is getting in the way?
+
+b) We don't know what threshold people use for their mood. Use psychophysics to find out (Bartuschek). 
+
+
+2) How do we maintain mood? Through knowledge of what is available in the environment. Model of mood as something that is constantly vigilant for such information from the environment. 
+
+3) What determines the valence of our mood? Contingencies. How are they calculated/estimated in the brain? What is a good model? 
+
+4) Are adolescents different? Why is there contra-hedonic motivation? How would they respond to reward of the negative? How does this relate to personhood/understanding of being different. 
+
+5) How does mood change? What explains the transitions? 
+Severely ill children 
+
+
+11th August 2021 Reworking  
+
+Turn this into a problem of a) prediction of new onset, relapse and maintenance; b) a way of manipulating mood.  
+
+Three levels  
+
+Macro:   
+New onset: ABCD; the work here can be atheoretical, see our stacking models.  
+Relapse: CAT-D; this will be theory driven.  
+
+Meso: 
+Maintenance of emotions: a novel family or school study. 
+A novel treatment study in adolescents and families.  
+
+Micro:  
+Computational studies like we have been doing them.  
+
+
+
+In terms of the meso study, which will require most resources, you need to do something that speaks to your theory of emotions, namely:
+  
+  -> functional/communicative component of emotion.  
+     - ask participants about how they communicate with their parents (qualitative)  
+     - observe participants' communication with their parents and or partners/friends
+     - accommodation index with accommodation secondary to irritability and secondary to lack of motivation. 
+     - maybe you can study these effects with the parents of children. How do they respond to negative emotions? May be expose them           experimentally to it, to stimuli of that sort.
+     
+  -> personal history component of emotion.  
+     - ask participants about who they perceive themselves to be in terms of their emotional states
+     - do patients define themselves on the basis of their illness, how do they form identity?
+     
+  -> preference for negative emotional states (i.e. not happiness maximisers).  
+    - authenticity over happiness
+    - negative to enjoy positive more
+    - utility of the negative state (getting something out of it). 
+  
+
+**The coherence needs to come from the reference to the prediction and the persistence**
+
+- Another take
+Make this about prediction of emotional states more generally. 
+Onset and persistence/recurrence in relation to environmental effects. 
+We will do it at different levels of granularity. 
+A: large observational studies; B: a natural experiment; C: a set of tightly-controlled experimental studies
+
+A. In depression
+1. In CAT-D about relapse of depression
+2. In ABCD about new onset and transitions from depression
+
+B. A natural experiment during school examinations
+Exams a common threat. Whose mood declines before, whose mood persists etc.  
+Collect overall measures in all (questionnaires etc). 
+Collect cortisol and brain measures in subset. 
+
+B'. If B above does not work resource-wise, then maybe the following:  
+Dyads of parent and child  
+Examine their ability to interact  
+Accommodation and negative reactions to emotional events should increase the probability of the behaviour. 
+This bit would set out to test the idea that mood/emotions persist because of environmental contingencies. 
+Basically, break down the clinical observation of accommodation and negative enhancement into something mechanistically explicable. 
+Do Hyperscanning? Antonia Hamilton from UCL 
+https://www.google.com/search?q=antonia+hamilton&oq=Antonia+Hamilton&aqs=chrome.0.0i512j46i20i263i512j0i512l3j0i22i30j69i60l2.461j0j7&sourceid=chrome&ie=UTF-8
+
+Has anybody checked Patterson's mutual coercion theory? What are the neurobiological underpinnings? 
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4183745/ 
+
+Basic prediction: negative behaviour likely to increase in the face of negativity. 
+
+C. In depth studies of mood
+Contingency effects on mood.
+Mood at rest with a drug (may be with MPH or propranolol). 
+Mood can be trained (Hanna and Vasili)
+
+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
+
+Expand "B'" from above. 
+Why family processes. 
+1. Evidence from evolutionary theory etc that emotions are instrumental, they have a use. 
+
+2. This is the basis of their maintenance, they are reinforced. 
+
+3. In development, family environments provide such reinforcement.  
+- anger cf Patterson
+- how is anger reinforced? 
+- how is anger accommodated? 
+
+4. Basic idea is that no only behaviours but also emotions are reinforced. 
+- they can be modelled. 
+- they can be negatively reinforced, e.g. don't have to go to school.
+- they can be positively reinforced, e.g. by being rewarded with attention. 
+
+5. Study this through 
+- observation/longitudinal study
+- modification through experiments (e.g. single-session parenting intervention)
+- use hyperlinking imaging. 
+
+Overall, collect multi-modal information, self reports of dyads, observations, textual accounts, camera recordings (like what Dylan did?). Experimental set up could be a computer game of sorts. 
+
+
+
+The question is: do you want to do this with adolescents or children? 
+CHILDREN (pre-pubertal)
+The advantage of doing it in children is that the observations and treatments are well established. The disadvantage is that depression in young children is not that recognised in the UK. On the other hand, you could work on the anger/irritability - depression nexus. 
+
+ADOLESCENTS (puberty onwards)
+The advantage is that it is new as an idea. Also, depression in adolescents is recognised as a major problem. Disadvantage is that there is no treatment that is family-based for adolescents. I would have first to show that family interactions are crucial for depression before I move on. 
+
+HYBRID: 
+Do the mechanistic work in children and do an observational study in adolescents to discover whether family processes happen in adolescents.
+
+
+##Use the Olivia Guest framework to build up the theory
+
+**Framework**
+
+-concepts include mood/emotion/affect; behaviour; coercion; parent-child dyad; parenting intervention; reinforcement (positive and negative) 
+
+- concepts such as mood will need operationalisation and measurement.  
+
+- I am thinking of several different time-scales: micro-affect (seconds to minutes),  meso-affect (hours to day), macro-affect (days to weeks)  
+
+
+
+**Theory**
+
+- Theory of coercive cycles by Patterson et al has been mainly clinical--very effective in guiding treatments but poorly specified for mechanisms. 
+
+- It suggests that a child's behaviour can be reinforced through a parental behaviour. 
+
+- Reinforced refers to the increase of the probability of an action occuring, in this case the behaviour of the child.
+
+- Reinforcement can be positive (by the parent doing something) or negative (by the parent omitting something)
+
+- More specifically, it suggests that a child's negative behaviour is reinforced by a parental behaviour. 
+
+- Here is a negative reinforcement example: a parent places a demand on a child "clean up your room". The child throws a tantrum. The parent backs off to avoid the negative affect. The child does not clean up their room. 
+
+- In the previous sentence there are several interesting bits contained, such as: the tantrum having an effect on the environment (the parent), i.e. the functionality of the emotion. The anger is felt (at least that's what we assume) but it is also used, wielded (consciously or not) and it has an effect on the other person--causes the parent some sort of dysphoria. 
+
+- Digging deeper: one would have to show two things: a) the effects of emotion on the one who is feeling them; b) the effects of emotion on the one who is exposed to them. 
+
+- Here is an example of positive reinforcement: the child does something naughty, e.g. continues playing on a computer game when they are not meant to; the parent screams at them; this is thought to increase the probability of the child repeating this behaviour. This seemingly paradoxical effect may stem from "rewarding" with negative attention. An alternative explanation is that more often than not, the parent does give in (or simply taps out), this being an example of a probably "enhanced negative reinforcement".
+
+- In general terms, one has to describe a system with at least two actors, where one is feeling and displaying an emotion and the other one is feeling it and then behaving in some sort of way or not. 
+
+- The actors are both endowed with systems of detection of affect that are intrinsic (their own emotions), as well as those of others (and vary in the degree of their endowment,e.g. capacity to recognise the emotions of others)
+
+- The novel theory here is that negative affect is learnt, is an adaptation to micro-environments, such as the family. 
+
+CAVE: 1) The above sounds like a model-free reinforcement learning paradigm. But these interactions are repeated and both the child and the parent learn a pattern that they probably apply to the situation. Maybe this could be solved by applying Experience Replay, an RL approach whereby sequences are stored and recalled, apparently this then becomes a form of supervised learning. 2) Also, since these are Markov Chain processes. Does it represent well agents who do the same thing several times despite it not being rewarded (e.g. insist on watching television)
+
+
+
+
+**Computational Specification**
+
+- Actor A (child)
+
+- A when faced with demand from B either complies or tantrums with a probability P(tantrum|demand). 
+
+- B (parent) places demand on B and faced with compliance repeats demand in future. When faced with tantrum, he withdraws demand with a probability (P(avoidance|tantrum). 
+
+- B  reports finding A's tantrum dysphoric, as measured on some scale.
+
+- Following past avoidance by B, A is likely to tantrum with a probability P(tantrum2|avoidance)
+
+The above depicts one cycle. The cycles repeat themselves and change the probabilities dynamically--need to specify further.
+
+The above could be broken down into three probabilities:
+
+1. The probability P(tantrum|demand) of a child throwing a tantrum given a parental demand. This is what many of us have been studying for years and captures inter-individual differences in children's irritability/anger and other such terms given a stimulus (although some research is also about "out of the blue" irritability, this would be P(tantrum), though it would be hard to prove the unconditionality of it. Thse inter-individual differences could stem from the genetic or other contextual factors. The argument here is that during development or specific phases of life (e.g. following an illness or some other re-adjustment) this probability will change as a function of the parental behaviour.
+
+2. The probability P(avoidance|tantrum) of a parent giving in to a child's tantrum. This refers to inter-individual differences in parents' ability to cope with irritability/anger and other such phenomena coming from their child. This is likely determined by factors such their own mental health (and genetic and environmental influences on the liability for such illness). The argument here is that parental behaviour is likely to change as a function of child behaviour (in this case affect).
+
+3. The probability P(tantrum2|avoidance) of a child given parental avoidance. This is a probability that is eventually contained in (1) once it becomes recursive. 
+
+The overall argument, to be clearly spelled out under Hypothesis further down is that negative affect, in this case the child's tantrum, is maintained via mutually coercive interactions. As a secondary point, parental negative affect will also increase in the course of it.
+
+At the simplest level, when considering a single actor, a TD-learning type model would do. But here the enviornment is, I guess, what they call non-stationary. This requires different tools.
+
+Here are some hints about the computational solutions to such a possible problem: https://discovery.ucl.ac.uk/id/eprint/10108722/1/thesis.pdf  
+Also wrote to Slack, may tweet about it or ask around at UCL.
+
+Also, watch this video: https://www.youtube.com/watch?v=IYUY91LrZ3E from someone who was at UCL and is now at Edinburgh. 
+
+**Experimental Specification**
+
+- Game  and Simulation
+
+A) Initially, we should be able to create a one-player game, where the child (or parent) or parent is programmed in an adaptive way to the actions of the parent. 
+For example: the child's negative mood is rewarded. It should be analogous to Vasili's and Hanna's experimental set ups.
+
+What could be the rewards for negative moods? So far, we have used monetary rewards. What could simulate rewards like the ones you see in child-parent interactions? Eg getting your way. Imagine a situation where you have to navigate a difficult environment, e.g. get to a mountain top, or get to earn more computer time, and someone is preventing you from doing so. You throw the tantrum. This then should be rewarded, the child should be allowed to get closer to their target. This should work (i.e. the probability of negative affect should be higher after negative affect has been displayed). This could all be done with an adaptation of Vasili's task.
+The above would be positive reinforcement. 
+We need negative reinforcement too. You throw a tantrum and the other person gives in (makes space) for you.
+
+Could we have an outcome that is different to subjective mood? Some behavioural outcome? May be a good idea would be to have both a behavioural and a mood outcome. 
+
+
+
+B) Eventually, we should be able to create a simulation with two actors interacting in the way discussed above, possibly based on a model such as the multi-agent RL ones. 
+
+
+- Micro/Meso
+Between two human actors.
+Example here from the "Bidirectional Transmission..." paper in the notes that elicits conflict between a parent and a child:
+"Before the conflict discussion, parents and daughters separately completed an issues checklist to identify a mutually endorsed common topic of disagreement from the past month. During the five-minute discussion, they were asked to talk about the disagreement and attempt to come up with a solution"
+This is a particularly relevant paper because it shows that negative affect predicts future negative affect over and above baseline--supporting my theory of affect maintenance through family processes.
+
+
+-Treatment; e.g. a one-session parenting intervention.
+
+
+**Implementation**
+
+
+**Hypothesis**
+
+**Data**
+
+
+
+
+C'. An alternative to treatment resistance: personal history
+Premise is that chronicity will impact on 
+
+
+
+
+## LITERATURE (also see papers embedded above)
+ON VALENCE https://www.frontiersin.org/articles/10.3389/fpsyg.2013.00261/full#:~:text=In%20appraisal%20theories%2C%20in%20particular,%2C%20and%20moral%20badness%2Fgoodness. **very important**
+
+ON POWER: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3383914/pdf/nihms355259.pdf 
+
+ON POWER AND EVOLUTION: https://anthro.vancouver.wsu.edu/documents/685/Depression_Oxford_chapter_Final_version-3-13-21-syme.pdf 
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+

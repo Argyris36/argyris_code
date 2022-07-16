@@ -1,0 +1,402 @@
+---
+title: "Contingency Analyses"
+author: "Argyris Stringaris"
+date: "31/01/2022"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Think about how best to test the alignment hypothesis
+
+# Import data
+```{r}
+library(tidyverse)
+library(reshape2)
+Experiment3 <- read.csv("~/Downloads/Experiment3_cleaned.csv")
+# Note: these are the cleaned data that Song sent me on 30th Jan 2022 with explanations in Markdown
+dim(Experiment3)
+
+```
+
+# Number of subjects
+```{r}
+length(unique(Experiment3$subject))
+# Note: Song, the previous dataset had 80 subjects. We must be able to account why we excluded any 
+# subject from our original MTurk collection
+```
+
+# Number of stimuli       
+```{r}
+length(unique(Experiment3$type2))
+#Note: Song, the previous dataset had over 30 stimuli. We need to be clear how many stimuli the subjects really saw. Where there 3 test ones? We should include and label them. What were the other ones? 
+```
+
+
+# Create new contingency and choice variables with labels
+```{r}
+Experiment3$contingency <- ifelse(Experiment3$contingency2 == 1, "weapon", "non_weapon")
+Experiment3$choice <- ifelse(Experiment3$choice2 == 1, "fight", "escape")
+#head(Experiment3[, c("contingency2", "contingency", "choice2", "choice")], -10)
+```
+
+
+# Categorical presentation of choice by contingency
+```{r}
+cross_tab_choice_contingency <-table(Experiment3$contingency,Experiment3$choice)
+
+prop_choice_contingency <- data.frame(prop.table(cross_tab_choice_contingency,1)*100)
+
+colnames(prop_choice_contingency) <- c("contingency", "choice", "percentage")
+
+prop_choice_contingency$contingency <- factor(prop_choice_contingency$contingency)
+
+prop_choice_contingency_chisq <- chisq.test(Experiment3$contingency,Experiment3$choice)
+prop_choice_contingency_chisq_stats <- round(with(prop_choice_contingency_chisq, c(statistic, parameter, p.value)), 3)
+
+prop_choice_contingency$counts <- c(cross_tab_choice_contingency[1,1], cross_tab_choice_contingency[2,1],cross_tab_choice_contingency[1,2],    cross_tab_choice_contingency[2,2])
+
+prop_choice_contingency
+```
+
+
+# Graph categorical presentation of choice and contingency
+```{r}
+prop_choice_contingency %>% 
+  ggplot(aes(x = contingency, y = percentage, fill = choice)) +
+  geom_bar(stat="identity", position=position_dodge(.93)) +
+  ggtitle("choice by contingency") +
+  ylab("percentage chosen") +
+annotate("text", x = 1, y = 75, label = paste0("χ2 = ", prop_choice_contingency_chisq_stats[1], ", df = ", prop_choice_contingency_chisq_stats[2], ", p = ", prop_choice_contingency_chisq_stats[3] ))
+```
+
+# Check distribution of anger
+```{r}
+hist(Experiment3$anger_rating)
+
+```
+
+
+
+# Look at average levels of anger by contingency
+```{r}
+levels_contingency <- levels(as.factor(Experiment3$contingency))
+avg_anger_rating <- 0
+sd_anger_rating <- 0
+for (i in seq(levels_contingency)){
+  avg_anger_rating[i] <-  mean(Experiment3[Experiment3$contingency==levels_contingency[i],]$anger_rating)
+  sd_anger_rating[i] <-  sd(Experiment3[Experiment3$contingency==levels_contingency[i],]$anger_rating)
+avg_anger_ratings_by_contingency <- data.frame(cbind(levels_contingency, avg_anger_rating, sd_anger_rating ))
+}
+avg_anger_ratings_by_contingency
+# Note the high sd 
+```
+
+
+# Plot the anger mean differences between contingencies  and t-test results
+```{r}
+test_mean_anger <- t.test(Experiment3$anger_rating ~ Experiment3$contingency, paired = TRUE)
+
+Experiment3 %>% 
+  ggplot(aes(x = contingency, y = anger_rating)) +
+  geom_boxplot() + 
+  annotate("text", x = 1.5, y = 2.5, label = paste0("t = ", round(test_mean_anger$statistic[1],2), ", df = ,", test_mean_anger$parameter, "\n", "p = ", test_mean_anger$p.value ))
+# these are very small differences
+```
+
+
+# Plot the anger mean differences between contingencies broken down by choice
+```{r}
+Experiment3 %>% 
+  ggplot(aes(x = contingency, y = anger_rating)) +
+  geom_boxplot() +
+  facet_grid(~choice)
+# and there is little evidence of a robust interaction by choice
+```
+
+
+# Get positive slopes for each subject
+```{r}
+
+slopes <- matrix(NA, nrow =  length(unique(Experiment3$subject)), ncol = length(unique(Experiment3$type2)))
+
+for (j in seq(unique(Experiment3$subject))){
+for (i in seq(unique(Experiment3$type2))) {
+  
+ # if(is.na(test[test$contingency=="weapon" & test$type2 == i ,]$anger_rating)==FALSE & #is.na(test[test$contingency=="non_weapon" & test$type2 == i ,]$anger_rating)==FALSE)
+  
+slopes[j,i] <- Experiment3[Experiment3$contingency=="weapon" & Experiment3$type2 == i & Experiment3$subject == j ,]$anger_rating - Experiment3[Experiment3$contingency=="non_weapon" & Experiment3$type2 == i & Experiment3$subject == j ,]$anger_rating
+
+anger_slopes_df <- data.frame(cbind(subect = unique(Experiment3$subject), slopes))
+ colnames(anger_slopes_df) <- c("subject", unique(Experiment3$type2)) 
+
+}
+}
+dim(anger_slopes_df )
+
+```
+
+
+
+# What is the proportion of positive slopes per subject and across subjects?
+```{r}
+proportion_pos_slopes_per_subject <- 0
+for (i in seq(nrow(anger_slopes_df))){
+  
+  proportion_pos_slopes_per_subject[i] <- 
+    
+    sum(anger_slopes_df[i,c(2:28)]>0)/length(anger_slopes_df[i,c(2:28)])
+
+}
+
+proportion_pos_slopes_per_subject  
+
+average_positive_slopes_across_subjects <- mean(proportion_pos_slopes_per_subject)
+paste0 ("average_positive_slopes_across_subjects = ", print(average_positive_slopes_across_subjects))
+
+# Note: a very small preponderance of positive slopes
+```
+
+
+
+# step to get a dataframe that denotes which trials amongst the ones where there is a positive contingency (i.e. weapon) had which CHOICE (fight or escape)
+```{r}
+slopes_weapon <- matrix(NA, nrow =  length(unique(Experiment3$subject)), ncol = length(unique(Experiment3$type2)))
+
+
+
+for (j in seq(unique(Experiment3$subject))){
+for (i in seq(unique(Experiment3$type2))) {
+  
+ # if(is.na(test[test$contingency=="weapon" & test$type2 == i ,]$anger_rating)==FALSE & #is.na(test[test$contingency=="non_weapon" & test$type2 == i ,]$anger_rating)==FALSE)
+  
+slopes_weapon[j,i] <- Experiment3[Experiment3$contingency=="weapon" & Experiment3$type2 == i & Experiment3$subject == j ,]$choice
+
+#anger_slopes_df <- data.frame(cbind(subect = unique(Experiment3$subject), slopes))
+ #colnames(anger_slopes_df) <- c("subject", unique(Experiment3$type2)) 
+
+}
+}
+
+dim(slopes_weapon)
+```
+
+
+
+```{r}
+nrow(anger_slopes_df[slopes_weapon == "fight", ])
+nrow(anger_slopes_df[slopes_weapon == "escape", ])
+#these make sense
+```
+
+```{r}
+positive_slopes_when_weapon_and_fight <- anger_slopes_df[slopes_weapon == "fight", ]
+positive_slopes_when_weapon_and_esccape <- anger_slopes_df[slopes_weapon == "escape", ]
+```
+
+
+
+# positive slopes when presented with a weapon and choosing to fight
+```{r}
+proportion_pos_slopes_per_subject_fight <- 0
+for (i in seq(nrow(positive_slopes_when_weapon_and_fight))){
+  
+  proportion_pos_slopes_per_subject_fight[i] <- 
+    
+    sum(positive_slopes_when_weapon_and_fight[i,c(2:28)]>0)/length(positive_slopes_when_weapon_and_fight[i,c(2:28)])
+
+}
+
+#proportion_pos_slopes_per_subject_fight  
+
+average_positive_slopes_across_subjects_fight <- mean(proportion_pos_slopes_per_subject_fight, na.rm = TRUE)
+paste0 ("average_positive_slopes_across_subjects_fight = ", print(average_positive_slopes_across_subjects_fight))
+
+# Note: a very small preponderance of positive slopes
+```
+
+
+# positive slopes when presented with a weapon and choosing to escape 
+```{r}
+proportion_pos_slopes_per_subject_escape <- 0
+for (i in seq(nrow(positive_slopes_when_weapon_and_esccape))){
+  
+ proportion_pos_slopes_per_subject_escape[i] <- 
+    
+    sum(positive_slopes_when_weapon_and_esccape[i,c(2:28)]>0)/length(positive_slopes_when_weapon_and_esccape[i,c(2:28)])
+
+}
+
+#proportion_pos_slopes_per_subject_escape  
+
+average_positive_slopes_across_subjects_escape <- mean(proportion_pos_slopes_per_subject_escape, na.rm = TRUE)
+paste0 ("average_positive_slopes_across_subjects_escape = ", print(average_positive_slopes_across_subjects_escape))
+
+# Note: a very small preponderance of positive slopes
+```
+
+
+
+
+
+# step to get a dataframe that denotes which trials amongst the ones where there is a negative contingency (i.e. non_weapon) had which CHOICE (fight or escape)
+```{r}
+slopes_non_weapon <- matrix(NA, nrow =  length(unique(Experiment3$subject)), ncol = length(unique(Experiment3$type2)))
+
+
+
+for (j in seq(unique(Experiment3$subject))){
+for (i in seq(unique(Experiment3$type2))) {
+  
+ # if(is.na(test[test$contingency=="weapon" & test$type2 == i ,]$anger_rating)==FALSE & #is.na(test[test$contingency=="non_weapon" & test$type2 == i ,]$anger_rating)==FALSE)
+  
+slopes_non_weapon[j,i] <- Experiment3[Experiment3$contingency=="non_weapon" & Experiment3$type2 == i & Experiment3$subject == j ,]$choice
+
+#anger_slopes_df <- data.frame(cbind(subect = unique(Experiment3$subject), slopes))
+ #colnames(anger_slopes_df) <- c("subject", unique(Experiment3$type2)) 
+
+}
+}
+
+dim(slopes_non_weapon)
+```
+
+
+```{r}
+positive_slopes_when_non_weapon_and_fight <- anger_slopes_df[slopes_non_weapon == "fight", ]
+positive_slopes_when_non_weapon_and_escape <- anger_slopes_df[slopes_non_weapon == "escape", ]
+dim(positive_slopes_when_non_weapon_and_fight )
+dim(positive_slopes_when_non_weapon_and_escape)
+```
+
+
+# Actually, Song, this is a better way of presenting things here: 
+If we take into acccount what happens in the non_weapon condition, the difference in positive slopes is fairly substantial: 
+Given what I have done above
+NUMBER OF POSITIVE SLOPES: 
+a) Contingency WEAPON, Choice FIGHT: 
+```{r}
+nrow(anger_slopes_df[slopes_weapon == "fight", ])
+```
+b) Contingency WEAPON, Choice ESCAPE
+```{r}
+nrow(anger_slopes_df[slopes_weapon == "escape", ])
+```
+
+c) Contingency NON-WEAPON, Choice FIGHT: 
+```{r}
+nrow(anger_slopes_df[slopes_non_weapon == "fight", ])
+```
+
+d) Contingency NON-WEAPON, Choice FIGHT: 
+```{r}
+nrow(anger_slopes_df[slopes_non_weapon == "escape", ])
+```
+
+
+
+# as a table
+```{r}
+numbers_positive_slopes <- data.frame(rbind(nrow(anger_slopes_df[slopes_weapon == "fight", ]), nrow(anger_slopes_df[slopes_weapon == "escape", ]), nrow(anger_slopes_df[slopes_non_weapon == "fight", ]), nrow(anger_slopes_df[slopes_non_weapon == "escape", ])))
+condition <- c("weapon_fight", "weapon_escape", "non_weapon_fight", "non_weapon_escape")
+numbers_positive_slopes <- cbind( condition , numbers_positive_slopes)
+colnames(numbers_positive_slopes) <- c("condition", "positive_slopes")
+```
+
+# as a graph
+```{r}
+numbers_positive_slopes %>% 
+ggplot(aes(as.factor(condition), positive_slopes,count)) + geom_bar(stat="identity") +
+  ylab ("trials with increase in anger (n)") +
+  xlab  ("condition") +
+  ggtitle  ("effect of affordance and choice on anger")
+```
+as a nicer graph
+```{r}
+library(stringr)
+
+numbers_positive_slopes <- numbers_positive_slopes %>%
+    mutate(chose_to_fight = str_detect(condition, "fight")) %>% 
+  mutate(weapon = str_detect(condition, "non")) %>% 
+  mutate(affordance =  ifelse(weapon=="TRUE", "non_weapon", "weapon"))
+
+numbers_positive_slopes %>% 
+ggplot(aes(affordance, positive_slopes,count, fill = chose_to_fight)) + 
+  geom_bar(stat="identity") +
+  ylab ("number of trials with increase in anger") +
+  xlab  ("Affordance") +
+  ggtitle  ("Anger increases when affordance and choice align")
+```
+
+# This does suggest a robust interaction effect. 
+
+
+# What is the proportion of positive slopes per subject and across stimuli?
+```{r}
+proportion_pos_slopes_per_stimilus <- 0
+for (i in seq(ncol(anger_slopes_df))){
+  
+  proportion_pos_slopes_per_stimilus[i] <- 
+    
+    sum(anger_slopes_df[,i]>0)/length(anger_slopes_df[, i])
+
+}
+
+
+paste0 ("The majority of stimuli lead to an increase in anger. Proportion_of_positive_slopes across_stimuli = ",sum(proportion_pos_slopes_per_stimilus[2:28]>0.5)/ncol(anger_slopes_df[,2:28]))
+
+
+
+#paste0 ("average_positive_slopes_across_subjects = ", print(average_positive_slopes_across_subjects))
+
+# Note: a very small preponderance of positive slopes
+```
+
+
+
+
+
+
+
+
+
+YOU CAN IGNORE THE BELOW, THESE ARE CHECKS THAT I HAVE DONE
+```{r}
+
+test <- Experiment3[Experiment3$subject == 1,]
+
+test_slopes <- 0
+
+for (i in seq(unique(test$type2))) {
+  
+ # if(is.na(test[test$contingency=="weapon" & test$type2 == i ,]$anger_rating)==FALSE & #is.na(test[test$contingency=="non_weapon" & test$type2 == i ,]$anger_rating)==FALSE)
+  
+ test_slopes[i] <-  test[test$contingency=="weapon" & test$type2 == i ,]$anger_rating - test[test$contingency=="non_weapon"& test$type2 == i,]$anger_rating
+  
+}
+
+#test_slopes
+#sum(test_slopes>0)/length(test_slopes)
+
+
+```
+
+some checks of the above
+```{r}
+check_for_loop <- list() #0
+for (i in seq(unique(Experiment3$type2))) {
+check_for_loop[i] <-test[test$contingency=="weapon" & test$type2 ==i, ]$anger_rating - test[test$contingency=="non_weapon"& test$type2 ==i,]$anger_rating == test_slopes[i]
+
+}
+#check_for_loop 
+```
+
+check the loop works by comparing this to the chunk below for subject 1
+```{r}
+sum(anger_slopes_df[1,c(2:28)]>0)/length(anger_slopes_df[1,c(2:28)]) == sum(test_slopes>0)/length(test_slopes) # this is from the chunk above for subject 1
+```

@@ -1,0 +1,390 @@
+---
+title: "How small is <br> a _small_ effect size? <br> Reflections on the pandemic"
+author: "Argyris Stringaris <br>  Professor of Child & Adolescent Psychiatry <br>  University College London"
+date: "04/06/2022"
+output:
+  ioslides_presentation: default
+  beamer_presentation: default
+---
+
+```{r setup, include=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Research findings in plain English.
+
+Scientists are asked to communicate in plain English in order to explain their findings to  non-specialists, including politicians and journalists.
+
+
+This became an urgent need during the pandemic when scientists found themselves at the epicentre of public debates.
+
+
+For the sake of communication scientists often resort to **translations of numerical findings into plain language**. 
+
+How well does this translation work?
+
+## Research findings in plain English.
+
+For example, some scientists have reassuringly told us that the negative effects of the pandemic on young people are **"small”**.   
+
+
+How reassured should we be? Haven't CAMHS presentations increased (<sup>1</sup>) since the pandemic? 
+
+
+I will take this **“small”** as my point of departure and try to simulate the problem.
+
+
+<font size="2"> Ford TJ, John A, Gunnell D (2021) Mental health of children and young people during pandemic BMJ 2021;372,  </font> 
+
+
+## Standard take on effect sizes.
+
+The most common interpretation of effect sizes comes from **Jacob Cohen**. He declared (and apparently later regretted having done so), that for an effect size _d_, defined thus:  
+
+_d_ = _difference in the average between two conditions_ / _standard deviation of these two conditions pooled together_
+
+the following holds:
+
+- **A value of 0.2 represents a small effect size.**
+- A value of 0.5 represents a medium effect size.
+- A value of 0.8 represents a large effect size.
+
+
+<font size="2"> Cohen J (1992) Power Analysis: A Primer, Psychol Bulletin, 112, 155 </font> 
+
+
+## A good study to estimate effect size.
+  
+Assume you have done the ultimate study:
+
+- Is _longitudinal_ with two periods (_pre-_ and _during_)  
+- Accounts for _regression to the mean_  
+- Does careful _statistical inference_  
+
+and have arrived at an effect size about the difference in depression scores in children before and during the pandemic. 
+
+You find and effect size of **d = 0.14**. 
+  
+I will try to put this **small effect** in context  
+
+  
+<font size="2"> Mansfield R (2022) The impact of the COVID-19pandemic on adolescentmental health: a naturalexperiment, R Soc Open Sci, doi: 10.1098/rsos.211114. </font> 
+
+
+
+## Simulating the pandemic: data.
+Consider the Mood and Feelings Questionnaire, a common depression measurement tool, as your outcome.
+
+Let the mean pre-pandemic<sup>1</sup> in adolescents be:
+
+**MFQ_mean_pre** = 4.90 with an SD of MFQ_sd_pre = 4.49 
+
+For an effect size close to d = 0.14 as per Mansfield<sup>2</sup>, the mean post-pandemic would have to be:
+
+**MFQ_mean_post** = 5.53 (let's keep the standard deviation the same) 
+
+and let the **threshold** for caseness be the standard **MFQ_threshold = 12**
+
+<font size="2"> 1.Kwong A (2019) Examining the longitudinal nature of depressive symptoms in the Avon Longitudinal Study of Parents and Children (ALSPAC), Wellcome Open Res,https://doi.org/10.12688/wellcomeopenres.15395.2. </font> 
+
+<font size="2"> 2.Mansfield R et al (2022) The impact of the COVID-19pandemic on adolescentmental health: a naturalexperiment, R Soc Open Sci, doi: 10.1098/rsos.211114. </font> 
+
+## Simulating the pandemic: two distributions.
+
+```{r cars, results='hide', message=FALSE, fig.show='hide', warning = FALSE}
+library(ggplot2)
+library(patchwork)
+library(tidyverse)
+library(tidyr)
+library(dplyr)
+library (lmerTest) 
+library(broom)
+library(ggthemes)
+library(SuppDists)
+library(questionr)
+library(installr)
+
+###### a simulation of the effects of mean changes on the extremes
+# the basic idea is that we create two distributions: a pre- and a post-covid
+# and that we are feeding in means and sds to each and for each estimate the proportion of
+# people above a threshold. 
+# the arguments of the function below are samples (i.e. how big the sample size is)
+# the others are self explanatory (I have kept the sd the same for both, but that can obviously change)
+
+
+#########################
+
+before_pandemic <- 0
+during_pandemic <- 0
+samples <- c(10^2, 10^3, 10^4, 10^5, 10^6, 5*10^6, 10*10^6)
+mean_a <- 4.9 # from Kwong, Wellcome Open Research https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6764237/pdf/wellcomeopenres-4-16962.pdf
+mean_b <- 5.53 # a single fictional value
+sd <- 4.49
+#threshold <- mean_a + 2*sd
+threshold <- 12
+
+
+
+library(stevemisc)
+
+# using a beta distribution that is scaled (i.e. multiplied) by the range (see also the documentation 
+# for the function). This gives both the right skew and the bounds (e.g. 0 - 26 for the MFQ)
+
+#rbnorm(n, mean, sd, lowerbound, upperbound, round = FALSE, seed)
+
+#n	 the number of observations to simulate
+
+#mean	a mean to approximate
+
+#sd	a standard deviation to approximate
+
+#lowerbound	a lower bound for the data to be generated
+
+#upperbound	an upper bound for the data to be generated
+
+#round	whether to round the values to whole integers. Defaults to FALSE
+
+#seed	set an optional seed
+
+
+for (i in 1:(length(samples))){
+  
+  before_pandemic[i] <- sum(rbnorm(samples[i], mean_a, sd, 0, 26, round = TRUE, seed = 1974)>=threshold) 
+  during_pandemic[i] <- sum(rbnorm(samples[i], mean_b, sd, 0, 26, round = TRUE, seed = 1974)>=threshold)
+  
+}
+before_pandemic
+diff_pre_post_pandemic <- during_pandemic - before_pandemic
+ratio_pre_post_pandemic <- during_pandemic/before_pandemic
+diff_pre_post_pandemic
+ratio_pre_post_pandemic
+
+df_pre_post <- data.frame(cbind(diff_pre_post_pandemic, samples))
+
+
+df_pre_post
+
+
+
+before <- tibble(before = rbnorm(samples[5], mean_a, sd, 0, 26, round = TRUE, seed = 1974))
+after <- tibble(after = rbnorm(samples[5], mean_b, sd, 0, 26, round = TRUE, seed = 1974))
+
+compare <- cbind(before, after)
+mean(compare$before)
+sd(compare$before)
+
+# turn wide to long
+compare_long <- gather(compare, timing, score, before:after, factor_key=TRUE)
+compare_long <- compare_long %>% 
+  rowid_to_column( var = "rowid")
+
+head(compare_long)
+tail(compare_long)
+
+
+
+simulation_plot <- ggplot(compare_long,aes(x=score, color = timing)) +
+  geom_histogram(alpha=0.2, position="identity", binwidth = 1)
+
+                                                                                  
+
+simulation_plot
+
+simulation_plot_no_thresh <- simulation_plot +  theme_classic() +
+  theme(legend.position="top")   +
+ ylab("number of people") +  
+  ggtitle("Shifts in depression **means** during a pandemic \n affecting 1M YP at Cohen's d ~ 0.14") 
+simulation_plot_no_thresh
+
+simulation_plot_with_thresh <- simulation_plot_no_thresh +  
+  geom_vline(xintercept = threshold) +annotate(geom="text", x=14.5, y=10^5, label="caseness \nthreshold",
+            color="red") 
+
+
+
+```
+
+## Simulating the pandemic: two distributions.
+
+I used a scaled beta distribution to simulate the data.
+```{r}
+simulation_plot_no_thresh
+```
+
+
+## Simulating the pandemic: two distributions.
+
+Here you see the two distributions with the threshold. It looks fairly innocuous.
+
+```{r}
+simulation_plot_with_thresh
+```
+
+## Simulating the pandemic: what happens to the cases.
+
+But is it that innocuous?
+
+## Simulating the pandemic: excess cases due to the pandemic.
+
+Here you see what the shift in mean values does to the tails.
+
+```{r pressure, warning = FALSE}
+change_in_cases <-  ggplot(df_pre_post, aes(x = log(samples), y = diff_pre_post_pandemic)) + 
+  geom_point(color = "red", size = 3) +
+  geom_line()
+
+
+annotation <- data.frame(
+  x = log(samples),
+  y = df_pre_post$diff_pre_post_pandemic + 6500,
+  label = c("100 \n affected", "1K \n  affected",  "10K \n affected", "100K \n affected", "1 M \n affected","5 M \n affected" ,
+            "10M \n affected")
+)
+
+
+
+change_in_cases <- change_in_cases +  geom_text(data = annotation, aes( x=x, y=y, label= label),
+            color="orange", size=3 , angle=0, fontface="bold")
+
+change_in_cases + xlim(0, 18) + ylab("Number of Extra Cases") + xlab("log Number of Youth Affected") +
+  ggtitle("Increase in Depression **cases** during a Pandemic \n at Cohen's d ~ 0.14 by Number of Youth Affected")
+
+
+head(df_pre_post)
+
+tibble(df_pre_post)
+```
+
+## Simulating the pandemic: a reality check.
+
+According to Mansfield et al<sup>1</sup>, the empirical **excess prevalence**, 
+is about 1.6%.  
+
+This number corresponds to our simulation results:
+
+e.g. for **1M** people, we get about **16K** excess cases of depression. 
+
+
+
+
+<font size="2"> 1.Mansfield R et al (2022) The impact of the COVID-19pandemic on adolescentmental health: a naturalexperiment, R Soc Open Sci, doi: 10.1098/rsos.211114. </font> 
+
+## Simulating the pandemic: **small effects**
+
+
+```{r, results='hide', message=FALSE, fig.show='hide'}
+
+samples <- c(10^2, 10^3, 10^4, 10^5, 10^6, 5*10^6, 10^7)
+mean_a <- 4.92 # from Kwong, Wellcome Open Research https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6764237/pdf/wellcomeopenres-4-16962.pdf
+sd <- 4.49
+#threshold <- mean_a + 2*sd
+threshold <- 12
+# to get mean_b_new do the following
+es <- c(0.05, 0.08, 0.1, 0.12, 0.15, 0.2)
+dif <- es*sd # because es = dif/sd
+dif 
+mean_b_new <- dif+mean_a  # because mean_a - mean_b_new = dif
+mean_b_new
+
+
+before_pandemic_new <- 0
+during_pandemic_new <- matrix(NA, nrow = length(samples), ncol = length(mean_b_new))
+
+for (i in 1:(length(samples))){
+ for(j in 1:(length(mean_b_new))){ 
+  before_pandemic_new[i] <- sum(rbnorm(samples[i], mean_a, sd, 0, 26, round = TRUE, seed = 1974)>=threshold) 
+  during_pandemic_new[i,j] <- sum(rbnorm(samples[i], mean_b_new[j], sd, 0, 26, round = TRUE, seed = 1974)>=threshold)
+ }
+}
+
+
+df_pre_post_new <- data.frame(cbind(before_pandemic_new, during_pandemic_new))
+df_pre_post_new <- data.frame(cbind(samples, df_pre_post_new))
+colnames(df_pre_post_new) <- c("sample_size", "before_pandemic", paste(replicate(length(es),"es"), es, sep="_"))
+
+head(df_pre_post_new)
+
+# here follows my idiosyncrantic way of subtracting one column from multiple others in a df--sure there are better ways.
+differences <- vector(mode = "list", length = 6) # matrix(NA, nrow = nrow(df_pre_post_new)+1, ncol = length(1:12))
+for (i in (3:8)){
+  differences[i] <- df_pre_post_new[,i] - df_pre_post_new[2]
+}
+# turn list into dataframe
+differences_pre_post_pandemic_new <- data.frame(Reduce(cbind, differences))
+# now give colnames
+colnames(differences_pre_post_pandemic_new) <- paste(replicate(length(es),"dif_for_es"), es, sep="_")
+head(differences_pre_post_pandemic_new)
+
+# now merge with the rest
+df_pre_post_new <- cbind(df_pre_post_new, differences_pre_post_pandemic_new)
+
+# turn to long
+df_pre_post_new_long <- gather(df_pre_post_new[, c(1,9:14)], effect_size,difference, dif_for_es_0.05:dif_for_es_0.2, factor_key=TRUE)
+
+
+change_in_cases_with_es <-  ggplot(df_pre_post_new_long, aes(x = log(sample_size), y = difference, color = effect_size)) + 
+  geom_line() +
+  geom_vline(xintercept = log(10^6), color = "blue", linetype = "longdash") +
+  geom_vline(xintercept = log(10^7), color = "red", linetype = "longdash") +
+  xlim(9,17)
+
+
+change_in_cases_with_es <- change_in_cases_with_es +  annotate(geom="text", x=15.2, y=200000, label="10M affected",
+            color="red") +   annotate(geom="text", x=12.8, y=120000, label="1M affected",
+                                       color="blue")
+
+change_in_cases_with_es <- change_in_cases_with_es + ggtitle("Increase in Depression **cases** during a Pandemic \n by Number of Youth Affected and Effect Sizes")+
+  ylab("Number of Extra Cases") + xlab("log Number of Youth Affected") 
+
+change_in_cases_with_es + scale_color_hue(labels=(es))
+
+
+```
+
+
+## Simulating the pandemic: **small effects**
+I have now varied the small effects to give you an idea of the range. 
+```{r, warning=FALSE}
+change_in_cases_with_es + scale_color_hue(labels=(es))
+```
+
+## Small effects at large scales
+
+
+Small effects are **irrelevant** (mostly) in a clinic. 
+
+- That's why the label makes sense in clinical medicine.
+
+Small effects are **very relevant** when they scale. 
+
+- That's why the label makes no sense in public health. 
+
+Other factors, such as _effects for what_ are important too. 
+
+The approach presented here emphasises the value of simulation.
+
+<font size="2"> Useful Readings: </font>  
+<font size="2"> Matthay EC (2019) Powering population health research: Considerations for plausible and actionable effect sizes. SSM Population Health, 19, 100789</font>   
+<font size="2"> Funder DC, Ozer DJ (2019) Evaluating Effect Size in Psychological Research: Sense and Nonsense,  </font> 
+
+## Small effects and reality
+
+The findings here have implications about how we perceive reality and how we communicate about it.
+
+Conventions (e.g. **small effects**) and summary statitstics (e.g. **Cohen's d**) are useful and necessary. 
+
+But they can also be highly misleading. 
+
+We propose that  presentations of raw data, absolute numbers and simulations become the norm in scientific abstracts. 
+
+Last but not least: think how important small effects may be for interventions.
+
+<font size="2"> Greenberg MT, Abenavoli R (2017) Powering population health research: Considerations for plausible and actionable effect sizes. Journal of Research on Educational Effectiveness https://doi.org/10.1080/19345747.2016.1246632</font>  
+
+
+
+
+
+
+
+
