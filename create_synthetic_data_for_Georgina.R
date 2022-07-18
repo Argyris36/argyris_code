@@ -33,8 +33,8 @@ num_binary <- 5 # how many variables you want to be binary
 prob <- seq(from =0, to = 1, length.out = num_binary)  #your probability for the binomial distribution, for illustration, I put here a vector of probabilities 
 
 
-cont<- replicate(num_binary,(rbinom(num_binary,1,prob)))
-bin <- replicate(num_continuous,rnorm(num_continuous,mean_cont,sd_cont))
+cont<- replicate(num_binary,(rbinom(num_rows,1,prob)))
+bin <- replicate(num_cont,rnorm(num_rows,mean_cont,sd_cont))
 
 df_synthetic <- data.frame(cbind(bin, cont))
 
@@ -42,3 +42,13 @@ colnames(df_synthetic) <- LETTERS[1:num_cols] # give them the names you like, I 
 
 dim(df_synthetic) # check dimensions right
 head(df_synthetic)
+
+#introduce missingness
+n_missing <- 30 # you could also make this variable if you wanted and run it over a second loop.
+
+for (i in 1: ncol(df_synthetic) ){
+  
+  df_synthetic[c(sample(nrow(df_synthetic), n_missing)),][,i] <- NA
+}
+
+df_synthetic

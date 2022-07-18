@@ -642,6 +642,8 @@ Tasks that is Moderated by Depression, Psyarxiv preprint
 
 Pat N, Want Y, Stringaris (2022) A Longitudinally stable, brain-based predictive models explain the relationships of childhood intelligence with socio-demographic, psychological and genetic factors Human Brain Mapping (in press)
 
+Vulser H, Lemaitre HS, ..., Stringaris A, ...Nees F (2022) Chronotype, Longitudinal Volumetric Brain Variations Throughout Adolescence and Depressive Symptom Development. J Am Academy Child Adolesc Psychiatry (in press)
+
 Pat N,Wang Y, Bartonicek A, Candia J, Stringaris A (2022)  Explainable Machine Learning Approach to Predict and Explain the Relationship between Task-based fMRI and Individual Differences in Cognition Cerebral Cortex (in press)
 
 Pan P, ..., Stringaris A, Ernst M (2022) Longitudinal Trajectory of the Link Between Ventral Striatum and Depression in Adolescence AJP (in press)
