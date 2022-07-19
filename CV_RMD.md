@@ -195,7 +195,7 @@ participate as a member or scientific advisor in the following:
   - 2004 European Science Foundation Young Scientist Travel Award
 
 ### Keynote Lectures, Invited Lectures, Symposia and Chairing of Symposia (examples)
-  -Chair ADHD: Life-time continuity, serious mental illness, and genetics World Psychiatric Association Thematic Conference, Athens, Greece
+  -Chair: ADHD. Life-time continuity, serious mental illness, and genetics World Psychiatric Association Thematic Conference, Athens, Greece
   - Guest Speaker and Panelist Pediatric Major Depressive Disorder Mini-Symposium,  Co-hosted by the Division of Pediatric and Maternal Health and the Division of Psychiatry Office of New Drugs | Center for Drug Evaluation & Research | U.S. Food and Drug Administration (FDA), (June 2022) Bethesda, MD, USA
   - Keynote Lecture (Lettura Magistrale) at the joint meeting of the Italian Societies of Neuropsychopharmacology       and Child & Adolescent Psychiatry (May 2022), Cagliari, Italy, Title: What is mood and how to modify it
   - Keynote Lecture (Hauptvortrag) at the German Society for Child and Adolescent Psychiatry (Deutsche Gesellschaft     für Kinder un      Jugendpsychiatrie, DGKJP, May 2022), Magdeburg Germany, Title: Warum gibt es Depression
