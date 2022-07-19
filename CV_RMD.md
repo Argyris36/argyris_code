@@ -9,7 +9,6 @@ output:
 
 **Professor and Chair of Child & Adolescent Psychiatry at University College London**
 
-![](https://github.com/Argyris36/CV/blob/gh-pages/75246595_736833856820733_2719593851835645952_n-2.jpg)
 
 email: <argyris.stringaris@nih.gov>  
 Address for Correspondence: 1-19 Torrington Pl, London WC1E 7HB, United Kingdom
