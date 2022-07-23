@@ -1,4 +1,5 @@
 library(tidyverse)
+weight.height <- read.csv("~/argyris_code/weight.height.csv")
 summary(lm(Weight ~ Gender, data = weight.height))$r.squared
 
 weight.height %>% 
