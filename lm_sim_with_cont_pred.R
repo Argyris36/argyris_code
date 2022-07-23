@@ -1,3 +1,4 @@
+weight.height <- read.csv("~/argyris_code/weight.height.csv")
 summary(lm(Weight ~ Height, data = weight.height))
 
 
@@ -40,6 +41,6 @@ mean(r_sq)
 # mean(catch_y[,1]) # to view individual y-columns
 # sd(catch_y[,1])
 
-avg <- mean(apply(catch_y, 2, mean)) # the mean of all y-columns
+avg <- mean(apply(catch_y, 1, mean)) # the mean of all y-columns
 sds <- mean(apply(catch_y, 2, sd)) # the sd of all y-columns
 
