@@ -5,9 +5,7 @@ summary(lm(Weight ~ Gender, data = weight.height))$r.squared
 weight.height %>% 
   group_by(Gender) %>% 
   summarise(mean(Weight))
-  
 
-########start by creating this for just the categorical and then move on with the other stuff
 
 
 n_sample <- 10000  
@@ -53,11 +51,4 @@ sds <- mean(apply(catch_y, 2, sd)) # the sd of all y-columns
 
 
 
-
-
-
-
-group = rep(c("group1", "group2"), each = 10)
-growth = 5 + 5*(group=="group2")
-growth
 
