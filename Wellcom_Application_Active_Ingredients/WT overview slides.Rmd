@@ -1,0 +1,167 @@
+---
+title: "Wellcome Trust Application Overview"
+author: "Argyris Stringaris"
+date: "04/06/2022"
+output:
+  ioslides_presentation: default
+  beamer_presentation: default
+---
+
+```{r setup, include=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Main Goal of the Application.
+
+Discover what causes improvement in successful psychological therapy for anxiety and depression in youth.
+
+
+## Principal Hypothesis.
+
+Improvement in psychotherapy depends on the generation of <br>
+surprises that are salient to the individual and their position in the world. 
+  
+  
+We call this the salient **surprise hypothesis (SSH)**.  
+
+We posit that it is fundamental to success in psychotherapy <br>
+
+
+
+## Disorders studied 
+
+To achieve this, we will : 
+
+a) demonstrate that the **SSH** is key to the success of cognitive therapy in social anxiety, one of the most efficacious and best- studied psychotherapies.  
+
+b) show that the **SSH** also underlies improvement of depression in those with social phobia comorbid with depression, a common and debilitating comorbdiity.
+
+c) examine how SSH can be used to improve treatment in depression not comorbid with social anxiety.
+
+
+
+## Main Research Approaches
+
+Investigations will be conducted at two levels in an iterative way:
+
+1. _Experimental Medicine Design_: Single-Session Psychological Therapy Laboratory to achieve causal manipulation and tight experimental control of variables. 
+
+2. _Randomised Controlled Trial_: Clinical trial that allows us to test mediating mechanisms in actual treatment. 
+
+Both will be co-researched together with young people....ADD HERE
+
+
+## Methodologies involved
+-  neural (MEG)
+-  cognitive
+-  eye tracking
+-  physiology
+-  interoception
+-  video taping and analysis of images
+-  high-density data collection
+
+
+## Clinical Rationale
+- SAD and Depression two of the most common and debilitating disorders, frequently comorbid.
+- SAD greatly treatable. Deression in great need of improvement. 
+
+## Research Rationale
+- Strong theory about how therapy works. 
+- Lots of background mediation analyses, experimental designs.
+- Paves the way for getting as clause to causality as possible. 
+
+
+## What are salient surprises?
+
+-  Describe what would constitute a surprise in psychotherapy, i.e. outcome better than expected
+
+-  Describe why generalisation is important. 
+
+A central Aim here will be to define, operationalise, model and manipulate those surprises. 
+
+## How are surprises generated in SAD?
+
+- In CT for SAD, some of the principal ways are: dropping of safety behaviours and shifting SFA
+
+- Experimental evidence. Here, we will focus in on manipulating etc. 
+
+## How are surprises generated in Depression? 
+
+- Not clear, several things to examine 
+
+- Avoidance one principal mechanism. 
+
+## First phase: Identify mechanisms of change in SAD
+
+- Experimental session recreate previous manipulation of SFA/Safety Beh (multiple events!!!)
+ 
+- Measure SFΑ, Safety Beh (quantify in various ways, measure neural correlates) and manipulate
+
+- How can we quantify this in the clinical sample? Will need measures of these that are easy to get during treatment.
+
+- Observational: surprises mediate between SFA/SB Anxiety
+
+## First phase: Identify mechanisms of change in SAD
+
+- Experimental I: is there a way of tweaking expectation or outcome in an ethically viable way? For example: generate zero surprises or negative ones, despite dropping safety behaviours? 
+
+- Experimental II: how to tweak the generalisability of surprise? Through instructions? Would simply dropping the instructions about "what does this mean about the world generally" be sufficient? 
+
+## Second phase: Manipulate surprises in SAD comorbid with depression
+
+- It is the same as above, with two crucial additions. 
+
+- First, measure mood throughout using multivariate measures: questionnaires, physiology, face processing etc. 
+
+
+- Second, test directions of effect and possible reciprocal relationships. Do manipulations such as SFA refocusing change mood in their own right? Does this facilitate changes in anxiety or the generation of surprises? Does low mood impact on generalisation? 
+
+## Second phase: Manipulate surprises in SAD comorbid with depression
+
+- Third, test mechanisms that may be specific to depression, e.g. access to autobiographical memory during session/experiment that may (a) lower mood; (b) discount outcomes and therefore surprises
+
+- Test these with tighter experimental control and measurement in the clinical sample. Is there a lag between depression and anxiety that we can exploit for mediation analyses? To do within and between session.
+
+## Third phase: Test the above in depression not comorbid with SAD
+
+- Apply the above to depression not comorbid with SAD.
+
+
+## What would a session for SAD look like?
+
+- It would be like in Eleanor's here:<font size="2">  Leigh, E., Chiu, K., & Clark, D. M. (2021). Self-focused attention and safety behaviours maintain social anxiety in adolescents: An experimental study. PloS one, 16(2), e0247703. https://doi.org/10.1371/journal.pone.0247703 </font>
+
+with two important modifications/additions:
+
+- multi-trial **ask EL and GK about this**
+
+- multi-method assessment of mediators and outcomes, including attention and behaviours, but also mood. 
+
+## Questions (primarily) for Eleanor and Georgina
+1. How can we turn the single-event session into a series of blocks or events (block vs event design, respectively). For example, can we instruct the participants to switch between internal vs external focus of attention several times per session? Are we too worried about carry over?
+
+2. How can we best manipulate surprise generalisation. In the slides that I have sent you, I am referring to the Salient Surprise Hypothesis, which is a shorthand for a surprise that is meaningful in the individual’s world. I have some ideas above about how we might do it.
+
+## Questions (primarily) for Eleanor and Georgina
+3. Eleanor: is your work for MRC going to be an RCT? It will be good to think what measures we could use that are both innovative and easy/unintrusive to incorporate (e.g. some form of eye-tracking).
+
+## Questions (primarily) for Elizabeth 
+1. Do you agree that SFA and SB can be mediators of change in BA? 
+2. Do you agree with generalisation as the target in BA? 
+3. Can you think of experiments where this has been sufficiently shown? 
+4. Other thoughts re: BA and its possible differences or alternative explanations? 
+
+## Questions for Quentin and Diego
+Georgina, Eleanor you and I should think about how best to test the idea of _meaningful_ shifts in beliefs. As discussed from a computational perspective, I think that it would be good to distinguish between mere surprise vs epistemic surprises. I found the Schwartenbeck paper here: particularly informative in this regard.  <font size="2"> Schwartenbeck P, FitzGerald THB, Dolan R.(2016) Neural signals encoding shifts in beliefs NeuroImage 125, 578  </font> Thoughts on this?
+
+1. Do you think we could develop a task to differentiate the two, but is done as part of a session? I am thinking of a design where generalisation instructions are provided/withheld per trial, but need to think harder. Ideas?
+
+
+## Questions for Quentin and Diego
+2. We should do this in MEG (though we would have to think about the depth of the dopaminergic strutures).
+
+3. It is tempting to consider pharmacological manipulation of the dopamine signal-- Thoughts?
+
+
+
+
