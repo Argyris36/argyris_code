@@ -690,33 +690,65 @@ head(osca_dep_anx_long)
 
 
 ```{r, echo = FALSE}
-dep_change_plot <- ggplot(data = osca_dep_anx_long , aes(x = time_point , y = mfq_values, group = id, color=factor(id),alpha=1)) +
+dep_change_plot <- ggplot(data = osca_dep_anx_long , aes(x = time_point , y = mfq_values, group = id, color=factor(id),alpha=0.8)) +
   geom_line( size = 2) +
   geom_point( size = 4) +
-  xlab("time") + ylab("mfq") +
-  ggtitle("Changes in Depression During Treatment")
+  xlab("time") + ylab("depressive symptoms") +
+  ggtitle("Changes in Depression Symptoms During Treatment of Social Anxiety")
 legend.position = "none"
 dep_change_plot <- dep_change_plot+
   theme(legend.position = "none")
-dep_change_plot +
+dep_change_plot <- dep_change_plot +
   facet_wrap(~ condition, ncol =2 )
+dep_change_plot + geom_hline(yintercept = 10, linetype = "dashed") +
+  annotate("text",x= 3.2,y=11,label="caseness") + coord_cartesian(ylim=c(-0,26),clip="off")
+
+```
+```{r}
+osca_dep_anx_long <- osca_dep_anx_long %>% 
+  mutate(depression_case = ifelse(mfq_values >= 10, 1, 0))
+
+percentages_depression <- osca_dep_anx_long %>% 
+  group_by(condition, time_point) %>%
+  count(depression_case)
+ 
+percentages_depression <- percentages_depression %>% 
+  group_by(condition, time_point) %>%
+mutate(perc = (n / sum(n, na.rm = TRUE)*100))  %>% 
+  as.data.frame()
+
+percentages_depression %>% 
+  filter(depression_case == 1) %>% 
+ggplot(aes(x=time_point, y=perc, fill=condition)) +
+  xlab("time point") + ylab("cases of depression") +
+  ggtitle("Change in Cases of Depression During Therapy for Social Phobia")+
+geom_bar(stat="identity",  position=position_dodge())#+
+  #theme_minimal()
+
+
 ```
 
 
 
 ```{r}
-anx_change_plot <- ggplot(data = osca_dep_anx_long , aes(x = time_point , y = lsas_values, group = id, color=factor(id),alpha=1)) +
+anx_change_plot <- ggplot(data = osca_dep_anx_long , aes(x = time_point , y = lsas_values, group = id, color=factor(id),alpha=0.8)) +
   geom_line( size = 2) +
   geom_point( size = 4) +
-  xlab("time") + ylab("mfq") +
-  ggtitle("Changes in Anxiety During Treatment")
+  xlab("time") + ylab("social anxiety symptoms") +
+  ggtitle("Changes in Social Anxiety Symptoms During Treatment Social Anxiety")
 legend.position = "none"
 anx_change_plot <- anx_change_plot+
   theme(legend.position = "none")
-anx_change_plot +
+anx_change_plot <- anx_change_plot +
   facet_wrap(~ condition, ncol =2 )
+anx_change_plot + geom_hline(yintercept = 35, linetype = "dashed") +
+  annotate("text",x= 3.2,y=39,label="caseness") + coord_cartesian(ylim=c(0,130),clip="off")
 ```
 
+```{r}
+library(patchwork)
+anx_change_plot / dep_change_plot #+ plot_layout(nrow = 2, byrow = FALSE)
+```
 
 
 
