@@ -186,7 +186,7 @@ rename(exp_value = Prediction1Rating_Study2)
 **Let's plot anxiety change**  
 
 ```{r, echo = FALSE}
-anx_change_plot <- ggplot(data = pe_anx_merged, aes(x = condition, y = anx_value, group = ID, color=ID,alpha=1)) +
+anx_change_plot <- ggplot(data = pe_anx_merged, aes(x = condition, y = anx_value, group = ID, color=factor(ID),alpha=1)) +
   geom_line( size = 2) +
   geom_point( size = 4) +
   xlab("Condition") + ylab("Anxiety") +
@@ -232,6 +232,9 @@ pe_change_plot <- ggplot(data = pe_anx_merged, aes(x = condition, y = pe_value, 
 legend.position = "none"
 pe_change_plot <- pe_change_plot +
   theme(legend.position = "none")
+pe_change_plot <- pe_change_plot + geom_hline(yintercept = 0,linetype = "dashed")
+pe_change_plot <- pe_change_plot + annotate(geom="text",x = 2.3, y=32, label="Outome Worse \nthen Expected", colour = "black")
+pe_change_plot <- pe_change_plot + annotate(geom="text",x = 2.3, y=-30, label="Outome Better \nthen Expected", colour = "black")
 pe_change_plot
 ```
 
@@ -627,7 +630,7 @@ Ideally, we should build something that involves mood or hedonic response and de
 
 
 
-
+## Some of Eleanor's OSCA data to see effects on depression and anxiety side by side
 **Load depression data**
 ```{r}
 
@@ -637,22 +640,6 @@ View(osca_dep_anx )
 
 
 **Create a long dataset too in order to do some plotting**
-```{r}
-osca_dep_anx_long <- osca_dep_anx  %>%      
-dplyr:: select(Prediction1Rating_Study2, ConditionOrder_2, Anxiety_with_Study2, Belief_With_Study2, Anxiety_WithOUT_Study2, Belief_WithOUT_Study2, pe_with ,pe_without)
-  
-osca_dep_anx_long   <- osca_dep_anx  %>% 
-  pivot_longer(cols = c("LSAS_B_Total", "LSAS_M_Total", "LSAS_post_total", "SMFQ_B", "SMFQ_M", "SMFQ_post"), 
-               names_to = c("lsas", "mfq"), values_to = c("values"), names_pattern = "new_?(.*)(.*)") %>% 
-  as.data.frame()
-head(osca_dep_anx_long )  
-
-
-dat %>% pivot_longer(c(heat_mean, heat_se, cold_mean, cold_se),
-                     names_to = c("treatment",".value"),
-                     names_sep = "_")
-
-```
 
 ```{r}
 
@@ -745,100 +732,59 @@ anx_change_plot + geom_hline(yintercept = 35, linetype = "dashed") +
   annotate("text",x= 3.2,y=39,label="caseness") + coord_cartesian(ylim=c(0,130),clip="off")
 ```
 
+
+
+## Some analyses of individual studies from the review that Eleanor did from which Katie Cunningham-Rowe pulled out means and sds. 
 ```{r}
-library(patchwork)
-anx_change_plot / dep_change_plot #+ plot_layout(nrow = 2, byrow = FALSE)
+soc_phobia_review <- read.csv("~/Downloads/Social_Phobi_Depression_outcomes - Sheet1.csv")
+
+View(soc_phobia_review)
+
 ```
 
-
-
-**ADDITIONAL ANALYSES, TO BE OPTIMISED. I ran into problems with running within group mediation analyses as below, need to figure out the problems. I have commented out things for the moment**
-
-<!-- **Trying a Bayesian version of single experiment mediation analysis as described here: https://github.com/mvuorre/bmlm-ms Commenting it out as it takes very long to run -->
-<!-- ```{r} -->
-<!-- #fit <- mlm(d = pe_anx_merged_test, -->
-<!-- #id = "ID", -->
-<!-- #x = "condition", -->
-<!-- #m = "belief_value", -->
-<!-- #y = "anx_value", -->
-<!-- #iter = 10000, cores = 4) -->
-<!-- #mlm_summary(fit) -->
-<!-- #mlm_path_plot(fit, xlab = "condition", mlab = "belief", ylab = "anxiety") -->
-<!-- ``` -->
-<!-- This did not run properly, gives unrealistic SEs for certain variables. Haven't done diagnostics.  -->
+```{r}
+### effect sizes between CT and Waitlist 
+soc_phobia_review <- soc_phobia_review %>% 
+  filter(time_point == "post") %>% 
+  mutate(es_between_dep_CT_WL = 
+           (dep_mean_CT - dep_mean_WL)
+         /sqrt((dep_sd_CT^2 + dep_sd_WL^2))/2)
 
 
 
+soc_phobia_review <- soc_phobia_review %>% 
+  filter(time_point == "post") %>% 
+  mutate(es_between_sp_CT_WL = 
+           (sp_mean_CT - sp_mean_WL)
+         /sqrt((sp_sd_CT^2 + sp_sd_WL^2))/2)
 
 
-<!-- **Trying a multi-level SEM here** -->
-<!-- ```{r} -->
-<!--       model <- ' -->
-<!--         level: 1 -->
-<!--             # direct effect -->
-<!--                  anx_value ~ c*condition -->
-<!--                # mediator -->
-<!--                  belief_value ~ a*condition -->
-<!--                  anx_value ~ b*belief_value -->
-<!--                # indirect effect (a*b) -->
-<!--                  ab := a*b -->
-<!--                # total effect -->
-<!--                  total := c + (a*b) -->
-<!--         level: 2 -->
-<!--                      # direct effect -->
-<!--                  anx_value ~ c*condition -->
-<!--                # mediator -->
-<!--                  belief_value ~ a*condition -->
-<!--                  anx_value ~ b*belief_value -->
-<!--                # indirect effect (a*b) -->
-<!--                  ab := a*b -->
-<!--                # total effect -->
-<!--                  total := c + (a*b) -->
-<!--     ' -->
+soc_phobia_review %>% 
+  dplyr:: select("name_study", "es_between_dep_CT_WL", "es_between_sp_CT_WL") %>% 
+  knitr::kable()
+```
 
-<!--     fit <- sem(model = model, data = pe_anx_merged, cluster = "ID", se = "robust.huber.white",) -->
-<!--     summary(fit, std=T) -->
-<!-- ``` -->
-<!-- This doesnt run because of zero variance in some clusters. I therefore prepared a new dataset below. -->
+```{r}
+### effect sizes within CT for dep and SP
+pre_df <- soc_phobia_review %>% 
+  filter(time_point == "pre")
+
+post_df <- soc_phobia_review %>% 
+  filter(time_point == "post")
+
+joined_pre_post_df <- data.frame(cbind(pre_df, post_df))
+head(joined_pre_post_df)
+
+joined_pre_post_df <- joined_pre_post_df %>% 
+  mutate(es_within_mean_dep_CT = (dep_mean_CT - dep_mean_CT.1)/((dep_sd_CT + dep_sd_CT.1)/2))
+
+joined_pre_post_df <- joined_pre_post_df %>% 
+  mutate(es_within_mean_sp_CT = (sp_mean_CT - sp_mean_CT.1)/((sp_sd_CT + sp_sd_CT.1)/2))
 
 
-<!-- **excluding the zero variance in sluter subjects** -->
-<!-- ```{r} -->
-<!-- pe_anx_merged_test <- pe_anx_merged %>%  -->
-<!--   filter(!ID%in%c("7008", "8006", -->
-<!--     "9040", "9088", "17006", "17094", "17097", "17098", "17117", "17152", "18011", "18021", "7075", "8044")) -->
+joined_pre_post_df %>% 
+  dplyr:: select("name_study", "es_within_mean_dep_CT", "es_within_mean_sp_CT") %>% 
+  knitr::kable()
 
-<!-- ``` -->
-
-
-<!-- **Re-running it with the subjects above excluded** -->
-<!-- ```{r} -->
-<!--       model <- ' -->
-<!--         level: 1 -->
-<!--             # direct effect -->
-<!--                  anx_value ~ c*condition -->
-<!--                # mediator -->
-<!--                  belief_value ~ a*condition -->
-<!--                  anx_value ~ b*belief_value -->
-<!--                # indirect effect (a*b) -->
-<!--                  ab := a*b -->
-<!--                # total effect -->
-<!--                  total := c + (a*b) -->
-<!--         level: 2 -->
-<!--                      # direct effect -->
-<!--                  anx_value ~ c*condition -->
-<!--                # mediator -->
-<!--                  belief_value ~ a*condition -->
-<!--                  anx_value ~ b*belief_value -->
-<!--                # indirect effect (a*b) -->
-<!--                  ab := a*b -->
-<!--                # total effect -->
-<!--                  total := c + (a*b) -->
-<!--     ' -->
-
-<!--     fit <- sem(model = model, data = pe_anx_merged_test, cluster = "ID", se = "robust.huber.white",) -->
-<!--     summary(fit, std=T) -->
-<!-- ``` -->
-<!-- But this does not converge -->
-
+```
 
