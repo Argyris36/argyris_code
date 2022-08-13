@@ -635,6 +635,7 @@ Ideally, we should build something that involves mood or hedonic response and de
 ```{r}
 
 osca_dep_anx <- read.csv("~/argyris_code/Wellcom_Application_Active_Ingredients/OSCApremidpostscores.csv")
+
 View(osca_dep_anx )
 ```
 
@@ -687,9 +688,9 @@ dep_change_plot <- dep_change_plot+
   theme(legend.position = "none")
 dep_change_plot <- dep_change_plot +
   facet_wrap(~ condition, ncol =2 )
-dep_change_plot + geom_hline(yintercept = 10, linetype = "dashed") +
+dep_change_plot <- dep_change_plot + geom_hline(yintercept = 10, linetype = "dashed") +
   annotate("text",x= 3.2,y=11,label="caseness") + coord_cartesian(ylim=c(-0,26),clip="off")
-
+dep_change_plot + theme(axis.text = element_text(size = 10)) 
 ```
 ```{r}
 osca_dep_anx_long <- osca_dep_anx_long %>% 
@@ -728,15 +729,16 @@ anx_change_plot <- anx_change_plot+
   theme(legend.position = "none")
 anx_change_plot <- anx_change_plot +
   facet_wrap(~ condition, ncol =2 )
-anx_change_plot + geom_hline(yintercept = 35, linetype = "dashed") +
+anx_change_plot <- anx_change_plot + geom_hline(yintercept = 35, linetype = "dashed") +
   annotate("text",x= 3.2,y=39,label="caseness") + coord_cartesian(ylim=c(0,130),clip="off")
+anx_change_plot + theme(axis.text = element_text(size = 10)) 
 ```
 
 
 
 ## Some analyses of individual studies from the review that Eleanor did from which Katie Cunningham-Rowe pulled out means and sds. 
 ```{r}
-soc_phobia_review <- read.csv("~/Downloads/Social_Phobi_Depression_outcomes - Sheet1.csv")
+soc_phobia_review <- read.csv("~/Downloads/soc_phobia_review.csv")
 
 View(soc_phobia_review)
 
@@ -744,23 +746,57 @@ View(soc_phobia_review)
 
 ```{r}
 ### effect sizes between CT and Waitlist 
-soc_phobia_review <- soc_phobia_review %>% 
+soc_phobia_review_for_table_between <- soc_phobia_review %>% 
   filter(time_point == "post") %>% 
   mutate(es_between_dep_CT_WL = 
            (dep_mean_CT - dep_mean_WL)
-         /sqrt((dep_sd_CT^2 + dep_sd_WL^2))/2)
-
-
-
-soc_phobia_review <- soc_phobia_review %>% 
-  filter(time_point == "post") %>% 
-  mutate(es_between_sp_CT_WL = 
+         /sqrt((dep_sd_CT^2 + dep_sd_WL^2))/2, es_between_sp_CT_WL = 
            (sp_mean_CT - sp_mean_WL)
          /sqrt((sp_sd_CT^2 + sp_sd_WL^2))/2)
 
 
-soc_phobia_review %>% 
+
+
+
+
+soc_phobia_review_for_table_between %>% 
   dplyr:: select("name_study", "es_between_dep_CT_WL", "es_between_sp_CT_WL") %>% 
+  knitr::kable()
+```
+
+
+**do for young people**
+```{r}
+### effect sizes between CT and Waitlist 
+soc_phobia_review_Eleanor_between <- soc_phobia_review %>% 
+ filter(time_point == "post", name_study == "Leigh2022") %>% 
+  mutate(es_between_dep_CT_WL_Eleanor = 
+           (dep_mean_internet_CT - dep_mean_WL)
+         /sqrt((dep_sd_internet_CT^2 + dep_sd_WL^2))/2,
+         es_between_sp_CT_WL_Eleanor = 
+           (sp_mean_internet_CT - sp_mean_WL)
+         /sqrt((sp_sd_internet_CT^2 + sp_sd_WL^2))/2)
+
+soc_phobia_review_Eleanor_between %>% 
+  dplyr:: select("name_study", "es_between_dep_CT_WL_Eleanor", "es_between_sp_CT_WL_Eleanor") %>% 
+  knitr::kable()
+```
+
+
+**do for all internet thereapy**
+```{r}
+### effect sizes between CT and Waitlist 
+soc_phobia_review_internet_between <- soc_phobia_review %>% 
+ filter(time_point == "post") %>% 
+  mutate(es_between_dep_CT_WL_internet = 
+           (dep_mean_internet_CT - dep_mean_WL)
+         /sqrt((dep_sd_internet_CT^2 + dep_sd_WL^2))/2,
+         es_between_sp_CT_WL_internet = 
+           (sp_mean_internet_CT - sp_mean_WL)
+         /sqrt((sp_sd_internet_CT^2 + sp_sd_WL^2))/2)
+
+soc_phobia_review_internet_between %>% 
+  dplyr:: select("name_study", "es_between_dep_CT_WL_internet", "es_between_sp_CT_WL_internet") %>% 
   knitr::kable()
 ```
 
@@ -776,15 +812,149 @@ joined_pre_post_df <- data.frame(cbind(pre_df, post_df))
 head(joined_pre_post_df)
 
 joined_pre_post_df <- joined_pre_post_df %>% 
-  mutate(es_within_mean_dep_CT = (dep_mean_CT - dep_mean_CT.1)/((dep_sd_CT + dep_sd_CT.1)/2))
+  
+  mutate(es_within_mean_dep_CT = (dep_mean_CT - dep_mean_CT.1)/((dep_sd_CT + dep_sd_CT.1)/2),
+         
+         es_within_mean_sp_CT = (sp_mean_CT - sp_mean_CT.1)/((sp_sd_CT + sp_sd_CT.1)/2))
 
-joined_pre_post_df <- joined_pre_post_df %>% 
-  mutate(es_within_mean_sp_CT = (sp_mean_CT - sp_mean_CT.1)/((sp_sd_CT + sp_sd_CT.1)/2))
 
 
 joined_pre_post_df %>% 
   dplyr:: select("name_study", "es_within_mean_dep_CT", "es_within_mean_sp_CT") %>% 
   knitr::kable()
 
+```
+
+
+```{r}
+### effect sizes within CT for dep and SP YOUNG PEOPLE
+pre_df <- soc_phobia_review %>% 
+  filter(time_point == "pre")
+
+post_df <- soc_phobia_review %>% 
+  filter(time_point == "post")
+
+joined_pre_post_df <- data.frame(cbind(pre_df, post_df))
+head(joined_pre_post_df)
+
+joined_pre_post_df_Eleanor <- joined_pre_post_df %>% 
+  mutate(es_within_mean_dep_CT = (dep_mean_internet_CT - dep_mean_internet_CT.1)/((dep_sd_internet_CT + dep_sd_internet_CT.1)/2),
+         
+         es_within_mean_sp_CT = (sp_mean_internet_CT - sp_mean_internet_CT.1)/((sp_sd_internet_CT + sp_sd_internet_CT.1)/2))
+
+
+joined_pre_post_df_Eleanor %>% 
+  dplyr:: select("name_study", "es_within_mean_dep_CT", "es_within_mean_sp_CT") %>% 
+  filter(name_study == "Leigh2022") %>% 
+  knitr::kable()
+
+
+
+```
+
+
+
+## look at the per session data for social phobia
+```{r}
+mfqlsas_sessional_osca <- read.csv("~/argyris_code/Wellcom_Application_Active_Ingredients/mfqlsas_sessional_osca.csv")
+   View(mfqlsas_sessional_osca)
+```
+
+**Random Invididual Cases**
+```{r}
+mfqlsas_sessional_osca_long <- mfqlsas_sessional_osca   
+
+
+mfqlsas_sessional_osca_long <-mfqlsas_sessional_osca_long   %>%
+  pivot_longer(
+    cols = !ID,
+    names_to = c("measure", "time_point"),
+    names_sep = "_",
+    values_to = "score"
+  )
+
+
+
+treated_ids <- osca_dep_anx$id[osca_dep_anx$condition==1]
+
+for_plotting <- mfqlsas_sessional_osca_long %>%
+  drop_na() %>% 
+  filter(ID %in% treated_ids)
+
+
+
+for_plotting_ids <- sample(for_plotting$ID, 8)
+
+plot_three_sub_lsas <- for_plotting %>%   
+  filter(ID %in% for_plotting_ids, time_point %in% seq(1:8), measure == "lsas") %>% 
+  ggplot(aes(x = time_point, y = score, group = ID)) + 
+  geom_point()+
+  geom_line ()+
+  facet_grid(~ID)
+
+plot_three_sub_mfq <- for_plotting %>%   
+  filter(ID %in% for_plotting_ids, time_point %in% seq(1:8), measure == "mfq") %>% 
+  ggplot(aes(x = time_point, y = score, group = ID)) + 
+  geom_point()+
+  geom_line ()+
+  facet_grid(~ID)
+
+plot_three_sub_lsas / plot_three_sub_mfq
+
+```
+**Average over time**
+```{r}
+sum_stats_by_session_lsas <- mfqlsas_sessional_osca_long %>% 
+  filter(measure == "lsas", time_point %in% seq(1:12)) %>% 
+  group_by(time_point) %>% 
+  summarise(avg_lsas = mean(score, na.rm = TRUE), std_lsas = sd(score, na.rm = TRUE), 
+            n = n(),
+            se = std_lsas/sqrt(n))
+
+sum_stats_by_session_lsas  <-sum_stats_by_session_lsas [order(as.numeric(as.character(sum_stats_by_session_lsas$time_point))),]
+
+sum_stats_by_session_lsas 
+
+sum_stats_by_session_mfq <- mfqlsas_sessional_osca_long %>% 
+  filter(measure == "mfq", time_point %in% seq(1:12)) %>% 
+  group_by(time_point) %>% 
+  summarise(avg_mfq = mean(score, na.rm = TRUE), std_mfq = sd(score, na.rm = TRUE), 
+            n = n(),
+            se = std_mfq/sqrt(n))
+
+sum_stats_by_session_mfq  <-sum_stats_by_session_mfq [order(as.numeric(as.character(sum_stats_by_session_mfq$time_point))),]
+
+sum_stats_by_session_mfq
+
+
+mean_plot_lsas <- ggplot(sum_stats_by_session_lsas, aes(x=reorder(time_point, seq(1:12)), y=avg_lsas, group = "condition")) + 
+    geom_errorbar(aes(ymin=avg_lsas-se, ymax=avg_lsas+se), width=.1) +
+    geom_line() +
+    geom_point() +
+    ggtitle("Mean Change Social Anxiety Symptoms Per Treatment Session")+
+  ylab("Mean Social Anxiety \nScore (+/-SE)") +
+  xlab("Session Number")
+
+
+mean_plot_lsas
+
+mean_plot_mfq <- ggplot(sum_stats_by_session_mfq, aes(x=reorder(time_point, seq(1:12)), y=avg_mfq, group = "condition")) + 
+    geom_errorbar(aes(ymin=avg_mfq-se, ymax=avg_mfq+se), width=.1) +
+    geom_line() +
+    geom_point() +
+  ggtitle("Mean Change Depression SYmptoms Per Treatment Session")+
+  ylab("Mean Depression \nScore (+/-SE)") +
+  xlab("Session Number")
+
+mean_plot_lsas /
+  mean_plot_mfq
+```
+
+```{r}
+
+mean_plot_lsas <- ggplot(sum_stats_by_session_mfq, aes(x=reorder(time_point, seq(1:12)), y=avg_lsas, group = "condition")) + 
+    geom_errorbar(aes(ymin=avg_lsas-se, ymax=avg_lsas+se), width=.1) +
+    geom_line() +
+    geom_point()
 ```
 
