@@ -22,7 +22,7 @@ It is a within-subject experiment where adolescents with high and low social anx
 The key variables are the following:
   
   
-- Prediction1Rating_Study2 -> Belief in original prediction Study 2 (0-100). For the purposes of analyses I have relablled it as expectation in code chunks below.
+- Prediction1Rating_Study2 -> Belief in original prediction Study 2 (0-100). For the purposes of analyses I have relabelled it as expectation in code chunks below.
   
   
 - Anxiety_with_Study2 -> How anxious did you feel during the WITH conversation (0-100)
@@ -238,9 +238,77 @@ pe_change_plot <- pe_change_plot + annotate(geom="text",x = 2.3, y=-30, label="O
 pe_change_plot
 ```
 
+
+
+
+
+
 There is a clear change in pe across experimental conditions: it drops when safetey behaviours are dropped. 
+
+
+
+
+**create an even "longer" dataset, or two of them, so that you can plot expectations and outcomes
+```{r}
+without_ratings_pred_belief <- pe_anx_merged %>% 
+   filter(condition == "_without") %>% 
+  dplyr:: select(ID, exp_value, belief_value) %>% 
+  pivot_longer(
+    cols = !ID,
+    names_to = c("time_point", "measure"),
+    names_sep = "_", 
+    values_to = "score"
+  ) 
+
+without_ratings_pred_belief$time_point <-  recode_factor(test$time_point, exp = "expectation", belief = "outcome")
+without_ratings_pred_belief $measure <-  recode_factor(test$measure, value = "certainty_value")
+  
+head(without_ratings_pred_belief )  
   
   
+with_ratings_pred_belief <- pe_anx_merged %>% 
+   filter(condition == "_with") %>% 
+  dplyr:: select(ID, exp_value, belief_value) %>% 
+  pivot_longer(
+    cols = !ID,
+    names_to = c("time_point", "measure"),
+    names_sep = "_", 
+    values_to = "score"
+  ) 
+
+with_ratings_pred_belief $time_point <-  recode_factor(test$time_point, exp = "expectation", belief = "outcome")
+with_ratings_pred_belief $measure <-  recode_factor(test$measure, value = "certainty_value")
+  
+head(with_ratings_pred_belief )  
+
+```
+
+  
+```{r}
+
+
+plot_without <- without_ratings_pred_belief %>% 
+  ggplot(aes(x= time_point, y = score, fill = time_point))+
+  geom_boxplot(width=0.1, color="grey") +
+   geom_jitter(shape=16, position=position_jitter(0.2), alpha = 0.6)+
+  theme(legend.position = "none") 
+plot_without <-plot_without + 
+  ggtitle("Feared Predictions and Outcomes *without* SFA and SB" ) +
+   labs(x= "Time Point", y="Conviction (%)")
+
+
+plot_with <- with_ratings_pred_belief %>% 
+  ggplot(aes(x= time_point, y = score, fill = time_point))+
+  geom_boxplot(width=0.1, color="grey")  +
+  geom_jitter(shape=16, position=position_jitter(0.2), alpha = 0.6)+
+  theme(legend.position = "none") 
+plot_with <-plot_with + 
+  ggtitle("Feared Predictions and Outcomes *with* SFA and SB" )+
+   labs(x= "Time Point", y="Conviction (%)")
+
+plot_with / plot_without
+
+```
   
  
     
@@ -682,7 +750,7 @@ dep_change_plot <- ggplot(data = osca_dep_anx_long , aes(x = time_point , y = mf
   geom_line( size = 2) +
   geom_point( size = 4) +
   xlab("time") + ylab("depressive symptoms") +
-  ggtitle("Changes in Depression Symptoms During Treatment of Social Anxiety")
+  ggtitle("Changes in **Depression Symptoms** During Treatment of Social Anxiety")
 legend.position = "none"
 dep_change_plot <- dep_change_plot+
   theme(legend.position = "none")
@@ -723,7 +791,7 @@ anx_change_plot <- ggplot(data = osca_dep_anx_long , aes(x = time_point , y = ls
   geom_line( size = 2) +
   geom_point( size = 4) +
   xlab("time") + ylab("social anxiety symptoms") +
-  ggtitle("Changes in Social Anxiety Symptoms During Treatment Social Anxiety")
+  ggtitle("Changes in Social Anxiety Symptoms During Treatment of Social Anxiety")
 legend.position = "none"
 anx_change_plot <- anx_change_plot+
   theme(legend.position = "none")
@@ -942,7 +1010,7 @@ mean_plot_mfq <- ggplot(sum_stats_by_session_mfq, aes(x=reorder(time_point, seq(
     geom_errorbar(aes(ymin=avg_mfq-se, ymax=avg_mfq+se), width=.1) +
     geom_line() +
     geom_point() +
-  ggtitle("Mean Change Depression SYmptoms Per Treatment Session")+
+  ggtitle("Mean Change Depression Symptoms Per Treatment Session")+
   ylab("Mean Depression \nScore (+/-SE)") +
   xlab("Session Number")
 
