@@ -260,8 +260,8 @@ without_ratings_pred_belief <- pe_anx_merged %>%
     values_to = "score"
   ) 
 
-without_ratings_pred_belief$time_point <-  recode_factor(test$time_point, exp = "expectation", belief = "outcome")
-without_ratings_pred_belief $measure <-  recode_factor(test$measure, value = "certainty_value")
+without_ratings_pred_belief$time_point <-  recode_factor(without_ratings_pred_belief$time_point, exp = "expectation", belief = "outcome")
+without_ratings_pred_belief $measure <-  recode_factor(without_ratings_pred_belief$measure, value = "certainty_value")
   
 head(without_ratings_pred_belief )  
   
@@ -276,8 +276,8 @@ with_ratings_pred_belief <- pe_anx_merged %>%
     values_to = "score"
   ) 
 
-with_ratings_pred_belief $time_point <-  recode_factor(test$time_point, exp = "expectation", belief = "outcome")
-with_ratings_pred_belief $measure <-  recode_factor(test$measure, value = "certainty_value")
+with_ratings_pred_belief$time_point <-  recode_factor(with_ratings_pred_belief$time_point, exp = "expectation", belief = "outcome")
+with_ratings_pred_belief$measure <-  recode_factor(with_ratings_pred_belief$measure, value = "certainty_value")
   
 head(with_ratings_pred_belief )  
 
@@ -285,33 +285,87 @@ head(with_ratings_pred_belief )
 
   
 ```{r}
+sum_stats_pe_by_condition <- pe_anx_merged %>% 
+  group_by(condition) %>% 
+  summarise(avg_pe = mean(pe_value), std_pe = sd(pe_value)) 
+
+cohen_d_with <- (mean(pe_anx_merged$exp) - mean(pe_anx_merged$belief_value))/
+  sqrt(((sd(pe_anx_merged$exp))^2 + (sd(pe_anx_merged$belief_value))^2)/2)
+
+cohen_d_without <- pe_anx_merged %>% 
+  filter(condition == "_without" ) %>%
+ mutate(cohen_d_without = (mean(exp_value) - mean(belief_value))/
+  sqrt(((sd(exp_value))^2 + (sd(belief_value))^2)/2))
+cohen_d_without$cohen_d_without[1]
+
+cohen_d_with <- pe_anx_merged %>% 
+  filter(condition == "_with" ) %>%
+ mutate(cohen_d_with = (mean(exp_value) - mean(belief_value))/
+  sqrt(((sd(exp_value))^2 + (sd(belief_value))^2)/2))
+cohen_d_with$cohen_d_with[1]
 
 
+  
 plot_without <- without_ratings_pred_belief %>% 
   ggplot(aes(x= time_point, y = score, fill = time_point))+
   geom_boxplot(width=0.1, color="grey") +
-   geom_jitter(shape=16, position=position_jitter(0.2), alpha = 0.6)+
+   geom_jitter(shape=16, position=position_jitter(0.2), alpha = 0.2)+
   theme(legend.position = "none") 
 plot_without <-plot_without + 
-  ggtitle("Feared Predictions and Outcomes *without* SFA and SB" ) +
-   labs(x= "Time Point", y="Conviction (%)")
-
+  ggtitle("Feared Predictions and Outcomes \n*without* SFA and SB" ) +
+   labs(x= "", y="Conviction (%)")
+plot_without  <- plot_without + annotate("text",x= 1.5,y=75,label=paste0("Surprise \nCohen's d = ", round(cohen_d_without$cohen_d_without[1], 2)))
+                                         
+plot_without <- plot_without + scale_x_discrete(breaks=c("pre","post"),
+        labels=c("Prediction", "Outcome"))
 
 plot_with <- with_ratings_pred_belief %>% 
   ggplot(aes(x= time_point, y = score, fill = time_point))+
   geom_boxplot(width=0.1, color="grey")  +
-  geom_jitter(shape=16, position=position_jitter(0.2), alpha = 0.6)+
+  geom_jitter(shape=16, position=position_jitter(0.2), alpha = 0.2)+
   theme(legend.position = "none") 
 plot_with <-plot_with + 
-  ggtitle("Feared Predictions and Outcomes *with* SFA and SB" )+
-   labs(x= "Time Point", y="Conviction (%)")
+  ggtitle("Feared Predictions and Outcomes \n*with* SFA and SB" )+
+   labs(x= "", y="Conviction (%)")
+plot_with  <- plot_with + annotate("text",x= 1.5,y=75,label=paste0("Surprise \nCohen's d = ", round(cohen_d_with$cohen_d_with[1], 2)))
+plot_with <- plot_with +  scale_x_discrete(breaks=c("pre","post"),
+        labels=c("Prediction", "Outcome"))
 
 plot_with / plot_without
 
 ```
   
+```{r}
+plot_with + plot_without
+```
  
-    
+ 
+**anxiety change 
+```{r, echo = FALSE}
+#estimate anxiety Cohen's d first
+t_test_for_anx <- t.test(el_soph_exp_pe$Anxiety_with_Study2 , el_soph_exp_pe$Anxiety_WithOUT_Study2, paired = TRUE, alternative = "two.sided")
+t_test_for_anx
+d_anx <- t_test_for_anx$statistic/sqrt(57)
+print(as.numeric(d_anx))
+
+mean_plot_anx <- pe_anx_merged %>% 
+  ggplot(aes(x= condition, y = anx_value)) +
+  geom_boxplot(width=0.1, color="grey")  +
+  geom_jitter(shape=16, position=position_jitter(0.2), alpha = 0.6)+
+  theme(legend.position = "none") +
+  ggtitle("Difference in Anxiety when self-focused attention (SFA) and \n safety behaviours (SB) are manipulated" )+
+   labs(x= "", y="Anxiety Score (+/-SE)")
+
+mean_plot_anx  <- mean_plot_anx + scale_x_discrete(breaks=c("_with","_without"),
+        labels=c("with SFA and SB", "without SFA and SB"))
+mean_plot_anx  <- mean_plot_anx + annotate("text",x= 1.5,y=60,label=paste0("Anxiety Difference \n Cohen's d =", round(d_anx, 2)))
+```
+
+```{r}
+ mean_plot_anx /(plot_with + plot_without)
+```
+
+
 
 **Now let's look at a correlation matrix of all the variables**  
 
