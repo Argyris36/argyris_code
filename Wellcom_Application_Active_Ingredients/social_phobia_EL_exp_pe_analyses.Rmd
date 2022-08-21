@@ -1080,3 +1080,25 @@ mean_plot_lsas <- ggplot(sum_stats_by_session_mfq, aes(x=reorder(time_point, seq
     geom_point()
 ```
 
+
+
+**draw overlappin distributions**
+```{r}
+df <- data.frame(soc_anx=rnorm(10000, mean=1, sd=1),
+                 dep=rnorm(10000, mean=2, sd=1))
+
+head(df)
+
+library(reshape)
+
+#convert from wide format to long format
+data <- melt(df)
+
+head(data)
+tail(data)
+
+
+ggplot(data, aes(x=value, fill=variable)) +
+  geom_density(alpha=.25)
+```
+
