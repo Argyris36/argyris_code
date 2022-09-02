@@ -139,7 +139,7 @@ There is a clear shift through the experimental manipulation in both anxiety and
 **I am creating a more principled long dataset to test our hypotheses in regression**
 ```{r}
 anxiety <- el_soph_exp_pe  %>%
- dplyr:: select(ID, LSAS_St2_T,  Anxiety_with_Study2,Prediction1Rating_Study2, Anxiety_WithOUT_Study2) 
+ dplyr:: select(ID,MFQ_St2_T, LSAS_St2_T,  Anxiety_with_Study2,Prediction1Rating_Study2, Anxiety_WithOUT_Study2) 
 anxiety <- anxiety %>% 
   pivot_longer(
     cols = starts_with("Anx"),
@@ -174,9 +174,13 @@ belief <- belief %>%
   )
 
 pe_anx_merged <- cbind(pe_anx_merged, belief)
-pe_anx_merged <-pe_anx_merged [,c(-4,-6, -9, -10)]
-pe_anx_merged <- pe_anx_merged %>% 
-rename(exp_value = Prediction1Rating_Study2) 
+pe_anx_merged <- pe_anx_merged[!duplicated(colnames(pe_anx_merged))]
+# pe_anx_merged <-pe_anx_merged %>% 
+#   dplyr:: select(- (ends_with(".1"))) %>% 
+#   dplyr:: select(- (ends_with(".2")))
+
+ pe_anx_merged <- pe_anx_merged %>% 
+ dplyr::rename(exp_value = Prediction1Rating_Study2) 
 
 
 ```
@@ -364,6 +368,19 @@ mean_plot_anx  <- mean_plot_anx + annotate("text",x= 1.5,y=60,label=paste0("Anxi
 ```{r}
  mean_plot_anx /(plot_with + plot_without)
 ```
+
+
+**does depression moderate anxiety or belief outcomes**
+```{r}
+# create MFQ dichotomous
+pe_anx_merged <- pe_anx_merged %>% 
+  mutate(mfq_dichot = cut(MFQ_St2_T, breaks = c(-Inf, 9, Inf), labels = c("low","high")) )
+
+anx_outcome  <- lm(anx_value ~ condition*mfq_dichot, data = pe_anx_merged)
+
+belief_outcome  <- lm(belief_value ~ condition*mfq_dichot, data = pe_anx_merged)
+```
+
 
 
 
