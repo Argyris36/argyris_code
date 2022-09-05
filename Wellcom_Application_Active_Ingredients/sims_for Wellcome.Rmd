@@ -1,0 +1,668 @@
+---
+title: "power_calculations_wellcome"
+author: "Argyris Stringaris"
+date: "01/09/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(faux)
+```
+
+
+## Power calculations for Wellcome Application
+
+Trying to simulate some of the models for the application. 
+The basic form is Outcome = b1Group + b2Treatment + bxGroup1xTreatment + error
+The idea is to 
+
+
+```{r}
+set.seed(1)
+n_sims <- 1000 # we want 1000 simulations
+p_vals <- c()
+power_at_n <- c(0) # this vector will contain the power for each sample-size (it needs the initial 0 for the while-loop to work)
+n <- 100 # sample-size and start at 100 as we can be pretty sure this will not suffice for such a small effect
+n_increase <- 100 # by which stepsize should n be increased
+i <- 2
+
+power_crit <- .95
+alpha <- .001
+
+while(power_at_n[i-1] < power_crit){
+  for(sim in 1:n_sims){
+    group_TI <-  rnorm(n, 43, 15)
+    group_VI <-  rnorm(n, 40, 15)
+    group_TE <-  rnorm(n, 45, 15)
+    group_VE <-  rnorm(n, 47, 15)
+    
+    participant <- c(1:(n*4))
+    focus <- rep(c("internal", "external"), each = n*2)
+    media <- rep(c("text", "visual"), each = n, times = 2)
+    
+    aov_dat <- data.frame(participant = participant, focus = focus, media = media, score = c(group_TI, group_VI, group_TE, group_VE))
+    aov_dat$media_sum_num <- ifelse(aov_dat$media == "text", 1, -1) # apply sum-to-zero coding
+    aov_dat$focus_sum_num <- ifelse(aov_dat$focus == "external", 1, -1) 
+    lm_int <- lm(score ~ 1 + focus_sum_num + media_sum_num + focus_sum_num:media_sum_num, data = aov_dat) # fit the model with the interaction
+    lm_null <- lm(score ~ 1 + focus_sum_num + media_sum_num, data = aov_dat) # fit the model without the interaction
+    p_vals[sim] <- anova(lm_int, lm_null)$`Pr(>F)`[2] # put the p-values in a list
+  }
+    print(n)
+    power_at_n[i] <- mean(p_vals < alpha) # check power (i.e. proportion of p-values that are smaller than alpha-level of .10)
+    names(power_at_n)[i] <- n
+    n <- n+n_increase # increase sample-size by 100 for low-resolution testing first
+    i <- i+1 # increase index of the while-loop by 1 to save power and cohens d to vector
+}
+
+```
+
+
+```{r}
+power_at_n <- power_at_n[-1] 
+```
+
+
+```{r}
+plot(as.numeric(names(power_at_n)), power_at_n, xlab = "Number of participants per group", ylab = "Power", ylim = c(0,1), axes = TRUE)
+abline(h = .95, col = "red")
+```
+
+**Cohen's d to R2**
+```{r}
+#apparently d = 0.3 corresponds to R_sq = 0.022
+M_A = 0
+M_B = 50
+SD_pooled = 15 # let's assume it is the same for both
+d = 0.5
+
+#d <- (M_A - M_B)/SD_pooled
+MA <- d*SD_pooled + M_B
+MA
+
+```
+
+**Let's create the dataset**
+```{r}
+
+    T_0_Cond_A <-  rnorm(n, 50, 15)
+    T_0_Cond_B <-  rnorm(n, 50, 15)
+    T_1_Cond_A <-  rnorm(n, 57.5, 15)
+    T_1_Cond_B <-  rnorm(n, 50, 15)
+    
+    subject <- c(1:(n*4))
+    time <- rep(c("time_0", "time_1"), each = n*2)
+    cond <- rep(c("A", "B"), each = n, times = 2)
+    
+  df_for_sim <-  data.frame(subject = subject, time = time, cond = cond, score = c(T_0_Cond_A, T_0_Cond_B, T_1_Cond_A, T_1_Cond_B))
+```
+
+**check this works**
+```{r}
+df_for_sim %>% 
+  group_by(cond, time) %>% 
+  summarise(avg = mean(as.numeric(score), na.rm = TRUE))
+```
+
+**This is the bare bones of the simulation. You will need to do two more things. First, make the variables correlate within subject, i.e. the distributions for T0 and T1 must correlate within each condition. Then you will want to recover the R2 for which it may be best to extract the R2 of each model**
+```{r}
+n_sims <- 500
+p_vals <- c()
+n <- 200
+for (i in 1:n_sims){
+
+    T_0_Cond_A <-  rnorm(n, 50, 15)
+    T_0_Cond_B <-  rnorm(n, 50, 15)
+    T_1_Cond_A <-  rnorm(n, 57.5, 15)
+    T_1_Cond_B <-  rnorm(n, 50, 15)
+    
+    subject <- c(1:(n*4))
+    time <- rep(c("time_0", "time_1"), each = n*2)
+    cond <- rep(c("A", "B"), each = n, times = 2)
+    
+  df_for_sim <-  data.frame(subject = subject, time = time, cond = cond, score = c(T_0_Cond_A, T_0_Cond_B, T_1_Cond_A, T_1_Cond_B))
+
+  
+  lm_int <- lm(score ~ 1 + cond + time + cond:time, data = df_for_sim) # fit the model with the interaction
+    lm_null <- lm(score ~ 1 + cond + time, data = df_for_sim) # fit the model without the interaction
+    p_vals[i] <- anova(lm_int, lm_null)$`Pr(>F)`[2] # put the p-values in a list
+  
+}
+sum(p_vals<0.05)/length(p_vals)
+length(p_vals)
+```
+
+create correlated variables. 
+```{r}
+library(faux)
+    T_0_Cond_A <-  rnorm(n, 50, 15)
+    T_0_Cond_B <-  rnorm(n, 50, 15)
+    T_1_Cond_A <-  rnorm(n, 57.5, 15)
+    T_1_Cond_B <-  rnorm(n, 50, 15)
+    
+    
+
+```
+
+
+```{r}
+datA <- rnorm_multi(n = 200, 
+                  mu = c(50, 57.5 ),
+                  sd = c(15, 15),
+                  r = c(0.5), 
+                  varnames = c("T_0_Cond_A", "T_1_Cond_A"),
+                  empirical = FALSE)
+hist(datA$T_0_Cond_A)
+colMeans(datA)
+plot(datA$T_0_Cond_A, datA$T_1_Cond_A)
+```
+
+
+
+
+```{r}
+datB <- rnorm_multi(n = 200, 
+                  mu = c(50, 50.5 ),
+                  sd = c(15, 15),
+                  r = c(0.5), 
+                  varnames = c("T_0_Cond_B", "T_1_Cond_B"),
+                  empirical = FALSE)
+hist(datB$T_0_Cond_B)
+colMeans(datB)
+plot(datB$T_0_Cond_B, datB$T_1_Cond_B)
+```
+
+```{r}
+n = 200
+
+    subject <- c(1:(n*4))
+    time <- rep(c("time_0", "time_1"), each = n*2)
+    cond <- rep(c("A", "B"), each = n, times = 2)
+    
+  df_for_sim <-  data.frame(subject = subject, time = time, cond = cond, score = c(datA$T_0_Cond_A, datB$T_0_Cond_B, datA$T_1_Cond_A, datB$T_1_Cond_B))
+  
+# check 
+  a <- df_for_sim %>% filter(time == "time_0" & cond == "A")
+  b <- df_for_sim %>% filter(time == "time_1" & cond == "A")
+  cor(a$score,b$score)
+  df_for_sim %>% group_by(time, cond) %>% summarise (avg = mean(score))
+```
+
+**this is more appropriate than the above as I allow the measures to correlate within person**
+```{r}
+n_sims <- 1000
+p_vals <- c()
+n <- 120
+
+for (i in 1:n_sims){
+
+    datA <- rnorm_multi(n = n, # create a two correlated variables
+                  mu = c(50, 57.5 ),
+                  sd = c(15, 15),
+                  r = c(0.5), 
+                  varnames = c("T_0_Cond_A", "T_1_Cond_A"),
+                  empirical = FALSE)
+
+    datB <- rnorm_multi(n = n,  # create a two correlated variables
+                  mu = c(50, 50.5 ),
+                  sd = c(15, 15),
+                  r = c(0.5), 
+                  varnames = c("T_0_Cond_B", "T_1_Cond_B"),
+                  empirical = FALSE)
+
+    subject <- c(1:(n*4))
+    time <- rep(c("time_0", "time_1"), each = n*2)
+    cond <- rep(c("A", "B"), each = n, times = 2)
+    
+  df_for_sim <-  data.frame(subject = subject, time = time, cond = cond, surprise = c(datA$T_0_Cond_A, datB$T_0_Cond_B, datA$T_1_Cond_A, datB$T_1_Cond_B))
+  
+   lm_int <- lm(surprise ~ 1 + cond + time + cond:time, data = df_for_sim) # fit the model with the interaction
+    lm_null <- lm(surprise ~ 1 + cond + time, data = df_for_sim) # fit the model without the interaction
+    p_vals[i] <- anova(lm_int, lm_null)$`Pr(>F)`[2] # put the p-values in a list
+  
+}
+sum(p_vals<0.05)/length(p_vals)
+length(p_vals)
+```
+
+
+```{r}
+n_sims <- 1000
+p_vals <- c()
+n <- 100
+r_for_scores = 0.5
+#r_for_surprise = 0.3
+
+
+for (i in 1:n_sims){
+
+    datA_high <- rnorm_multi(n = n, # create a two correlated variables
+                  mu = c(50, 57.5 ),
+                  sd = c(15, 15),
+                  r = c(r_for_scores), 
+                  varnames = c("T_0_Cond_A", "T_1_Cond_A"),
+                  empirical = FALSE)
+
+    datA_low <- rnorm_multi(n = n, # create a two correlated variables
+                  mu = c(50, 50 ),
+                  sd = c(15, 15),
+                  r = c(r_for_scores), 
+                  varnames = c("T_0_Cond_A", "T_1_Cond_A"),
+                  empirical = FALSE)
+ 
+    datB_high <- rnorm_multi(n = n,  # create a two correlated variables
+                  mu = c(50, 50 ),
+                  sd = c(15, 15),
+                  r = c(r_for_scores), 
+                  varnames = c("T_0_Cond_B", "T_1_Cond_B"),
+                  empirical = FALSE)
+    
+    datB_low <- rnorm_multi(n = n,  # create a two correlated variables
+                  mu = c(50, 50 ),
+                  sd = c(15, 15),
+                  r = c(r_for_scores), 
+                  varnames = c("T_0_Cond_B", "T_1_Cond_B"),
+                  empirical = FALSE)
+
+    subject <- c(1:(n*4))
+    time <- rep(c("time_0", "time_1"), each = n*4)
+    cond <- rep(c("A", "B"), each = n, times = 4)
+    surprise <- rep(c("high", "low"), each = n*2)
+    
+  df_for_sim <-  data.frame(subject = subject, time = time, cond = cond, surprise = surprise,
+  score = c(datA_high$T_0_Cond_A, 
+            datA_low$T_0_Cond_A,
+            datB_high$T_0_Cond_B, 
+            datB_low$T_0_Cond_B,
+                                                                                           
+            datA_high$T_1_Cond_A, 
+            datA_low$T_1_Cond_A,
+            datB_high$T_1_Cond_B, 
+            datB_low$T_1_Cond_B))
+  
+   lm_int <- lm(score ~ 1 + cond*time*surprise, data = df_for_sim) # fit the model with the interaction
+    lm_null <- lm(score ~ 1 + cond*time , data = df_for_sim) # fit the model without the interaction
+    p_vals[i] <- anova(lm_int, lm_null)$`Pr(>F)`[2] # put the p-values in a list
+  
+}
+sum(p_vals<0.05)/length(p_vals)
+length(p_vals)
+```
+
+```{r}
+df_for_sim %>% group_by(time, cond, surprise) %>% summarise(avg= (mean(score)))
+```
+
+# try to see what you need in order to recover a diffrence of d = 0.5 for the interaction
+```{r}
+n_sims <- 1000
+p_vals <- c()
+n <-180
+r_for_scores = 0.5
+#r_for_surprise = 0.3
+
+
+for (i in 1:n_sims){
+
+    datA_high <- rnorm_multi(n = n, # create two correlated variables
+                  mu = c(50, 57.5 ),
+                  sd = c(15, 15),
+                  r = c(r_for_scores), 
+                  varnames = c("T_0_Cond_A", "T_1_Cond_A"),
+                  empirical = FALSE)
+
+    datA_low <- rnorm_multi(n = n, # create two correlated variables
+                  mu = c(50, 50 ),
+                  sd = c(15, 15),
+                  r = c(r_for_scores), 
+                  varnames = c("T_0_Cond_A", "T_1_Cond_A"),
+                  empirical = FALSE)
+ 
+    datB_high <- rnorm_multi(n = n,  # create two correlated variables
+                  mu = c(50, 50 ),
+                  sd = c(15, 15),
+                  r = c(r_for_scores), 
+                  varnames = c("T_0_Cond_B", "T_1_Cond_B"),
+                  empirical = FALSE)
+    
+    datB_low <- rnorm_multi(n = n,  # create two correlated variables
+                  mu = c(50, 50 ),
+                  sd = c(15, 15),
+                  r = c(r_for_scores), 
+                  varnames = c("T_0_Cond_B", "T_1_Cond_B"),
+                  empirical = FALSE)
+
+    subject <- c(1:(n*4))
+    time <- rep(c("time_0", "time_1"), each = n*4)
+    cond <- rep(c("A", "B"), each = n, times = 4)
+    surprise <- rep(c("high", "low"), each = n*2)
+    
+  df_for_sim <-  data.frame(subject = subject, time = time, cond = cond, surprise = surprise,
+  score = c(datA_high$T_0_Cond_A, 
+            datA_low$T_0_Cond_A,
+            datB_high$T_0_Cond_B, 
+            datB_low$T_0_Cond_B,
+                                                                                           
+            datA_high$T_1_Cond_A, 
+            datA_low$T_1_Cond_A,
+            datB_high$T_1_Cond_B, 
+            datB_low$T_1_Cond_B))
+  
+   lm_int <- lm(score ~ 1 + cond*time + time*surprise, data = df_for_sim) # fit the model with the interaction
+   # lm_null <- lm(score ~ 1 + cond*time , data = df_for_sim) # fit the model without the interaction
+    p_vals[i] <- summary(lm_int)$coefficients[length(lm_int$coefficients),4] # put the p-values in a list
+  
+}
+sum(p_vals<0.05)/length(p_vals)
+length(p_vals)
+```
+
+
+```{r}
+model_1 <- lmer(score~time*cond + time*surprise + (1|subject), data = df_for_sim )
+summary(model_1)$coef
+```
+
+```{r}
+powerSim(model_1, fixed("timetime_1:surpriselow", "z"), nsim=50)
+```
+
+
+```{r}
+df_for_sim %>% group_by(time, cond, surprise) %>% summarise(avg= (mean(score)))
+```
+
+# try to see what you need in order to recover a diffrence of d = 0.5 for the interaction
+```{r}
+n_sims <- 1000
+p_vals <- c()
+n <-200
+r_for_scores = 0.5
+#r_for_surprise = 0.3
+
+
+for (i in 1:n_sims){
+
+    datA_high <- rnorm_multi(n = n, # create two correlated variables
+                  mu = c(50, 57.5 ),
+                  sd = c(15, 15),
+                  r = c(r_for_scores), 
+                  varnames = c("T_0_Cond_A", "T_1_Cond_A"),
+                  empirical = FALSE)
+
+    datA_low <- rnorm_multi(n = n, # create two correlated variables
+                  mu = c(50, 50 ),
+                  sd = c(15, 15),
+                  r = c(r_for_scores), 
+                  varnames = c("T_0_Cond_A", "T_1_Cond_A"),
+                  empirical = FALSE)
+ 
+    datB_high <- rnorm_multi(n = n,  # create two correlated variables
+                  mu = c(50, 50 ),
+                  sd = c(15, 15),
+                  r = c(r_for_scores), 
+                  varnames = c("T_0_Cond_B", "T_1_Cond_B"),
+                  empirical = FALSE)
+    
+    datB_low <- rnorm_multi(n = n,  # create two correlated variables
+                  mu = c(50, 50 ),
+                  sd = c(15, 15),
+                  r = c(r_for_scores), 
+                  varnames = c("T_0_Cond_B", "T_1_Cond_B"),
+                  empirical = FALSE)
+
+    subject <- c(1:(n*4))
+    time <- rep(c("time_0", "time_1"), each = n*4)
+    cond <- rep(c("A", "B"), each = n, times = 4)
+    surprise <- rep(c("high", "low"), each = n*2)
+    
+  df_for_sim <-  data.frame(subject = subject, time = time, cond = cond, surprise = surprise,
+  score = c(datA_high$T_0_Cond_A, 
+            datA_low$T_0_Cond_A,
+            datB_high$T_0_Cond_B, 
+            datB_low$T_0_Cond_B,
+                                                                                           
+            datA_high$T_1_Cond_A, 
+            datA_low$T_1_Cond_A,
+            datB_high$T_1_Cond_B, 
+            datB_low$T_1_Cond_B))
+  
+   lmer_int <- lmer(score~time*cond + time*surprise + (1|subject), data = df_for_sim ) # fit the model with the interaction
+   # lm_null <- lm(score ~ 1 + cond*time , data = df_for_sim) # fit the model without the interaction
+    p_vals[i] <- summary(lmer_int)$coef[6,5] # put the p-values in a list
+  
+}  
+sum(p_vals<0.05)/length(p_vals)
+length(p_vals)
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd) + (1|obs), data=cbpp,
+    family=binomial)
+summary(gm1)$coef
+```
+
+
+
+
+```{r}
+dat_test_A <- rnorm_multi(n = n, 
+                  mu = c(30, 50, 57.5),
+                  sd = c(10, 15, 15),
+                  r = c(0.3, 0.3, 0.5), 
+                  varnames = c("surprise", "T_0_Cond_A", "T_1_Cond_A"),
+                  empirical = FALSE)
+
+cor(dat_test_A)
+```
+
+```{r}
+dat_test_B <- rnorm_multi(n = n, 
+                  mu = c(30, 50, 50),
+                  sd = c(10, 15, 15),
+                  r = c(0.1, 0.1, 0.5), 
+                  varnames = c("surprise", "T_0_Cond_A", "T_1_Cond_A"),
+                  empirical = FALSE)
+
+cor(dat_test_B)
+
+```
+
+
+
+```{r}
+n_sims <- 1000
+p_vals <- c()
+n <- 500
+r_for_scores = 0.8
+r_for_surprise = 0.8
+
+
+for (i in 1:n_sims){
+
+dat_test_A <- rnorm_multi(n = n, 
+                  mu = c(30, 50, 57.5),
+                  sd = c(10, 15, 15),
+                  r = c(0.3, 0.3, 0.5), 
+                  varnames = c("surprise", "T_0_Cond_A", "T_1_Cond_A"),
+                  empirical = FALSE)
+
+dat_test_B <- rnorm_multi(n = n, 
+                  mu = c(30, 50, 50),
+                  sd = c(10, 15, 15),
+                  r = c(0.1, 0.1, 0.5), 
+                  varnames = c("surprise", "T_0_Cond_B", "T_1_Cond_B"),
+                  empirical = FALSE) 
+
+
+    subject <- c(1:(n*4))
+    time <- rep(c("time_0", "time_1"), each = n*2)
+    cond <- rep(c("A", "B"), each = n, times = 2)
+    
+  df_for_sim <-  data.frame(subject = subject, time = time, cond = cond, score = c(dat_test_A$T_0_Cond_A, dat_test_B$T_0_Cond_B, dat_test_A$T_1_Cond_A, dat_test_B$T_1_Cond_B),
+                            surprise = dat_test_A$surprise)
+  
+   lm_int <- lm(score ~ 1 + time*surprise + time*cond, data = df_for_sim[cond=="A",]) # fit the model with the interaction
+    lm_null <- lm(score ~ 1 + time*cond, data = df_for_sim[cond=="A",]) # fit the model without the interaction
+    p_vals[i] <- anova(lm_int, lm_null)$`Pr(>F)`[2] # put the p-values in a list
+  
+}
+sum(p_vals<0.05)/length(p_vals)
+length(p_vals)
+```
+
+
+
+
+```{r}
+n_sims <- 1000 # we want 1000 simulations
+p_vals <- c()
+  for(sim in 1:n_sims){
+    group_TI <-  rnorm(n, 43, 15)
+    group_VI <-  rnorm(n, 40, 15)
+    group_TE <-  rnorm(n, 45, 15)
+    group_VE <-  rnorm(n, 47, 15)
+    
+    participant <- c(1:(n*4))
+    focus <- rep(c("internal", "external"), each = n*2)
+    media <- rep(c("text", "visual"), each = n, times = 2)
+    
+    aov_dat <- data.frame(participant = participant, focus = focus, media = media, score = c(group_TI, group_VI, group_TE, group_VE))
+    aov_dat$media_sum_num <- ifelse(aov_dat$media == "text", 1, -1) # apply sum-to-zero coding
+   aov_dat$focus_sum_num <- ifelse(aov_dat$focus == "external", 1, -1) 
+    lm_int <- lm(score ~ 1 + focus_sum_num + media_sum_num + focus_sum_num:media_sum_num, data = aov_dat) # fit the model with the interaction
+    lm_null <- lm(score ~ 1 + focus_sum_num + media_sum_num, data = aov_dat) # fit the model without the interaction
+    p_vals[sim] <- anova(lm_int, lm_null)$`Pr(>F)`[2] # put the p-values in a list
+  }
+p_vals
+```
+
+
+
+```{r}
+n = 100
+n_sims = 500
+est_null <- 0
+est_two_var <- 0
+est_inter <- 0
+for(i in 1:n_sims){
+test <- rnorm_multi(n = n , mu = 100, sd = 15, r = 0.5, varnames = letters[20:22])
+est_null[i] <- summary(lm(test[,1]~test[,2] + test[,3], test))$coefficients[2,4]
+est_two_var[i] <- summary(lm(test[,1]~test[,2] + test[,3], test))$coefficients[3,4]
+est_inter[i] <- summary(lm(test[,1]~test[,2] + test[,3] + test[,2]*test[,3], test))$coefficients[4,4]
+estimates_df <- data.frame(est_null, est_two_var, est_inter)
+}
+
+colMeans(estimates_df)
+```
+colmeans
+
+
+
+
+```{r}
+x <- rnorm(100, 100, 15)
+#y <- rnorm(100, 100, 15)
+e <- rnorm(100, 0, 1)
+
+for(i in 1:n_sims){
+y <- 1 +  0.5*x + e
+
+test <- data.frame(cbind(y,x))
+estimate[i] <-summary(lm(y~x))$coefficients[2,1]
+
+}
+mean(estimate)
+
+```
+
+```{r}
+install.packages("simr")
+library(simr)
+cbpp$obs <- 1:nrow(cbpp)
+gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd) + (1|obs), data=cbpp,
+    family=binomial)
+summary(gm1)$coef
+doTest(gm1, fixed("period", "lr"))
+doTest(gm1, fixed("period2", "z"))
+gm2 <- glmer(cbind(incidence, size - incidence) ~ period + size + (1 | herd), data=cbpp,
+    family=binomial)
+doTest(gm2, fixed("size", "z"))
+fixef(gm2)["size"] <- 0.05
+powerSim(gm2, fixed("size", "z"), nsim=50)
+
+fm1 <- lmer(angle ~ recipe:temp + (1|recipe:replicate), data=cake, REML=FALSE)
+doTest(fm1, fixed("recipe", "lr"))
+fixef(fm1)["recipeA:temp"] <- 0.5
+powerSim(fm1, fixed("recipeA:temp", "z"), nsim=50)
+
+data(budworm, package="pbkrtest")
+bw1 <- glmer(cbind(ndead, ntotal-ndead) ~ dose*sex, family="binomial", data=budworm)
+summary(bw1)$coef
+doTest(bw1, compare(. ~ dose + sex))
+doTest(bw1, fixed("dose:sexmale", "z"))
+fixef(bw1)["dose:sexmale"] <- 0.5
+
+```
+
+```{r}
+subj <- factor(1:10)
+class_id <- letters[1:5]
+```
+
+
+```{r}
+time <- 0:2
+group <- c("control", "intervention")
+
+subj_full <- rep(subj, 15)
+class_full <- rep(rep(class_id, each=10), 3)
+time_full <- rep(time, each=50)
+group_full <- rep(rep(group, each=5), 15)
+
+covars <- data.frame(id=subj_full, class=class_full, treat=group_full, time=factor(time_full))
+
+covars
+
+tail(covars)
+str(covars$id)
+```
+
+```{r}
+fixed <- c(5, 0, 0.1, 0.2, 1, 0.9)
+rand <- list(0.5, 0.1)
+
+## residual variance
+res <- 2
+```
+
+```{r}
+model <- makeLmer(y ~ treat*time + (1|class/id), fixef=fixed, VarCorr=rand, sigma=res, data=covars)
+model
+```
+
+```{r}
+
+```
+```{r}
+fm2 <- lmer(angle ~ recipe + poly(temp, 2) + (1|recipe:replicate), data=cake, REML=FALSE)
+summary(fm2)$coef
+```
+
+```{r}
+fixef(fm2)
+```
+
