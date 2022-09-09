@@ -518,7 +518,7 @@ length(p_vals)
 ```{r}
 
 avg_A <- 50
-avg_B <- 55
+avg_B <- 56
 n <-100
 r_for_scores = 0.5
 
