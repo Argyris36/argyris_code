@@ -778,6 +778,31 @@ osca_dep_anx <- read.csv("~/argyris_code/Wellcom_Application_Active_Ingredients/
 View(osca_dep_anx )
 ```
 
+```{r}
+efs <- osca_dep_anx %>% 
+  group_by(condition) %>% 
+  summarise(avg_lsas_post = mean(LSAS_post_total, na.rm = T), std_lsas_post = sd(LSAS_post_total, na.rm = T)) 
+sq_sd1 <- (efs$std_lsas_post[1])^2
+sq_sd2 <- (efs$std_lsas_post[1])^2
+effect_size_lsas = (efs$avg_lsas_post[1] - efs$avg_lsas_post[2])/sqrt((sq_sd1 +sq_sd2)/2)
+
+
+effect_size_lsas 
+```
+
+
+```{r}
+efs_mfq <- osca_dep_anx %>% 
+  group_by(condition) %>% 
+  summarise(avg_mfq_post = mean(SMFQ_post, na.rm = T), std_mfq_post = sd(SMFQ_post, na.rm = T)) 
+sq_sd1_mfq <- (efs_mfq$std_mfq_post[1])^2
+sq_sd2_mfq <- (efs_mfq$std_mfq_post[1])^2
+effect_size_mfq = (efs_mfq$avg_mfq_post[1] - efs_mfq$avg_mfq_post[2])/sqrt((sq_sd1_mfq +sq_sd2_mfq)/2)
+
+
+effect_size_mfq
+```
+
 
 **Create a long dataset too in order to do some plotting**
 
@@ -1044,7 +1069,7 @@ plot_three_sub_lsas / plot_three_sub_mfq
 **Average over time**
 ```{r}
 sum_stats_by_session_lsas <- mfqlsas_sessional_osca_long %>% 
-  filter(measure == "lsas", time_point %in% seq(1:12)) %>% 
+  filter(measure == "lsas", time_point %in% seq(1:14)) %>% 
   group_by(time_point) %>% 
   summarise(avg_lsas = mean(score, na.rm = TRUE), std_lsas = sd(score, na.rm = TRUE), 
             n = n(),
@@ -1055,7 +1080,7 @@ sum_stats_by_session_lsas  <-sum_stats_by_session_lsas [order(as.numeric(as.char
 sum_stats_by_session_lsas 
 
 sum_stats_by_session_mfq <- mfqlsas_sessional_osca_long %>% 
-  filter(measure == "mfq", time_point %in% seq(1:12)) %>% 
+  filter(measure == "mfq", time_point %in% seq(1:14)) %>% 
   group_by(time_point) %>% 
   summarise(avg_mfq = mean(score, na.rm = TRUE), std_mfq = sd(score, na.rm = TRUE), 
             n = n(),
@@ -1066,7 +1091,7 @@ sum_stats_by_session_mfq  <-sum_stats_by_session_mfq [order(as.numeric(as.charac
 sum_stats_by_session_mfq
 
 
-mean_plot_lsas <- ggplot(sum_stats_by_session_lsas, aes(x=reorder(time_point, seq(1:12)), y=avg_lsas, group = "condition")) + 
+mean_plot_lsas <- ggplot(sum_stats_by_session_lsas, aes(x=reorder(time_point, seq(1:14)), y=avg_lsas, group = "condition")) + 
     geom_errorbar(aes(ymin=avg_lsas-se, ymax=avg_lsas+se), width=.1) +
     geom_line() +
     geom_point() +
@@ -1077,7 +1102,7 @@ mean_plot_lsas <- ggplot(sum_stats_by_session_lsas, aes(x=reorder(time_point, se
 
 mean_plot_lsas
 
-mean_plot_mfq <- ggplot(sum_stats_by_session_mfq, aes(x=reorder(time_point, seq(1:12)), y=avg_mfq, group = "condition")) + 
+mean_plot_mfq <- ggplot(sum_stats_by_session_mfq, aes(x=reorder(time_point, seq(1:14)), y=avg_mfq, group = "condition")) + 
     geom_errorbar(aes(ymin=avg_mfq-se, ymax=avg_mfq+se), width=.1) +
     geom_line() +
     geom_point() +

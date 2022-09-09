@@ -12,6 +12,10 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(tidyverse)
 library(faux)
+library(simr)
+library(lme4)
+library(lmerTest)
+library(stringr)
 ```
 
 
@@ -442,6 +446,139 @@ length(p_vals)
 
 
 
+
+
+```{r}
+n_sims <- 1000
+p_vals <- c()
+n <-200
+r_for_scores = 0.5
+#r_for_surprise = 0.3
+
+
+for (i in 1:n_sims){
+
+    datA_high <- rnorm_multi(n = n, # create two correlated variables
+                  mu = c(50, 57.5 ),
+                  sd = c(15, 15),
+                  r = c(r_for_scores), 
+                  varnames = c("T_0_Cond_A", "T_1_Cond_A"),
+                  empirical = FALSE)
+
+    datA_low <- rnorm_multi(n = n, # create two correlated variables
+                  mu = c(50, 50 ),
+                  sd = c(15, 15),
+                  r = c(r_for_scores), 
+                  varnames = c("T_0_Cond_A", "T_1_Cond_A"),
+                  empirical = FALSE)
+ 
+    datB_high <- rnorm_multi(n = n,  # create two correlated variables
+                  mu = c(50, 50 ),
+                  sd = c(15, 15),
+                  r = c(r_for_scores), 
+                  varnames = c("T_0_Cond_B", "T_1_Cond_B"),
+                  empirical = FALSE)
+    
+    datB_low <- rnorm_multi(n = n,  # create two correlated variables
+                  mu = c(50, 50 ),
+                  sd = c(15, 15),
+                  r = c(r_for_scores), 
+                  varnames = c("T_0_Cond_B", "T_1_Cond_B"),
+                  empirical = FALSE)
+
+    subject <- c(1:(n*4))
+    time <- rep(c("time_0", "time_1"), each = n*4)
+    cond <- rep(c("A", "B"), each = n, times = 4)
+    surprise <- rep(c("high", "low"), each = n*2)
+    
+  df_for_sim <-  data.frame(subject = subject, time = time, cond = cond, surprise = surprise,
+  score = c(datA_high$T_0_Cond_A, 
+            datA_low$T_0_Cond_A,
+            datB_high$T_0_Cond_B, 
+            datB_low$T_0_Cond_B,
+                                                                                           
+            datA_high$T_1_Cond_A, 
+            datA_low$T_1_Cond_A,
+            datB_high$T_1_Cond_B, 
+            datB_low$T_1_Cond_B))
+  
+   lmer_int <- lmer(score~time*cond + time*surprise + (1|subject), data = df_for_sim ) # fit the model with the interaction
+   # lm_null <- lm(score ~ 1 + cond*time , data = df_for_sim) # fit the model without the interaction
+    p_vals[i] <- summary(lmer_int)$coef[6,5] # put the p-values in a list
+  
+}  
+sum(p_vals<0.05)/length(p_vals)
+length(p_vals)
+```
+
+
+
+
+
+```{r}
+
+avg_A <- 50
+avg_B <- 55
+n <-100
+r_for_scores = 0.5
+
+datX <- rnorm_multi(n = n, # create many correlated variables
+                  mu = c(avg_A, avg_B , avg_A, avg_B , avg_A, avg_B , avg_A, avg_B , avg_A, avg_B , avg_A, avg_B),#c(50, 55 , 50, 55 , 50, 55 , 50, 55 , 50, 55 ,50, 55), #c(avg_A, avg_B , avg_A, avg_B , avg_A, avg_B , avg_A, avg_B , avg_A, avg_B , avg_A, avg_B),
+                  sd = c(15, 15,15, 15,15, 15,15, 15,15, 15,15, 15),
+                  r = c(r_for_scores), 
+                  varnames = c("A", "B", "A", "B", "A", "B", "A", "B", "A", "B", "A", "B"),
+                  empirical = FALSE)
+
+#datX <- data.frame(cbind(id), datX)
+```
+
+
+```{r}
+datX_long <- datX %>%
+  pivot_longer(
+    cols = starts_with(c("A", "B")),
+    names_to = "cond", 
+    #names_prefix = "Condd",
+    values_to = "score")
+id <- rep(1:n, each=12)
+time<- rep(1:12, n)
+datX_long <- data.frame(cbind(id,time, datX_long))
+
+
+
+
+# test <- str_replace(datX_long$cond , "Cond_A_1", "A")
+# test <- str_replace(test , "Cond_A_2", "A")
+# test <- str_replace(test , "Cond_A_3", "A")
+# test <- str_replace(test , "Cond_A_4", "A")
+# test <- str_replace(test , "Cond_A_5", "A")
+# test <- str_replace(test , "Cond_A_6", "A")
+# test <- str_replace(test , "Cond_B_1", "B")
+# test <- str_replace(test , "Cond_B_2", "B")
+# test <- str_replace(test , "Cond_B_3", "B")
+# test <- str_replace(test , "Cond_B_4", "B")
+# test <- str_replace(test , "Cond_B_5", "B")
+# test <- str_replace(test , "Cond_B_6", "B")
+# test[1:10]
+
+# datX_long$cond <- test
+
+datX_long %>% 
+  group_by(cond,time) %>% 
+  summarise(avg= mean(score), std = sd(score))
+
+```
+
+
+
+```{r}
+mod_1 <- lmer(score~time*cond  + (1|id), data = datX_long)
+summary(mod_1)$coef
+```
+
+```{r}
+powerSim(mod_1, fixed("condB", "z"), nsim=50)
+```
 
 
 
