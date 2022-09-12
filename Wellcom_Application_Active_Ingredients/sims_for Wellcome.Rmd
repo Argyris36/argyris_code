@@ -10,12 +10,12 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-library(tidyverse)
-library(faux)
-library(simr)
-library(lme4)
-library(lmerTest)
-library(stringr)
+# library(tidyverse)
+# library(faux)
+# library(simr)
+# library(lme4)
+# library(lmerTest)
+# library(stringr)
 ```
 
 
@@ -82,7 +82,7 @@ abline(h = .95, col = "red")
 M_A = 0
 M_B = 50
 SD_pooled = 15 # let's assume it is the same for both
-d = 0.5
+d = 0.3
 
 #d <- (M_A - M_B)/SD_pooled
 MA <- d*SD_pooled + M_B
@@ -116,7 +116,7 @@ df_for_sim %>%
 ```{r}
 n_sims <- 500
 p_vals <- c()
-n <- 200
+n <- 150
 for (i in 1:n_sims){
 
     T_0_Cond_A <-  rnorm(n, 50, 15)
@@ -196,11 +196,53 @@ n = 200
   df_for_sim %>% group_by(time, cond) %>% summarise (avg = mean(score))
 ```
 
-**this is more appropriate than the above as I allow the measures to correlate within person**
+**USE THIS FOR WP5 this is more appropriate than the above as I allow the measures to correlate within person**
+```{r}
+n_sims <- 100
+p_vals <- c()
+n <- 150
+#sample_size <- c(10,50,100,300, 400, 500)
+
+
+#test_func <- function(n_sims, n){
+for (i in 1:n_sims){
+ 
+
+    datA <- rnorm_multi(n = n, # create two correlated variables
+                  mu = c(50, 57.5 ),
+                  sd = c(15, 15),
+                  r = c(0.5), 
+                  varnames = c("T_0_Cond_A", "T_1_Cond_A"),
+                  empirical = FALSE)
+
+    datB <- rnorm_multi(n = n,  # create two correlated variables
+                  mu = c(50, 50.5 ),
+                  sd = c(15, 15),
+                  r = c(0.5), 
+                  varnames = c("T_0_Cond_B", "T_1_Cond_B"),
+                  empirical = FALSE)
+
+    subject <- rep((1:n), times = 4)
+    time <- rep(c("time_0", "time_1"), each = n*2)
+    cond <- rep(c("A", "B"), each = n, times = 2)
+    
+  df_for_sim <-  data.frame(subject = subject, time = time, cond = cond, mood = c(datA$T_0_Cond_A, datB$T_0_Cond_B, datA$T_1_Cond_A, datB$T_1_Cond_B))
+  
+    lmer_int <- lmer(mood ~ 1 + cond + time + cond:time + (1|subject), data = df_for_sim, REML = FALSE,) # fit the model with the interaction (score~time*cond + time*surprise , data = df_for_sim )
+    lmer_null <- lmer(mood ~ 1 + cond + time  + (1|subject), data = df_for_sim, REML = FALSE,) # fit the model without the interaction  lm_null <- lm(mood ~ 1 + cond + time, data = df_for_sim)
+     p_vals[i] <- anova(lmer_int, lmer_null)$`Pr(>Chisq)`[2] # put the p-values in a list
+  
+}
+sum(p_vals<0.05)/length(p_vals)
+
+#length(p_vals)
+```
+
+
 ```{r}
 n_sims <- 1000
 p_vals <- c()
-n <- 120
+n <- 150
 
 for (i in 1:n_sims){
 
@@ -218,20 +260,24 @@ for (i in 1:n_sims){
                   varnames = c("T_0_Cond_B", "T_1_Cond_B"),
                   empirical = FALSE)
 
-    subject <- c(1:(n*4))
-    time <- rep(c("time_0", "time_1"), each = n*2)
-    cond <- rep(c("A", "B"), each = n, times = 2)
+  #  subject <- c(1:(n*4))
+  #  time <- rep(c("time_0", "time_1"), each = n*2)
+    cond <- rep(c("A", "B"), each = n)#, times = 2)
     
-  df_for_sim <-  data.frame(subject = subject, time = time, cond = cond, surprise = c(datA$T_0_Cond_A, datB$T_0_Cond_B, datA$T_1_Cond_A, datB$T_1_Cond_B))
+  df_for_sim <-  data.frame( cond = cond, mood_baseline = c(datA$T_0_Cond_A, datB$T_0_Cond_B), 
+                            mood_outcome = c( datA$T_1_Cond_A, datB$T_1_Cond_B))
   
-   lm_int <- lm(surprise ~ 1 + cond + time + cond:time, data = df_for_sim) # fit the model with the interaction
-    lm_null <- lm(surprise ~ 1 + cond + time, data = df_for_sim) # fit the model without the interaction
-    p_vals[i] <- anova(lm_int, lm_null)$`Pr(>F)`[2] # put the p-values in a list
-  
-}
-sum(p_vals<0.05)/length(p_vals)
-length(p_vals)
+    lm_int <- lm(mood_outcome ~ 1 + cond + mood_baseline + cond:mood_baseline, data = df_for_sim) # fit the model with the interaction
+     lm_null <- lm(mood_outcome ~ 1  + cond + mood_baseline, data = df_for_sim) # fit the model without the interaction
+     p_vals[i] <- anova(lm_int, lm_null)$`Pr(>F)`[2] # put the p-values in a list
+#   
+ }
+ sum(p_vals<0.05)/length(p_vals)
+ length(p_vals)
 ```
+
+
+
 
 
 ```{r}
@@ -801,5 +847,73 @@ summary(fm2)$coef
 
 ```{r}
 fixef(fm2)
+```
+
+```{r}
+# library(tidyverse)
+# library(faux)
+# library(simr)
+# library(lme4)
+# library(lmerTest)
+# library(stringr)
+# 
+
+
+
+n_sims <- 500
+#p_vals <- c()
+#n <- 150
+#sample_size <- c(10,50,100,300, 400, 500)
+
+
+power_func <- function( n){
+  p_vals <- c()
+for (i in 1:n_sims){
+  
+  
+  datA <- rnorm_multi(n = n, # create two correlated variables
+                      mu = c(50, 54.5 ),
+                      sd = c(15, 15),
+                      r = c(0.5), 
+                      varnames = c("T_0_Cond_A", "T_1_Cond_A"),
+                      empirical = FALSE)
+  
+  datB <- rnorm_multi(n = n,  # create two correlated variables
+                      mu = c(50, 50.5 ),
+                      sd = c(15, 15),
+                      r = c(0.5), 
+                      varnames = c("T_0_Cond_B", "T_1_Cond_B"),
+                      empirical = FALSE)
+  
+  subject <- rep((1:n), times = 4)
+  time <- rep(c("time_0", "time_1"), each = n*2)
+  cond <- rep(c("A", "B"), each = n, times = 2)
+  
+  df_for_sim <-  data.frame(subject = subject, time = time, cond = cond, mood = c(datA$T_0_Cond_A, datB$T_0_Cond_B, datA$T_1_Cond_A, datB$T_1_Cond_B))
+  
+  lmer_int <- lmer(mood ~ 1 + cond + time + cond:time + (1|subject), data = df_for_sim, REML = FALSE,) # fit the model with the interaction (score~time*cond + time*surprise , data = df_for_sim )
+  lmer_null <- lmer(mood ~ 1 + cond + time  + (1|subject), data = df_for_sim, REML = FALSE,) # fit the model without the interaction  lm_null <- lm(mood ~ 1 + cond + time, data = df_for_sim)
+  p_vals[i] <- anova(lmer_int, lmer_null)$`Pr(>Chisq)`[2] # put the p-values in a list
+  
+}
+sum(p_vals<0.05)/length(p_vals)
+}
+prop_abo_thresh_p_value <- lapply(seq(100, 600, by = 50),power_func)
+
+power_data_WP5 <- data.frame(cbind(x = seq(100, 600, by = 50), y = prop_abo_thresh_p_value))
+#plot(seq(50, 250, by = 10),prop_abo_thresh_p_value)
+
+power_WP5 <- power_data_WP5 %>% 
+ggplot(aes(x= as.numeric(x), y = as.numeric(y))) + 
+  geom_point() +
+  geom_hline(yintercept = 0.9, colour = "red")
+
+power_WP5 <- power_WP5 + 
+labs(x= "Sample Size", y="Power") +
+  annotate("text",x= 400,y=0.6,label="simulations = 500, \n alpha = 0.05, \n d = 0.3")+ #+ coord_cartesian(ylim=c(-0,26),clip="off")+
+ggtitle("Power Simulation for WP5")
+
+
+power_WP5
 ```
 
