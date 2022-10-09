@@ -1,0 +1,441 @@
+---
+title: "graphs_dmdd"
+author: "Argyris Stringaris"
+date: "06/10/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Prepare data for graphs in DMDD paper
+
+Some code on turning the lists of dataframes to graphs for the DMDD paper
+
+```{r}
+my_packages <- c("tidyverse", "srvyr", "survey", "broome", "lme4", "foreign", "stringr", "haven", "readr",
+                 "sjlabelled", "openxlsx")
+lapply(my_packages, require, character.only = TRUE)
+
+```
+
+
+
+```{r}
+##############IMPORTANT CODE ####################################
+# same thing for SY1, plot SDQs 
+### extract the excels sheets in cleverer way than I had done before!!!
+library(readxl)
+sheets <- excel_sheets("/Users/stringarisa/Downloads/4_Oct_2022_new/s_means_sdqs_SY1.xlsx")           # Get sheet names
+sheets 
+
+# create a list containing a df for each sheet
+list_df <- lapply(sheets, function(x) {          # Read all sheets to list
+  as.data.frame(read_excel("/Users/stringarisa/Downloads/4_Oct_2022_new/s_means_sdqs_SY1.xlsx", sheet = x)) } )
+
+# name it based on the loop for outcome names that you had in your original code, in this case
+names(list_df) <- c("emotion", "conduct", "hyperactivity", "impact", "peer") 
+
+
+
+# # give it better column names in order to avoid bad indexing in the plot function
+# # in this case "semotion", "shyper" etc need to change to mean, therefore:
+
+for (i in 1: length(list_df)){
+
+  colnames(list_df[[i]])[5] <- "Mean"
+  colnames(list_df[[i]])[6] <- "se"
+}
+
+# # loop over it to create the factors in each
+for (i in 1:length(list_df)){
+
+  list_df[[i]]$sex <- factor(list_df[[i]]$sex)
+  levels(list_df[[i]]$sex ) = c("boys", "girls")
+
+  list_df[[i]]$SY1dic <- factor(list_df[[i]]$SY1dic)
+  levels(list_df[[i]]$SY1dic) = c("no", "yes")
+}
+
+
+
+# create a filtered dataframe for each list element, this is necessary for the loop to work
+filt_list_df <- vector("list", length(list_df))
+for (i in 1: length(list_df)){
+  
+  filt_list_df[[i]] <- list_df[[i]] %>% 
+    filter(adolescent == "adolescent")
+  
+}
+# now create the plots
+plot_list <- vector("list", length(filt_list_df))
+test <- vector("list", length(filt_list_df))
+for (i in 1: length(list_df)){
+  
+  p =   ggplot( filt_list_df[[i]], aes(x= unlist(filt_list_df[[i]]["SY1dic"]), 
+                                       y= unlist(filt_list_df[[i]]["Mean"]), colour = unlist(filt_list_df[[i]]["sex"]))) + 
+    geom_pointrange(aes(ymin= (unlist(filt_list_df[[i]]["Mean"]) - unlist(filt_list_df[[i]]["se"])), 
+                        ymax=(unlist(filt_list_df[[i]]["Mean"]) + unlist(filt_list_df[[i]]["se"] ))), 
+                    fatten = 6,
+                    position = position_dodge(width = .5)) +
+    
+    ylab("Mean +/- se")+ xlab("") + ylim(0, 6) + 
+    ggtitle(paste(names(list_df[i])," problems \nself report in adolescence")) +
+    xlab("presence of irritable mood") +
+    theme(axis.text=element_text(size=14), legend.text=element_text(size=14), plot.title = element_text(size = 16),
+          axis.title=element_text(size=16)) +
+    theme(legend.title=element_blank())
+  
+  
+  plot_list[[i]] = p
+  
+}
+
+pdf("SY1_mean_plots.pdf")
+for (i in 1:length(list_df)) {
+  print(plot_list[[i]])
+}
+dev.off()
+
+```
+
+
+```{r }
+##############IMPORTANT CODE ####################################
+# same thing for SY2, plot SDQs 
+### extract the excels sheets in cleverer way than I had done before!!!
+library(readxl)
+sheets <- excel_sheets("/Users/stringarisa/Downloads/4_Oct_2022_new/s_means_sdqs_SY2.xlsx")           # Get sheet names
+sheets 
+
+# create a list containing a df for each sheet
+list_df <- lapply(sheets, function(x) {          # Read all sheets to list
+  as.data.frame(read_excel("/Users/stringarisa/Downloads/4_Oct_2022_new/s_means_sdqs_SY2.xlsx", sheet = x)) } )
+
+# name it based on the loop for outcome names that you had in your original code, in this case
+names(list_df) <- c("emotion", "conduct", "hyperactivity", "impact", "peer") 
+
+
+
+# # give it better column names in order to avoid bad indexing in the plot function
+# # in this case "semotion", "shyper" etc need to change to mean, therefore:
+
+for (i in 1: length(list_df)){
+
+  colnames(list_df[[i]])[5] <- "Mean"
+  colnames(list_df[[i]])[6] <- "se"
+}
+
+# # loop over it to create the factors in each
+for (i in 1:length(list_df)){
+
+  list_df[[i]]$sex <- factor(list_df[[i]]$sex)
+  levels(list_df[[i]]$sex ) = c("boys", "girls")
+
+  list_df[[i]]$SY2dic <- factor(list_df[[i]]$SY2dic)
+  levels(list_df[[i]]$SY2dic) = c("no", "yes")
+}
+
+
+
+# create a filtered dataframe for each list element, this is necessary for the loop to work
+filt_list_df <- vector("list", length(list_df))
+for (i in 1: length(list_df)){
+  
+  filt_list_df[[i]] <- list_df[[i]] %>% 
+    filter(adolescent == "adolescent")
+  
+}
+# now create the plots
+plot_list <- vector("list", length(filt_list_df))
+test <- vector("list", length(filt_list_df))
+for (i in 1: length(list_df)){
+  
+  p =   ggplot( filt_list_df[[i]], aes(x= unlist(filt_list_df[[i]]["SY2dic"]), 
+                                       y= unlist(filt_list_df[[i]]["Mean"]), colour = unlist(filt_list_df[[i]]["sex"]))) + 
+    geom_pointrange(aes(ymin= (unlist(filt_list_df[[i]]["Mean"]) - unlist(filt_list_df[[i]]["se"])), 
+                        ymax=(unlist(filt_list_df[[i]]["Mean"]) + unlist(filt_list_df[[i]]["se"] ))), 
+                    fatten = 6,
+                    position = position_dodge(width = .5)) +
+    
+    ylab("var_mean +/- var_se")+ xlab("") + ylim(0, 6) + 
+    ggtitle(paste(names(list_df[i])," problems \nself report in adolescence")) +
+    xlab("presence of temper outbursts") +
+    theme(axis.text=element_text(size=14), legend.text=element_text(size=14), plot.title = element_text(size = 16),
+          axis.title=element_text(size=16)) +
+    theme(legend.title=element_blank())
+  
+  
+  plot_list[[i]] = p
+  
+}
+
+pdf("SY2_mean_plots.pdf")
+for (i in 1:length(list_df)) {
+  print(plot_list[[i]])
+}
+dev.off()
+
+```
+
+
+```{r}
+##############IMPORTANT CODE ####################################
+# same thing for PY1, plot SDQs 
+### extract the excels sheets in cleverer way than I had done before!!!
+library(readxl)
+sheets <- excel_sheets("/Users/stringarisa/Downloads/4_Oct_2022_new/s_means_sdqs_PY1.xlsx")           # Get sheet names
+sheets 
+
+# create a list containing a df for each sheet
+list_df <- lapply(sheets, function(x) {          # Read all sheets to list
+  as.data.frame(read_excel("/Users/stringarisa/Downloads/4_Oct_2022_new/p_means_sdqs_PY1.xlsx", sheet = x)) } )
+
+# name it based on the loop for outcome names that you had in your original code, in this case
+names(list_df) <- c("emotion", "conduct", "hyperactivity", "impact", "peer") 
+
+
+
+# # give it better column names in order to avoid bad indexing in the plot function
+# # in this case "semotion", "shyper" etc need to change to mean, therefore:
+
+for (i in 1: length(list_df)){
+
+  colnames(list_df[[i]])[5] <- "Mean"
+  colnames(list_df[[i]])[6] <- "se"
+}
+
+# # loop over it to create the factors in each
+for (i in 1:length(list_df)){
+
+  list_df[[i]]$sex <- factor(list_df[[i]]$sex)
+  levels(list_df[[i]]$sex ) = c("boys", "girls")
+
+  list_df[[i]]$PY1dic <- factor(list_df[[i]]$PY1dic)
+  levels(list_df[[i]]$PY1dic) = c("no", "yes")
+  
+  list_df[[i]]$adolescent <- factor(list_df[[i]]$adolescent)
+  levels(list_df[[i]]$adolescent) = c("child", "adolescent")
+}
+
+
+
+# create a filtered dataframe for each list element, this is necessary for the loop to work
+# filt_list_df <- vector("list", length(list_df))
+# for (i in 1: length(list_df)){
+#   
+#   filt_list_df[[i]] <- list_df[[i]] %>% 
+#     filter(adolescent == "adolescent")
+#   
+# }
+
+
+# now create the plots
+plot_list <- vector("list", length(list_df))
+test <- vector("list", length(list_df))
+for (i in 1: length(list_df)){
+  
+  p =   ggplot(list_df[[i]], aes(x= unlist(list_df[[i]]["PY1dic"]), 
+                                       y= unlist(list_df[[i]]["Mean"]), colour = unlist(list_df[[i]]["sex"]))) + 
+    geom_pointrange(aes(ymin= (unlist(list_df[[i]]["Mean"]) - unlist(list_df[[i]]["se"])), 
+                        ymax=(unlist(list_df[[i]]["Mean"]) + unlist(list_df[[i]]["se"] ))), 
+                    fatten = 6,
+                    position = position_dodge(width = .5)) +
+    
+    ylab("Mean +/- se")+ xlab("") + ylim(0, 6) + 
+    ggtitle(paste(names(list_df[i])," problems \nparent report in adolescence")) +
+    xlab("presence of irritable mood") +
+    theme(axis.text=element_text(size=14), legend.text=element_text(size=14), plot.title = element_text(size = 16),
+          axis.title=element_text(size=16)) +
+    theme(legend.title=element_blank()) +
+     facet_grid(cols = vars(adolescent))
+  
+  
+  plot_list[[i]] = p
+  
+}
+
+pdf("PY1_mean_plots.pdf")
+for (i in 1:length(list_df)) {
+  print(plot_list[[i]])
+}
+dev.off()
+
+```
+
+
+
+```{r}
+##############IMPORTANT CODE ####################################
+# same thing for PY2, plot SDQs 
+### extract the excels sheets in cleverer way than I had done before!!!
+library(readxl)
+sheets <- excel_sheets("/Users/stringarisa/Downloads/4_Oct_2022_new/p_means_sdqs_PY2.xlsx")           # Get sheet names
+sheets 
+
+# create a list containing a df for each sheet
+list_df <- lapply(sheets, function(x) {          # Read all sheets to list
+  as.data.frame(read_excel("/Users/stringarisa/Downloads/4_Oct_2022_new/p_means_sdqs_PY2.xlsx", sheet = x)) } )
+
+# name it based on the loop for outcome names that you had in your original code, in this case
+names(list_df) <- c("emotion", "conduct", "hyperactivity", "impact", "peer") 
+
+
+
+# # give it better column names in order to avoid bad indexing in the plot function
+# # in this case "semotion", "shyper" etc need to change to mean, therefore:
+
+for (i in 1: length(list_df)){
+
+  colnames(list_df[[i]])[5] <- "Mean"
+  colnames(list_df[[i]])[6] <- "se"
+}
+
+# # loop over it to create the factors in each
+for (i in 1:length(list_df)){
+
+  list_df[[i]]$sex <- factor(list_df[[i]]$sex)
+  levels(list_df[[i]]$sex ) = c("boys", "girls")
+
+  list_df[[i]]$PY2dic <- factor(list_df[[i]]$PY2dic)
+  levels(list_df[[i]]$PY2dic) = c("no", "yes")
+  
+  list_df[[i]]$adolescent <- factor(list_df[[i]]$adolescent)
+  levels(list_df[[i]]$adolescent) = c("child", "adolescent")
+}
+
+
+
+# create a filtered dataframe for each list element, this is necessary for the loop to work
+# filt_list_df <- vector("list", length(list_df))
+# for (i in 1: length(list_df)){
+#   
+#   filt_list_df[[i]] <- list_df[[i]] %>% 
+#     filter(adolescent == "adolescent")
+#   
+# }
+
+
+# now create the plots
+plot_list <- vector("list", length(list_df))
+test <- vector("list", length(list_df))
+for (i in 1: length(list_df)){
+  
+  p =   ggplot(list_df[[i]], aes(x= unlist(list_df[[i]]["PY2dic"]), 
+                                       y= unlist(list_df[[i]]["Mean"]), colour = unlist(list_df[[i]]["sex"]))) + 
+    geom_pointrange(aes(ymin= (unlist(list_df[[i]]["Mean"]) - unlist(list_df[[i]]["se"])), 
+                        ymax=(unlist(list_df[[i]]["Mean"]) + unlist(list_df[[i]]["se"] ))), 
+                    fatten = 6,
+                    position = position_dodge(width = .5)) +
+    
+    ylab("Mean +/- se")+ xlab("") + ylim(0, 6) + 
+    ggtitle(paste(names(list_df[i])," problems \nparent report in adolescence")) +
+    xlab("presence of irritable mood") +
+    theme(axis.text=element_text(size=14), legend.text=element_text(size=14), plot.title = element_text(size = 16),
+          axis.title=element_text(size=16)) +
+    theme(legend.title=element_blank()) +
+     facet_grid(cols = vars(adolescent))
+  
+  
+  plot_list[[i]] = p
+  
+}
+
+pdf("PY2_mean_plots.pdf")
+for (i in 1:length(list_df)) {
+  print(plot_list[[i]])
+}
+dev.off()
+
+```
+
+
+
+
+
+## Create graphs for the frequency of parent and self reported mood and outbursts   
+```{r}
+# import
+dic_child_freq <- read_excel("~/Downloads/4_Oct_2022_new/dic_child_freq.xlsx")
+dic_adol_freq <- read_excel("~/Downloads/4_Oct_2022_new/dic_adol_freq.xlsx")
+#  create a joint excel sheet
+all_ages <- cbind(data.frame(rbind(dic_child_freq, dic_adol_freq)), age_group = factor(c(rep("child",8), rep("adolescent",8))))
+
+all_ages$sex <- factor(all_ages$subs_var) # rename for code below to work
+
+
+```
+
+
+
+```{r}
+
+ 
+# parent rated irritable mood    
+p_irritable_mood <- all_ages %>% 
+  filter(informant == "parent", outcome == "PY1dic") %>% 
+  ggplot( aes(x= factor(age_group, levels = c("child", "adolescent")), y=100*mean, colour = sex)) + 
+  geom_pointrange(aes(ymin= 100*(mean - se), ymax=100*(mean+se )), fatten = 6,
+                  position = position_dodge(width = .5))
+
+p_irritable_mood  <- p_irritable_mood    + ylab("percentage +/- se")+ xlab("") + ylim(12, 32) + ggtitle("Irritable Mood by\n parent report across development")
+
+p_irritable_mood <- p_irritable_mood  +theme(axis.text=element_text(size=14), legend.text=element_text(size=14), plot.title = element_text(size = 16),
+                         axis.title=element_text(size=16))
+
+
+
+
+# parent rated outbursts    
+p_outbursts <- all_ages %>% 
+  filter(informant == "parent", outcome == "PY2dic") %>% 
+  ggplot( aes(x= factor(age_group, levels = c("child", "adolescent")), y=100*mean, colour = sex)) + 
+  geom_pointrange(aes(ymin= 100*(mean - se), ymax=100*(mean+se )), fatten = 6,
+                  position = position_dodge(width = .5))
+
+p_outbursts  <- p_outbursts    + ylab("percentage +/- se")+ xlab("") + ylim(12, 32) + ggtitle("Temper Outbursts by\n parent report across development")
+
+p_outbursts <- p_outbursts  + theme(axis.text=element_text(size=14), legend.text=element_text(size=14), plot.title = element_text(size = 16),
+                     axis.title=element_text(size=16))
+
+
+
+
+# irritable mood by self report
+s_irritable_mood <- all_ages %>% 
+  filter(age_group == "adolescent", outcome == "SY1dic") %>% 
+  ggplot( aes(x= factor(sex, levels = c("boy", "girl")), y=100*mean, colour = sex)) + 
+  geom_pointrange(aes(ymin= 100*(mean - se), ymax=100*(mean+se )), fatten = 6,
+                  position = position_dodge(width = .5))
+
+s_irritable_mood   <- s_irritable_mood   + ylab("percentage +/- se")+ xlab("") + ylim(12, 32) + ggtitle("Irritable mood by \nself report in adolescence")
+
+s_irritable_mood  + theme(axis.text=element_text(size=14), legend.text=element_text(size=14), plot.title = element_text(size = 16),
+                          axis.title=element_text(size=16))
+
+
+
+# irritable mood by self report
+s_temper_outbursts <- all_ages %>% 
+  filter(age_group == "adolescent", outcome == "SY2dic") %>% 
+  ggplot( aes(x= factor(sex, levels = c("boy", "girl")), y=100*mean, colour = sex)) + 
+  geom_pointrange(aes(ymin= 100*(mean - se), ymax=100*(mean+se )), fatten = 6,
+                  position = position_dodge(width = .5))
+
+s_temper_outbursts   <- s_temper_outbursts + ylab("percentage +/- se")+ xlab("") + ylim(12, 32) + ggtitle("Temper Outbursts by \nself report in adolescence")
+
+s_temper_outbursts <- s_temper_outbursts  + theme(axis.text=element_text(size=14), legend.text=element_text(size=14), plot.title = element_text(size = 16),
+                            axis.title=element_text(size=16))
+
+
+# save the plots now
+pdf("percentages_irritable_mood_and_outbursts.pdf")
+print(p_irritable_mood )
+print(p_outbursts )
+print(s_irritable_mood )
+print(s_temper_outbursts )
+dev.off()
+
+```
+

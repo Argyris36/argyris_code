@@ -7,7 +7,7 @@
 # 
 
 
-```{r}
+
 n_sims <- 500
 #p_vals <- c()
 #n <- 150
@@ -57,8 +57,9 @@ ggplot(aes(x= as.numeric(x), y = as.numeric(y))) +
   geom_hline(yintercept = 0.9, colour = "red")
 
 power_WP5 + 
-  geom
-labs(x= "Expectation", y="Belief")
+labs(x= "Sample Size", y="Power") +
+  annotate("text",x= 400,y=0.6,label="simulations = 500, \n alpha = 0.05, \n d = 0.3")+ #+ coord_cartesian(ylim=c(-0,26),clip="off")+
+ggtitle("Power Simulation for WP5")
 
 
 #length(p_vals)

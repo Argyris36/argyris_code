@@ -1,0 +1,92 @@
+---
+title: "Child Psychiatry Teaching"
+author: "Argyris Stringaris"
+date: "08/10/2022"
+output: html_document
+---
+<style type="text/css">
+  body{
+  font-size: 12pt;
+}
+</style>
+
+
+# Chapter 1. Comorbidity Basics
+Comorbidity, the co-occurrence of two disorders is said to be the norm in child and adolescent psychiatry. 
+Understanding comorbidity gives us some very helpful insights about mental health; for some purposes more than trying to understand each disorder in its own right.
+
+## How Common is comorbidity and how do we estimate it?
+
+Consider the following problems: 
+
+###  _Problem 1_.  
+You and your best friend each have a fair coin in your pocket. 
+What is the probability that when you toss it at the same time you will both get tails (γράμματα)? 
+  
+###  _Problem 2_.  
+A disorder **X** has a probability (denoted p_a)  of 10%  and a disorder **Y** has a probability (denoted p_b) of 5%. What is the probability that a child will have both these disorders at the same time.
+
+
+**Solution** to _Problem 1_.  
+
+A fair coin has a 50% chance of turning heads, therefore, p_heads = 0.5.
+In this problem there are two events--also called "experiments"--happening, namely you and your friend each toss a coin. The outcome of each of these events is independent of each other. There is nothing that can connect the outcome of the two events in a way that one event would influence the outcome of the other. 
+The two events are said to be **independent of each other**.  
+
+One of the fundamental theorems of probability is the **multiplication rule of independent events**. When two events **A** and **B** are independent of each other, the chance that they will occur together is found by multiplying them. Formally:
+ 
+ _P_($A \cap B$) = _P_( A ) _P_( B )
+
+where _P_ means probability and this sign \cap means that two events occur together.
+
+Why is that? How do you explain the probability rule? If you are interested in finding out, see the explanation below. For the moment, you can simply memorise that if you want to know the probability of two independent events occur together, you simply need to multiply their probabilities. 
+
+Can you now provide a **Solution** to _Problem 2_?
+
+**Does the multiplicative rule work for _Problem 2_?** 
+
+**Does it work for psychiatric disorders in general?**
+
+**Suppose disorder X is anxiety and disorder Y is depression; does it work?**
+
+
+
+## Optional reading.   
+An intuition about the multiplicative rule
+
+Let coin A and coin B each have a probabilitly of 50%.
+In Table 1 below, the columns correspond to the two coins. 
+Each row represents a possibility, what could happen when you toss a coin, whereby "0" is failure, i.e. heads (κορώνα) and "1" is success, i.e. tails.  For example, in the first row we had head (κορώνα) on both occasions, in the second we have tails only once. 
+
+```{r, echo = FALSE, warning= FALSE}
+A <- c(rep(0,1), rep(1,1))
+   B <- c(rep(0,1), rep(1,1))
+   df_probs <- data.frame(expand.grid(A,B))
+   colnames(df_probs) <- c("coin A", "coin B")
+   knitr:: kable(df_probs, align = "ll", caption = "Table 1. Outcomes of tossing fair coins")
+```
+As you can see above only 1 in 4 times do we get a "1" in both columns, corresponding to the theoretical prediction derived by the multiplicative rule derived by multiplying 1/2 x 1/2 = 1/4. 
+
+
+Below I have added code for you to play around:
+
+```{r, message = FALSE}
+library(tidyverse)
+A <- c(rep(0,4), rep(1,2)) # probability 1/3
+B <- c(rep(0,4), rep(1,4)) # probabilty 4/8 = 1/2
+two_events <- data.frame(expand.grid(A,B))
+knitr:: kable(two_events, col.names = c("Event A", "Event B"), align = "ll", 
+              caption = "Table 2. Outcomes of two independent events")
+
+```
+Table 2 above shows you the possibilities, for the two events. 
+You can calculate by hand the times when both events scored a 1 by counting the 1-1 rows. Or you can do it with the snippet of code below. 
+```{r}
+two_events <-two_events  %>%  mutate(add_rows = Var1+Var2) 
+paste("the probability is", round(sum(two_events $add_rows==2)/length(two_events $add_rows),2), ", which corresponds to 1/3 x 1/2")
+
+#Now verify
+sum(two_events $add_rows==2)/length(two_events $add_rows) == 1/3*(4/8)
+
+```
+
