@@ -13,7 +13,7 @@ output: html_document
 
 # Chapter 1. Comorbidity Basics
 Comorbidity, the co-occurrence of two disorders is said to be the norm in child and adolescent psychiatry. 
-Understanding comorbidity gives us some very helpful insights about mental health; for some purposes more than trying to understand each disorder in its own right.
+Understanding comorbidity gives us some very helpful insights about mental health; for some purposes more than trying to understand each disorder in its own right. TEST
 
 ## How Common is comorbidity and how do we estimate it?
 
