@@ -2,7 +2,9 @@
 title: "Child Psychiatry Teaching"
 author: "Argyris Stringaris"
 date: "08/10/2022"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 <style type="text/css">
   body{
@@ -21,7 +23,7 @@ Consider the following problems:
 
 ###  _Problem 1_.  
 You and your best friend each have a fair coin in your pocket. 
-What is the probability that when you toss it at the same time you will both get tails (γράμματα)? 
+What is the probability that when you toss it at the same time you will both get tails? 
   
 ###  _Problem 2_.  
 A disorder **X** has a probability (denoted p_a)  of 10%  and a disorder **Y** has a probability (denoted p_b) of 5%. What is the probability that a child will have both these disorders at the same time.
@@ -37,7 +39,7 @@ One of the fundamental theorems of probability is the **multiplication rule of i
  
  _P_($A \cap B$) = _P_( A ) _P_( B )
 
-where _P_ means probability and this sign \cap means that two events occur together.
+where _P_ means probability and the cup sign  means that two events occur together.
 
 Why is that? How do you explain the probability rule? If you are interested in finding out, see the explanation below. For the moment, you can simply memorise that if you want to know the probability of two independent events occur together, you simply need to multiply their probabilities. 
 
@@ -56,7 +58,7 @@ An intuition about the multiplicative rule
 
 Let coin A and coin B each have a probabilitly of 50%.
 In Table 1 below, the columns correspond to the two coins. 
-Each row represents a possibility, what could happen when you toss a coin, whereby "0" is failure, i.e. heads (κορώνα) and "1" is success, i.e. tails.  For example, in the first row we had head (κορώνα) on both occasions, in the second we have tails only once. 
+Each row represents a possibility, what could happen when you toss a coin, whereby "0" is failure, i.e. heads  and "1" is success, i.e. tails.  For example, in the first row we had head  on both occasions, in the second we have tails only once. 
 
 ```{r, echo = FALSE, warning= FALSE}
 A <- c(rep(0,1), rep(1,1))
@@ -86,7 +88,9 @@ two_events <-two_events  %>%  mutate(add_rows = Var1+Var2)
 paste("the probability is", round(sum(two_events $add_rows==2)/length(two_events $add_rows),2), ", which corresponds to 1/3 x 1/2")
 
 #Now verify
-sum(two_events $add_rows==2)/length(two_events $add_rows) == 1/3*(4/8)
+sum(two_events $add_rows==2)/length(two_events$add_rows) == 1/3*(4/8)
 
 ```
+
+# Chapter 2. Getting more specific with comorbidity
 

@@ -1145,23 +1145,23 @@ ggplot(data, aes(x=value, fill=variable)) +
 ```
 
 ```{r}
-pred_err_metanalysis <- read.csv("~/Downloads/All_Included_Contrasts (1).csv")
-pred_err_metanalysis$OutcomeType
-
-pred_err_metanalysis %>% 
-  count(OutcomeType)
-
-
-pred_err_metanalysis %>% 
-  count(OutcomeType) %>% 
-  
-
-study_freq_by_outcome <- pred_err_metanalysis %>%
-  group_by(OutcomeType) %>%
-  summarise(cnt = n()) %>%
-  mutate(freq = round(cnt / sum(cnt), 3)) %>% 
-  arrange(desc(freq))
-
-study_freq_by_outcome 
+# pred_err_metanalysis <- read.csv("~/Downloads/All_Included_Contrasts (1).csv")
+# pred_err_metanalysis$OutcomeType
+# 
+# pred_err_metanalysis %>% 
+#   count(OutcomeType)
+# 
+# 
+# pred_err_metanalysis %>% 
+#   count(OutcomeType) %>% 
+#   
+# 
+# study_freq_by_outcome <- pred_err_metanalysis %>%
+#   group_by(OutcomeType) %>%
+#   summarise(cnt = n()) %>%
+#   mutate(freq = round(cnt / sum(cnt), 3)) %>% 
+#   arrange(desc(freq))
+# 
+# study_freq_by_outcome 
 ```
 
