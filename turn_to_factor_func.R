@@ -6,7 +6,7 @@ test_df
 class(test_df$c)
 
 
-turn_to_factor <- function(df, var1, var2){  
+turn_to_factor <- function(df, var1){  
   if (is.null(df[[var1]])==TRUE)  {
     print("nothing to do for var1")
   } else {
@@ -16,19 +16,20 @@ turn_to_factor <- function(df, var1, var2){
       df[[var1]]
     }  
   }
-  if (is.null(df[[var2]])==TRUE) {
-    print("nothing to do for var2")
-  } else {
-    if(is.factor(df[[var2]])==FALSE){ 
-      df[[var2]] = factor(df[[var2]])
-    } else{
-      df[[var2]]
-    }  
-  }
-  return(df)
+  # if (is.null(df[[var2]])==TRUE) {
+  #   print("nothing to do for var2")
+  # } else {
+  #   if(is.factor(df[[var2]])==FALSE){ 
+  #     df[[var2]] = factor(df[[var2]])
+  #   } else{
+  #     df[[var2]]
+  #   }  
+  # }
+   return(df)
 }
 
-result_2 <- turn_to_factor(df = test_df , var1 = "c", var2 = "d")
+result_2 <- turn_to_factor(df = test_df , var1 = "c")
 
-class(c(result_2$c, result_2$d))
+class(c(result_2$c))
 
+lapply(test_df,turn_to_factor)
