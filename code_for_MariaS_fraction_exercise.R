@@ -49,6 +49,6 @@ if((final_comparisons$numbers_1[i]>final_comparisons$numbers_2[i])  == TRUE){
   final_comparisons$winner[i] <- final_comparisons$fraction_2[i]
 }
   
-  
+final_comparisons
 paste("The number of comparisons are", nrow(final_comparisons))
 

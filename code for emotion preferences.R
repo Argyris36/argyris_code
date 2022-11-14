@@ -197,4 +197,10 @@ for (i in 1:length(ranks$item_number)){
 }
 
 
-                 
+x<-c(1,2,3,2,1,3,4,2,5,2,6,5,5)
+y<-c(5,5,6,2,1,4,4,2,1,2,1,5,5)
+
+x<-seq(from = 1, to = 14)
+y<-seq(from = 14, to = 1)
+res<-cor.test(x,y, method="kendall")
+res                 
