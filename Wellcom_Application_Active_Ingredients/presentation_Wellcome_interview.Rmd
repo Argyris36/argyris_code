@@ -1,0 +1,124 @@
+---
+title: "Wellcome Presentation Interview"
+author: "Argyris Stringaris"
+date: "28/10/2022"
+output: pdf_document
+fontsize: 12pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Surprises as a Mechanism of Improvement in the Psychological Therapy of Anxiety and Depression in Young People
+
+Young people are often affected by social anxiety _and_ depression and are particularly impaired.
+
+Some of these young people improve substantially with treatment--we ask:
+
+_how_ do they improve--what are the causal mechanisms and can we maximise them?
+
+_who_ improves--could we tell you will get better in advance?
+
+_whether_ the way we pursue improvement is relevant and acceptable
+
+
+
+## Social Anxiety and Depression co-occur
+
+- Two of the most common conditions in young people that co-occur at high frequency  
+
+
+
+- Their co-occurrence causes a higher burden to individuals. 
+
+
+## Social Anxiety and Depression can be effectively treated
+
+
+\includegraphics{anxiety_dep_decline_treatment.jpg}
+
+
+## What is the active ingredient of the treatment? 
+
+_Surprises_: a better outcome than expected. 
+
+Surprises underlie learning. 
+
+Surprises shape affect in the moment.
+
+## What is the active ingredient of the treatment? 
+
+In social anxiety treatment, surprises are maximised.
+
+Treatment is designed as such with experiments in which surprises are engineered. 
+
+a surprise occurs when the outcome of a social interaction is better than expected, that is the beliefs that the person initially held about the outcome of the interaction are disconfirmed
+
+
+## 
+The way we process oursevels can get in the way. 
+
+-  _self-focused attention_: too much attention on how we come across
+
+when shifted outwards--anxiety improved.
+
+-  _safety behaviours_: precautions to ao avoid/"not get caught"
+
+when dropped--anxiety improved.
+
+-  _negative self image_: look terrible anyway
+
+when held positive image--anxiety improved.
+
+
+## What is the active ingredient of the treatment? 
+
+maximise surprises and shift self-processing variables
+
+distinguish between three models
+
+
+
+## WP1: Establish what is causal about the intervention
+Compare three models in experimental set up. 
+
+Outcome is anxiety and mood in the moment  
+
+Variables are the ones from the three models.   
+
+Why important: 
+
+## WP2: Develop computational models
+
+Recently developed model that incorporates surprises and rewards
+
+Rewards: positive outcome
+
+Surprises: better than expected outcome
+
+Why important: 
+
+## WP3: Identify neural and interoceptive markers of social interactions.
+
+MEG
+
+Interoception
+
+## WP4: Create ecologically valid, scalable version of experiment
+
+This is the basis for our WP5. We want to create a version that is online of what the original experiment is by Dr Leigh--an online social experiment. 
+This will allow this to be scalable--which means we can do a big online sample.
+
+
+## WP5: Trial efficacy of active ingredient
+
+Does our intervention work? If we are right, even a small exposure to an online game, such as the one in WP1 should have a big effect. 
+
+## WP5: Inter-individual differences
+
+Can we predict who will respond?
+
+## WPX: Establish ethical and epistemic viability of manipulations 
+
+How can we find out about what young people want.

@@ -342,6 +342,160 @@ change_in_cases_with_es + scale_color_hue(labels=(es))
 ```
 
 
+
+## Different graph to make effects clearer and spare room in the graph.
+
+```{r, warning=FALSE}
+difference_graph <- df_pre_post_new_long %>% filter(sample_size == 1e+07) %>% 
+  ggplot(aes(x = as.numeric(effect_size), y = difference)) +
+  geom_line(colour = "steelblue") +
+  geom_point(colour = "steelblue")
+
+difference_graph + scale_x_discrete(name ="Effect Sizes (expressed as Cohen's d)", 
+                    limits=c("0.05","0.08","0.1", "0.12", "0.15", "0.2")) +
+  ylab("Number of Extra Cases") +
+  ggtitle(" Increase in youth depression cases during a pandemic\n according to different effect size simulated for a youth population of 10 million")
+
+```
+
+
+
+## wanted to check what happens if I incrase the sd in a simple example
+```{r}
+# see the definition of variables in chunks above. 
+# this bit here is our calcuation above for an effect sizes of 0.2 keeping sd the same
+pre_values <- sum(rbnorm(samples[7], mean_a, sd, 0, 26, round = TRUE, seed = 1974)>=threshold) 
+post_values<- sum(rbnorm(samples[7], mean_b_new[6], sd, 0, 26, round = TRUE, seed = 1974)>=threshold) 
+not_scaled <- post_values - pre_values
+
+# this bit here is our calcuation above for an effect sizes of 0.2 BUT varying sd. Here 
+# scaled it to the ratio of mean_a/mean_b_new[6]. In general, the bigger the more exacerbated the results.
+pre_values_scaled <- sum(rbnorm(samples[7], mean_a, sd, 0, 26, round = TRUE, seed = 1974)>=threshold) 
+post_values_scaled <- sum(rbnorm(samples[7], mean_b_new[6], 5.06669, 0, 26, round = TRUE, seed = 1974)>=threshold) 
+scaled <- post_values_scaled - pre_values_scaled
+not_scaled < scaled 
+
+paste("incrasing the SD for post makes the difference bigger, in this example by ", scaled -not_scaled) 
+```
+
+# NEW Here I ran the simulation 500 times to get standard errors.
+```{r}
+# This is a function to estimate the effects of the pandemic on the MFQ
+
+samples <- 10^7 # approximately the number of children and adolescents in the UK
+
+mean_before <- 4.92 # from Kwong, Wellcome Open Research, the population mean for the short MFQ BEFORE the pandemic https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6764237/pdf/wellcomeopenres-4-16962.pdf
+sd_before <- 4.49 # also Kwong, the population sd for the short MFQ before the pandemic
+
+threshold <- 12 # the commonly used caseness threshold for the MFQ
+
+upper_bound <- 26 # the mfq max score
+lower_bound <-  0 # the mfq min score
+
+# to get mean_after according to different effect sizes do the following
+es <- c(0.05, 0.08, 0.1, 0.12, 0.15, 0.2) # these are the effect sizes
+dif <- es*sd # because es = dif/sd
+dif 
+mean_after <- dif + mean_before  # because mean_a - mean_b_new = dif
+mean_after
+
+# here comes the function
+sims_for_pandemic <- function(samples, mean_before, sd_before, mean_after, sd_after, upper_bound, lower_bound, threshold){
+before_pandemic_scores <- 0
+after_pandemic_scores <- 0
+
+
+ for(j in 1:(length(mean_after))){ 
+  before_pandemic_score <- sum(rbnorm(samples, mean_before, sd_before, lower_bound, upper_bound, round = TRUE)>=threshold) 
+  after_pandemic_scores[j] <- sum(rbnorm(samples, mean_after[j], sd_after, lower_bound, upper_bound, round = TRUE)>=threshold)
+
+ }
+difference_after_before <- after_pandemic_scores - before_pandemic_score
+
+return(difference_after_before)
+}
+
+# now just run the simulation
+sims_results <- replicate(500,(sims_for_pandemic(10^7, mean_before = mean_before, sd = sd_before, mean_after = mean_after, sd_after = sd_before, upper_bound = upper_bound, lower_bound = lower_bound, threshold = threshold )))
+
+
+sims_summary <- data.frame(effect_sizes = es,sims_results_mean = apply(sims_results, 1, mean),sims_results_sd = apply(sims_results, 1, sd) )
+
+```
+
+
+
+# NEW Here is the plot of the above
+```{r}
+p<- sims_summary %>% 
+  ggplot(aes(x=effect_sizes, y=sims_results_mean)) + 
+  geom_line(colour = "steelblue") +
+  geom_point(colour = "steelblue")+
+  geom_errorbar(aes(ymin=sims_results_mean - sims_results_sd, 
+                    ymax=sims_results_mean + sims_results_sd), width = 0.005, colour = "steelblue")
+p + labs(title=" Increase in youth depression cases during a pandemic\n according to different effect sizes  a youth population of 10 million.",
+         y = "Mean Number of Extra Cases (+/- sd)", x = "Effect Sizes as Cohen's d")+
+
+   theme_classic()
+
+```
+
+# NEW here is the simulation for Table 1
+```{r}
+sample_sizes <- c(10^2, 10^3, 10^4, 10^5, 10^6, 5*10^6, 10^7)
+list_df <- list()
+
+n_sims <- 500
+before_pandemic_score_by_sample_size <-matrix(NA, nrow = length(sample_sizes), ncol = n_sims )
+after_pandemic_score_by_sample_size <- matrix(NA, nrow = length(sample_sizes), ncol = n_sims )
+
+
+ for(j in 1:(length(sample_sizes))){ 
+  before_pandemic_score_by_sample_size[j, ] <- replicate(n_sims,(sum(rbnorm(sample_sizes[j], mean_before, sd_before, lower_bound, upper_bound, round = TRUE)>=threshold)))
+  after_pandemic_score_by_sample_size [j, ] <- replicate(n_sims,(sum(rbnorm(sample_sizes[j], 5.5935, sd_before, lower_bound, upper_bound, round = TRUE)>=threshold)))
+ }
+
+#means and sds for before
+by_sample_size_means_before <- apply(before_pandemic_score_by_sample_size, 1, mean)
+by_sample_size_sd_before <- sd_before <- apply(before_pandemic_score_by_sample_size, 1, sd)
+
+#means and sds for after
+by_sample_size_means_after <- apply(after_pandemic_score_by_sample_size, 1, mean)
+by_sample_size_sd_after <- apply(after_pandemic_score_by_sample_size, 1, sd)
+
+# means and sds for difference
+by_sample_size_difference <- after_pandemic_score_by_sample_size - before_pandemic_score_by_sample_size
+by_sample_size_mean_difference <- apply(by_sample_size_difference, 1, mean)
+by_sample_size_sd_of_mean_difference <- apply(by_sample_size_difference, 1, sd)
+
+
+df_for_table <- data.frame("Population Size" = sample_sizes,
+"Cases Before Pandemic" = by_sample_size_means_before , "sd before" = by_sample_size_sd_before, 
+"Cases After Pandemic" = by_sample_size_means_after,"sd after" = by_sample_size_sd_after, 
+"Difference in Cases After vs Before" = by_sample_size_mean_difference, "sd difference" = by_sample_size_sd_of_mean_difference )
+
+df_for_table
+
+
+openxlsx:: write.xlsx(df_for_table, file = "df_for_table..xlsx")
+
+knitr::kable(df_for_table, caption = "Excess Cases by Population Size Affected, Estimates from 500 Simulations for _d_ = 0.15.", col.names = c(
+             "Population Size","Cases Before" , "sd before" , "Cases After", 
+             "sd after", "Difference in Cases", "sd difference"), digits = 2, 
+             format.args = list(scientific = FALSE), align = "lllllll")
+
+
+####END OF NEW STUFF
+```
+
+
+
+
+
+
+
+
+
 ## Simulating the pandemic: **small effects**
 I have now varied the small effects to give you an idea of the range. 
 ```{r, warning=FALSE}
