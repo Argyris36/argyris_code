@@ -88,13 +88,6 @@ rename(
   
 )
 
-if(sig_rank$wins_1 > sig_rank$wins_2==TRUE){
-   print(sig_rank$item_1)
-} else {
-  print(sig_rank$item_2)
-}
-sig_rank <- sig_rank %>% 
-  mutate(prop.test(c(item1, item_2), c(962,962))$p.value)
 
 p_val <- 0
 for(i in 1:nrow(sig_rank)){
