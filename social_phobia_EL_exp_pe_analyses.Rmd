@@ -3,8 +3,9 @@ title: "Social Phobia Experiments by Eleanor Leigh. PE analyses by Argyris"
 author: "Argyris Stringaris"
 date: "09/07/2022"
 output:
-  html_document: default
+  pdf_document: default
   word_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}

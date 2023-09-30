@@ -847,7 +847,7 @@ dep_change_plot <- ggplot(data = osca_dep_anx_long , aes(x = time_point , y = mf
   geom_line( size = 2) +
   geom_point( size = 4) +
   xlab("time") + ylab("depressive symptoms") +
-  ggtitle("Changes in **Depression Symptoms** During Treatment of Social Anxiety")
+  ggtitle("Improvement in Depression Symptoms")
 legend.position = "none"
 dep_change_plot <- dep_change_plot+
   theme(legend.position = "none")
@@ -855,7 +855,10 @@ dep_change_plot <- dep_change_plot +
   facet_wrap(~ condition, ncol =2 )
 dep_change_plot <- dep_change_plot + geom_hline(yintercept = 10, linetype = "dashed") +
   annotate("text",x= 3.2,y=11,label="caseness") + coord_cartesian(ylim=c(-0,26),clip="off")
-dep_change_plot + theme(axis.text = element_text(size = 10)) 
+dep_change_plot + theme(axis.text = element_text(size = 10))+
+theme(strip.text.x = element_text(size = 20)) +
+  theme(axis.title = element_text(size = 15)) + 
+    theme(plot.title = element_text(size = 20, face = "bold"))
 ```
 ```{r}
 osca_dep_anx_long <- osca_dep_anx_long %>% 
@@ -888,7 +891,7 @@ anx_change_plot <- ggplot(data = osca_dep_anx_long , aes(x = time_point , y = ls
   geom_line( size = 2) +
   geom_point( size = 4) +
   xlab("time") + ylab("social anxiety symptoms") +
-  ggtitle("Changes in Social Anxiety Symptoms During Treatment of Social Anxiety")
+  ggtitle("Improvement in Social Anxiety Symptoms")
 legend.position = "none"
 anx_change_plot <- anx_change_plot+
   theme(legend.position = "none")
@@ -896,7 +899,10 @@ anx_change_plot <- anx_change_plot +
   facet_wrap(~ condition, ncol =2 )
 anx_change_plot <- anx_change_plot + geom_hline(yintercept = 35, linetype = "dashed") +
   annotate("text",x= 3.2,y=39,label="caseness") + coord_cartesian(ylim=c(0,130),clip="off")
-anx_change_plot + theme(axis.text = element_text(size = 10)) 
+anx_change_plot + theme(axis.text = element_text(size = 10)) + 
+   theme(strip.text.x = element_text(size = 20)) +
+  theme(axis.title = element_text(size = 15))+ 
+    theme(plot.title = element_text(size = 20, face = "bold"))
 ```
 
 

@@ -45,7 +45,7 @@ dim(demo_res_new)
 demo_res_new <- subset(demo_res_new, select = c(id, SDAN, sex, code, complete, Participant_Type, age, 
                                                 mfq_sum))
 head(demo_res_new)
-write.csv(demo_res_new, "/Users/stringarisa/Downloads/demo_adol_emot_pref.csv", row.names=FALSE)
+
 # now get some item metrics
 n_items <- 14
 

@@ -1,0 +1,35 @@
+---
+title: "Questions for post-doc position"
+author: "Argyris Stringaris"
+date: "11/12/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+## Please respond to the following questions within the specified time. If you decide to use chatGPT for your answers, that's fine, but please comment on the bot's answers and make sure you are happy with them and be in position to explain why in the interview and modify the code.
+
+## Problem 1. 
+An experiment has _n_ = 50 trials of stimulus presentations, after each of which, subjects are asked to rate their a) fear, b) anger, on a scale from 1 to 10 using a slider.  
+You expect that, on average, the correlation between the anger and fear rating will be a Pearson's _r_ ~ 0.4. You are asked:
+
+a) how many subjects would be required to have reasonable power to detect this correlation? 
+  
+b) how much of an effect does varying trial number have (within a range of 30 $\geq$ _n_ $\leq$ 70 trials).
+Please simulate a dataset to demonstrate this and comment on  your code. 
+
+
+
+## Problem 2. 
+
+After completing a task designed to induce anger, EEG data of the same participants are recorded at rest. You observe that their self-reported anger decays over time. You hypothesize that there may be measurable correlates of this anger decay in the participants’ neural activity:  
+
+a) what features of the EEG signal could you select to test your hypothesis?  
+
+b) what are some confounding factors in the EEG data (not directly originating from neural activity) that could affect your results?  
+
+  
+
+## Thank you for your time and effort.
+
+

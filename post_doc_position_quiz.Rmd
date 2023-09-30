@@ -1,0 +1,34 @@
+---
+title: "Questions for post-doc position"
+author: "Argyris Stringaris"
+date: "05/12/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+## Please respond to the following questions within the specified time. 
+
+## Problem 1. 
+Let there be a clinic in which an adverse event to treatment happens with a probability of 1/10.  
+Please determine through simulations how many patients would have to be seen on average in the clinic for two such events to be observed consecutively. Could you give clinicians an intuition of the how rare it would be to observe two consecutive adverse events after seeing the first, say, 20 patients. 
+Please comment on  your code.   
+
+## Problem 2. 
+An experiment has _n_ = 50 trials of stimulus presentations, after each of which, subjects are asked to rate their a) fear, b) anger, on a scale from 1 to 10 using a slider.  
+You expect that, on average, the correlation between the anger and fear rating will be a Pearson's _r_ ~ 0.4. You are asked:
+
+a) how many subjects would be required to have reasonable power to detect this correlation? b) how much of an effect does varying trial number have (within a range of 30 $\geq$ _n_ $\leq$ 70 trials).
+Please simulate a dataset to demonstrate this and comment on  your code. 
+
+## Problem 3.   
+On Monday evening, a boy requests more video-game time of his mother, the mother refuses, upon which the child throws a tantrum, to which the mother responds with some anger; this cycle of exchanges continues until eventually the mother gives in allowing the child to go back to his game console.  You are asked:
+
+a) Would you expect that the boy is more, similarly, or less likely to have a tantrum in the future, say on Tuesday of that week?   b) Can you think of a common computational framework that could help you make predictions about the probablities of tantrums in the future given responses to them?   
+
+## Problem 4. 
+Going back to _Problem 3_, what, if any, are the potential methodological and substantive implications of the vignette and the possible computational approaches for mood in depression. Please respond to the question in no more than two paragraphs.
+  
+## Thank you for your time and effort.
+
+

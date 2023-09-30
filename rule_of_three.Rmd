@@ -1,0 +1,155 @@
+---
+title: "rule of three"
+author: "Argyris Stringaris"
+date: "03/04/2023"
+output:
+  pdf_document: default
+  html_document: default
+---
+Rule of 3
+
+Suppose you encounter a zero numerator in a study, e.g. in a trial of a drug that reports its side effects.
+How do you estimate the probability of a problem occuring? It is impossible in the absence of a probability, but what you can estimate
+is the upper CI for this, that is the maximum theoretical value, the upper bound, that would be obtained in the long run, i.e. after repeated samplings within the 95% of the sample. This will be the _p_ below. 
+Importantly, you can use the **Rule of Three** which I explain below.
+
+
+Generally, in order to derive the risk,  you can use the Bernoulli function for binary events, i.e. what you 
+woudl use if you were wanting to find out, say, the number of heads when  tossing a coin many times. 
+$$
+\binom{n}{k}p^{k}(1-p)^{n-k} (1)
+$$
+where 
+$$
+\binom{n}{k} = \frac{p!}{k!(n-k)!}(2)
+$$ 
+
+because $k = 0$, and $0! = 1$, (1) simplifies to
+
+$$
+(1-p)^{n}
+$$
+
+What needs to be satisfied is that this relationship be equal to the maximum risk, e.g. 0.05 (if using a 
+95% confidence interval), hence: 
+
+$$
+(1-p)^{n} = max\_risk
+$$
+
+which, can be transformed to 
+
+$$(1-p) = max\_risk^{1/n}
+$$
+
+and 
+$$
+p = 1- max\_risk^{1/n}
+$$
+
+NOTE: The **Rule of Three** can be intuited as follows. 
+
+If you take this relationship from above: 
+$$
+(1-p) = max\_risk^{1/n}
+$$
+
+You could solve it using the natural logarithm on each side. 
+
+You can find out, by using a hand calculator that:  
+
+a) for any small $p$ (e.g. 0.01), $ln(1-p)$ reduces to approximately $-p$. You can get this more clealry if you use a Talyor series approximation, which I am too lazy to write out.  
+
+b) that $ln($max\_risk$)\approx -3$, again, verify this using your calculator.  
+
+Transforming the above, we get: 
+
+$$
+-p = -ln(0.05)^{1/n}
+$$
+
+
+which after dealing with signs, and using log rules becomes:
+
+$$
+p = \frac{3}{n}
+$$
+
+This is how the rule of three arises.   
+
+Now, let's show this with some examples below
+
+```{r, echo=FALSE, message= FALSE}
+library(tidyverse)
+```
+
+
+
+```{r}
+
+n <-  c(10,20, 30, 40, 50,  80, 100, 120, 150, 200, 250,500,750, 1000) # these are the sample sizes
+
+max_risk <- 1-0.95 # this is the 95% confidence interval you want to have, you could of course use a different one, but then you would not have a rule of three, but a different rule (the ln of say 0.01) would apply
+
+
+p = 1- max_risk^(1/n) # this is the one to get
+
+p # the vector of probabilities
+
+
+```
+
+As you can see, the probabilities, i.e. the upper bounds of the probabilities of a problem being prsent, decrease as the sample size in which a zero numerator was found, increases.  
+
+You can verify the values in this vector in the following way: for this rate of events, i.e. zero at each 
+of the sample sizes and for each p-value contained in the vector, the output should be 0.05 when 
+plugged into the binomial formula. Here is the test.
+
+```{r}
+
+pbinom(0, n,p) # where n is the sample sizes above, and p the vector of probabilities above.
+# for which the following holds
+round(pbinom(0, n,p) ,3) == rep(max_risk, length(n))
+```
+
+Now you can verify the above using the rule of three
+```{r}
+rule_three  <- 3/n # this is the rule of three
+rule_three 
+```
+
+Now plot all this to show differences and overlap between analytical and rule of three approximation
+```{r, echo=FALSE}
+# first create teh dataframe
+risk_sample_size <- data.frame(max_risk = c(p, rule_three), sample_size = c(n, n), estimation = factor(
+                                  rep(c("analytical", "rule_of_three" ), each = length(n))))
+
+# plot
+risk_sample_size %>% 
+  ggplot(aes(x = sample_size, y = max_risk))  +
+  geom_jitter(aes(colour = estimation), alpha = 0.5)+
+  geom_line(aes(colour = estimation), position=position_dodge(width=20.0))+
+  xlab("Sample Sizes")+
+  ylab("Maximum Tolerable Risk")+
+  ggtitle(paste0("The upper limit of risk when encountering a zero numerator \nfor a ", 100*(1-max_risk), 
+                 "% ", "Confidence Interval"))
+
+  # you could also plot it on log scale, in which case you would get a linear relationship
+```
+```{r, echo=FALSE}
+# first create teh dataframe
+risk_sample_size <- data.frame(max_risk = c(p, rule_three), sample_size = c(n, n), estimation = factor(
+                                  rep(c("analytical", "rule_of_three" ), each = length(n))))
+
+# plot
+risk_sample_size %>% 
+  ggplot(aes(x = log(sample_size), y = log(max_risk)))  +
+  geom_point(aes(colour = estimation), alpha = 0.5)+
+  geom_line(aes(colour = estimation), position=position_dodge(width=0.00))+
+  xlab("Log Sample Sizes")+
+  ylab("Log Maximum Tolerable Risk")+
+  ggtitle(paste0("The upper limit of risk when encountering a zero numerator \nfor a ", 100*(1-max_risk), 
+                 "% ", "Confidence Interval on a log scale"))
+
+  # you could also plot it on log scale, in which case you would get a linear relationship
+```

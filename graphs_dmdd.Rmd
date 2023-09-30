@@ -35,7 +35,7 @@ list_df <- lapply(sheets, function(x) {          # Read all sheets to list
   as.data.frame(read_excel("/Users/stringarisa/Downloads/4_Oct_2022_new/s_means_sdqs_SY1.xlsx", sheet = x)) } )
 
 # name it based on the loop for outcome names that you had in your original code, in this case
-names(list_df) <- c("emotion", "conduct", "hyperactivity", "impact", "peer") 
+names(list_df) <- c("emotion", "hyperactivity", "conduct", "impact", "peer") 
 
 
 
@@ -114,7 +114,7 @@ list_df <- lapply(sheets, function(x) {          # Read all sheets to list
   as.data.frame(read_excel("/Users/stringarisa/Downloads/4_Oct_2022_new/s_means_sdqs_SY2.xlsx", sheet = x)) } )
 
 # name it based on the loop for outcome names that you had in your original code, in this case
-names(list_df) <- c("emotion", "conduct", "hyperactivity", "impact", "peer") 
+names(list_df) <- c("emotion", "hyperactivity", "conduct", "impact", "peer") 
 
 
 
@@ -185,7 +185,7 @@ dev.off()
 # same thing for PY1, plot SDQs 
 ### extract the excels sheets in cleverer way than I had done before!!!
 library(readxl)
-sheets <- excel_sheets("/Users/stringarisa/Downloads/4_Oct_2022_new/s_means_sdqs_PY1.xlsx")           # Get sheet names
+sheets <- excel_sheets("/Users/stringarisa/Downloads/4_Oct_2022_new/p_means_sdqs_PY1.xlsx")           # Get sheet names
 sheets 
 
 # create a list containing a df for each sheet
@@ -193,7 +193,7 @@ list_df <- lapply(sheets, function(x) {          # Read all sheets to list
   as.data.frame(read_excel("/Users/stringarisa/Downloads/4_Oct_2022_new/p_means_sdqs_PY1.xlsx", sheet = x)) } )
 
 # name it based on the loop for outcome names that you had in your original code, in this case
-names(list_df) <- c("emotion", "conduct", "hyperactivity", "impact", "peer") 
+names(list_df) <- c("emotion", "hyperactivity", "conduct", "impact", "peer") 
 
 
 
@@ -216,7 +216,7 @@ for (i in 1:length(list_df)){
   levels(list_df[[i]]$PY1dic) = c("no", "yes")
   
   list_df[[i]]$adolescent <- factor(list_df[[i]]$adolescent)
-  levels(list_df[[i]]$adolescent) = c("child", "adolescent")
+  levels(list_df[[i]]$adolescent) = c("adolescent", "child")
 }
 
 
@@ -279,7 +279,7 @@ list_df <- lapply(sheets, function(x) {          # Read all sheets to list
   as.data.frame(read_excel("/Users/stringarisa/Downloads/4_Oct_2022_new/p_means_sdqs_PY2.xlsx", sheet = x)) } )
 
 # name it based on the loop for outcome names that you had in your original code, in this case
-names(list_df) <- c("emotion", "conduct", "hyperactivity", "impact", "peer") 
+names(list_df) <- c("emotion", "hyperactivity", "conduct", "impact", "peer") 
 
 
 
@@ -302,7 +302,7 @@ for (i in 1:length(list_df)){
   levels(list_df[[i]]$PY2dic) = c("no", "yes")
   
   list_df[[i]]$adolescent <- factor(list_df[[i]]$adolescent)
-  levels(list_df[[i]]$adolescent) = c("child", "adolescent")
+  levels(list_df[[i]]$adolescent) = c("adolescent", "child")
 }
 
 
