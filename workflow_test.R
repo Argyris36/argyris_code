@@ -10,7 +10,7 @@ wflow_git_push(dry_run = TRUE)
 wflow_open("analysis/first-analysis.Rmd")
 wflow_build()
 wflow_status()
-wflow_publish(c("analysis/index.Rmd", "analysis/first-analysis.Rmd"),
+wflow_publish(c("analysis/index.Rmd", "analysis/first-analysis.Rmd", "data/df_wflow.xlsx"),
               "Add my first analysis")
 wflow_build()
 wflow_git_push()
