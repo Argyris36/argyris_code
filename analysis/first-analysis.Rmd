@@ -1,0 +1,18 @@
+---
+title: "first-analysis"
+author: "Argyris36"
+date: "2023-09-30"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+## Introduction
+
+```{r}
+print("hello world")
+
+df_wflow <- data.frame(new_var_a = rnorm(10, 0, 1), new_var_b = rnorm(10, 1, 2))
+```
+
+
