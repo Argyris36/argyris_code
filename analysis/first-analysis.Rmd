@@ -13,6 +13,9 @@ editor_options:
 print("hello world")
 
 df_wflow <- data.frame(new_var_a = rnorm(10, 0, 1), new_var_b = rnorm(10, 1, 2))
+
+
+openxlsx:: write.xlsx(df_wflow, file = "df_wflow.xlsx", rowNames = TRUE)
 ```
 
 
