@@ -13,3 +13,4 @@ wflow_status()
 wflow_publish(c("analysis/index.Rmd", "analysis/first-analysis.Rmd"),
               "Add my first analysis")
 wflow_build()
+wflow_git_push()
