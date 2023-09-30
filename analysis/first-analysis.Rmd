@@ -22,3 +22,8 @@ hist(df_wflow$new_var_a)
 ```
 
 
+```{r}
+df_wflow_diff_location <- readxl:: read_excel("data/df_wflow.xlsx")
+plot(df_wflow$new_var_a)
+```
+
