@@ -474,16 +474,16 @@ This reproducible <a href="https://rmarkdown.rstudio.com">R Markdown</a> analysi
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomArgyris36argyriscodetree78be46522b6e0d1409e7a3f25083b06359fc7772targetblank78be465a"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Repository version:</strong> <a href="https://github.com/Argyris36/argyris_code/tree/78be46522b6e0d1409e7a3f25083b06359fc7772" target="_blank">78be465</a> </a>
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomArgyris36argyriscodetree54ac2ed8fe6da26c5976af5196f9f4f730cdbc44targetblank54ac2eda"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Repository version:</strong> <a href="https://github.com/Argyris36/argyris_code/tree/54ac2ed8fe6da26c5976af5196f9f4f730cdbc44" target="_blank">54ac2ed</a> </a>
 </p>
 </div>
-<div id="strongRepositoryversionstrongahrefhttpsgithubcomArgyris36argyriscodetree78be46522b6e0d1409e7a3f25083b06359fc7772targetblank78be465a" class="panel-collapse collapse">
+<div id="strongRepositoryversionstrongahrefhttpsgithubcomArgyris36argyriscodetree54ac2ed8fe6da26c5976af5196f9f4f730cdbc44targetblank54ac2eda" class="panel-collapse collapse">
 <div class="panel-body">
 <p>
 Great! You are using Git for version control. Tracking code development and connecting the code version to the results is critical for reproducibility.
 </p>
 <p>
-The results in this page were generated with repository version <a href="https://github.com/Argyris36/argyris_code/tree/78be46522b6e0d1409e7a3f25083b06359fc7772" target="_blank">78be465</a>. See the <em>Past versions</em> tab to see a history of the changes made to the R Markdown and HTML files.
+The results in this page were generated with repository version <a href="https://github.com/Argyris36/argyris_code/tree/54ac2ed8fe6da26c5976af5196f9f4f730cdbc44" target="_blank">54ac2ed</a>. See the <em>Past versions</em> tab to see a history of the changes made to the R Markdown and HTML files.
 </p>
 <p>
 Note that you need to be careful to ensure that all relevant files for the analysis have been committed to Git prior to generating the results (you can use <code>wflow_publish</code> or <code>wflow_git_commit</code>). workflowr only checks the R Markdown file, but you know if there are other scripts or data files that it depends on. Below is the status of the Git repository when the results were generated:
@@ -500,6 +500,7 @@ Untracked files:
     Untracked:  argyris_code/
 
 Unstaged changes:
+    Modified:   df_wflow.xlsx
     Modified:   workflow_test.R
 
 </code></pre>
@@ -539,6 +540,40 @@ Message
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/Argyris36/argyris_code/blob/54ac2ed8fe6da26c5976af5196f9f4f730cdbc44/analysis/first-analysis.Rmd" target="_blank">54ac2ed</a>
+</td>
+<td>
+Argyris36
+</td>
+<td>
+2023-09-30
+</td>
+<td>
+Add my first analysis
+</td>
+</tr>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/Argyris36/argyris_code/f9e1876ce732725e8ab47ddaa43d2757cf7682bc/docs/first-analysis.html" target="_blank">f9e1876</a>
+</td>
+<td>
+Argyris36
+</td>
+<td>
+2023-09-30
+</td>
+<td>
+Build site.
+</td>
+</tr>
 <tr>
 <td>
 Rmd
@@ -727,6 +762,48 @@ openxlsx:: write.xlsx(df_wflow, file = &quot;df_wflow.xlsx&quot;, rowNames = TRU
 
 hist(df_wflow$new_var_a)</code></pre>
 <p><img src="figure/first-analysis.Rmd/unnamed-chunk-1-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-unnamed-chunk-1-1">
+Past versions of unnamed-chunk-1-1.png
+</button>
+</p>
+<div id="fig-unnamed-chunk-1-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/Argyris36/argyris_code/blob/f9e1876ce732725e8ab47ddaa43d2757cf7682bc/docs/figure/first-analysis.Rmd/unnamed-chunk-1-1.png" target="_blank">f9e1876</a>
+</td>
+<td>
+Argyris36
+</td>
+<td>
+2023-09-30
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<pre class="r"><code>df_wflow_diff_location &lt;- readxl:: read_excel(&quot;data/df_wflow.xlsx&quot;)</code></pre>
+<pre><code>New names:
+• `` -&gt; `...1`</code></pre>
+<pre class="r"><code>plot(df_wflow$new_var_a)</code></pre>
+<p><img src="figure/first-analysis.Rmd/unnamed-chunk-2-1.png" width="672" style="display: block; margin: auto;" /></p>
 <br>
 <p>
 <button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
@@ -753,18 +830,18 @@ other attached packages:
 [1] workflowr_1.7.1
 
 loaded via a namespace (and not attached):
- [1] zip_2.2.0        Rcpp_1.0.9       highr_0.9        compiler_4.1.2  
- [5] pillar_1.8.1     bslib_0.4.0      later_1.3.0      git2r_0.32.0    
- [9] jquerylib_0.1.4  tools_4.1.2      getPass_0.2-2    digest_0.6.29   
-[13] jsonlite_1.8.2   evaluate_0.17    tibble_3.1.8     lifecycle_1.0.3 
-[17] pkgconfig_2.0.3  rlang_1.1.1      openxlsx_4.2.5   cli_3.4.1       
-[21] rstudioapi_0.14  yaml_2.3.5       xfun_0.33        fastmap_1.1.0   
-[25] httr_1.4.4       stringr_1.4.1    knitr_1.40       fs_1.5.2        
-[29] vctrs_0.6.2      sass_0.4.2       rprojroot_2.0.3  glue_1.6.2      
-[33] R6_2.5.1         processx_3.7.0   fansi_1.0.3      rmarkdown_2.17  
-[37] callr_3.7.1      magrittr_2.0.3   whisker_0.4      ps_1.7.1        
-[41] promises_1.2.0.1 htmltools_0.5.3  httpuv_1.6.4     utf8_1.2.2      
-[45] stringi_1.7.8    cachem_1.0.6    </code></pre>
+ [1] zip_2.2.0        Rcpp_1.0.9       cellranger_1.1.0 highr_0.9       
+ [5] compiler_4.1.2   pillar_1.8.1     bslib_0.4.0      later_1.3.0     
+ [9] git2r_0.32.0     jquerylib_0.1.4  tools_4.1.2      getPass_0.2-2   
+[13] digest_0.6.29    jsonlite_1.8.2   evaluate_0.17    tibble_3.1.8    
+[17] lifecycle_1.0.3  pkgconfig_2.0.3  rlang_1.1.1      openxlsx_4.2.5  
+[21] cli_3.4.1        rstudioapi_0.14  yaml_2.3.5       xfun_0.33       
+[25] fastmap_1.1.0    httr_1.4.4       stringr_1.4.1    knitr_1.40      
+[29] fs_1.5.2         vctrs_0.6.2      sass_0.4.2       rprojroot_2.0.3 
+[33] glue_1.6.2       R6_2.5.1         processx_3.7.0   fansi_1.0.3     
+[37] readxl_1.3.1     rmarkdown_2.17   callr_3.7.1      magrittr_2.0.3  
+[41] whisker_0.4      ps_1.7.1         promises_1.2.0.1 htmltools_0.5.3 
+[45] httpuv_1.6.4     utf8_1.2.2       stringi_1.7.8    cachem_1.0.6    </code></pre>
 </div>
 </div>
 
