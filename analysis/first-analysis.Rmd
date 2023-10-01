@@ -27,3 +27,10 @@ df_wflow_diff_location <- readxl:: read_excel("data/df_wflow.xlsx")
 plot(df_wflow$new_var_a)
 ```
 
+```{r}
+#remember you have to set the raw file 
+df_wflow_from_git = openxlsx:: read.xlsx("https://github.com/Argyris36/argyris_code/raw/main/df_wflow.xlsx")
+plot(df_wflow_from_git$new_var_a, df_wflow_from_git$new_var_b)
+```
+
+
