@@ -15,4 +15,4 @@ wflow_publish(c("analysis/index.Rmd", "analysis/first-analysis.Rmd"),
 wflow_build()
 wflow_git_push()
 
-#git push -u origin main
+#git push -u origin main  # do this via terminal
