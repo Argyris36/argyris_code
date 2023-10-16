@@ -10,9 +10,16 @@ wflow_git_push(dry_run = TRUE)
 wflow_open("analysis/first-analysis.Rmd")
 wflow_build()
 wflow_status()
-wflow_publish(c("analysis/index.Rmd", "analysis/first-analysis.Rmd"),
+wflow_publish(c("analysis/index.Rmd", "analysis/testing_CV.Rmd"),
               "Add my first analysis")
 wflow_build()
 wflow_git_push()
 
 #git push -u origin main  # do this via terminal
+
+
+setwd("/Users/stringarisa/my_project/my_project")
+wflow_start("my_project", git = TRUE, existing= TRUE)
+wflow_publish(c("analysis/index.Rmd", "analysis/testing_CV.Rmd"),
+              "Add my first analysis")
+wflow_build()

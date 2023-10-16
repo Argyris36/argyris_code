@@ -1,6 +1,9 @@
-pop_var <- seq(from = 1000, to = 2000, length.out= 17) 
+pop_var <- seq(from = 1000, to = 10000, length.out= 17) 
 #response <- 0.9
 side_effect <- .1
+
+
+
 
 response <-   seq(from = 0.5, to = 0.1, by = -.025)
   
@@ -16,18 +19,12 @@ for (i in 1: length(response)){
 responders[i] <- pop_var[i]*response[i]
 non_responders[i] <- pop_var[i]-responders[i]
 
-responders_SE[i] <- responders[i]*0.1
+responders_SE[i] <- responders[i]*side_effect 
 responders_no_SE[i] <- responders[i] -responders_SE[i]
 
-non_responders_SE[i] <- non_responders[i]*0.1
+non_responders_SE[i] <- non_responders[i]*side_effect 
 non_responders_no_SE[i] <- non_responders[i]-non_responders_SE[i]
 
-responders
-non_responders
-responders_SE
-responders_no_SE
-non_responders_SE
-non_responders_no_SE
 
 
 ratio_responders_no_SE_all[i] <- responders_no_SE[i]/(responders_SE[i]+non_responders_SE[i]+non_responders_no_SE[i])
@@ -63,5 +60,4 @@ ratio_over_response_rate <- df_response_ratio%>%
   scale_x_reverse()
 ratio_over_response_rate
 
-dilution_of_response <-  ratio_over_prevalence / ratio_over_response_rate
-dilution_of_response
+
