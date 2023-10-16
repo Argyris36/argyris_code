@@ -1,64 +1,49 @@
-#compare three group by functions: a base one, my own loop solution, and the tidyverse one
 df <- data.frame(
-  grp = sample(2, 100000, replace = TRUE),
-  a = rnorm(100000),
-  b = rnorm(100000),
-  c = rnorm(100000),
-  d = rnorm(100000)
+  grp = sample(2, 1000000, replace = TRUE),
+  a = rnorm(1000000),
+  b = rnorm(1000000),
+  c = rnorm(1000000),
+  d = rnorm(1000000)
 )
 df
 
-# standard base solution
-st_time_std_base <- Sys.time()
 
-agg <-lst ()
-the_names <- colnames(df[, 2:ncol(df)])
-for(i in 1: ncol(df-1)){
-agg[[i]] <- aggregate(as.formula(paste(the_names[i], paste("grp"), sep = "~")), 
-                      df, function(x) c( n = length(x), mean = mean(x), sd = sd(x), min = min(x), max = max(x)))
 
-}
-agg
 
-end_time_std_base <- Sys.time()
+# my solution -------------------------------------------------------------
 
-time.taken_std_base <- round(end_time_std_base - st_time_std_base,2)
-
-# my solution
 st_time_my <- Sys.time()
-
-tst <- lst () 
-lst_dfs <- list()
+# write a quick function that does whatever you want to summarise
 multiple.func <- function(x) {
   c( mean = mean(x), sd = sd(x), min = min(x), max = max(x))
+  
 }
+
+#two empty vectors
+test1 <- list()
+test2 <- list()
+
+#the loop
 for(i in 1:length(unique(df$grp))){
   
-lst_dfs[[i]] <-   df[which(df$grp==i),,drop= FALSE ]
+  test1[[i]] <-  df[df[1]==i, ]
   
-tst[[i]]<-  c(
-              i,
-              nrow((lst_dfs[[i]])), 
-              sapply(lst_dfs[[i]][,2:ncol(df)], multiple.func )
-          
-            
-)
-
-  names(tst[[i]])<- c("grp", "n",paste0(rep(c("mean_", "sd_", "min_", "max_"), 4), 
-                                                   rep(colnames(df[2:ncol(df)]), each = 4) ))
+  test2[[i]]<- sapply(test1[[i]][,2:ncol(df)], multiple.func)
+  
 }
-tst
 
-
-df_tst <- cbind(data.frame(tst[[1]]), data.frame(tst[[2]]))
+test2
 
 end_time_my <- Sys.time()
 
 time.taken_my <- round(end_time_my - st_time_my,2)
-# tidyverse solution
 
+
+
+
+
+# the tidyverse solution --------------------------------------------------
 start_time_tidy <- Sys.time()
-
 df %>% 
   group_by(grp) %>% 
   summarize(
@@ -70,10 +55,9 @@ end_time_tidy <- Sys.time()
 
 time.taken_tidy <- round(end_time_tidy- start_time_tidy,2)
 
-
-time.taken_std_base
 time.taken_my
 time.taken_tidy
+
 
 
 #### a problem of plotting
