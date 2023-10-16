@@ -1,10 +1,10 @@
 #compare three group by functions: a base one, my own loop solution, and the tidyverse one
 df <- data.frame(
-  grp = sample(2, 1000, replace = TRUE),
-  a = rnorm(1000),
-  b = rnorm(1000),
-  c = rnorm(1000),
-  d = rnorm(1000)
+  grp = sample(2, 100000, replace = TRUE),
+  a = rnorm(100000),
+  b = rnorm(100000),
+  c = rnorm(100000),
+  d = rnorm(100000)
 )
 df
 
@@ -111,17 +111,21 @@ simulated_df_all_subjects$trials <- rep(1:30, 10)
 dim(simulated_df_all_subjects)
 
 
+head(simulated_df_all_subjects, 40)
+
+
 # here I get correlations across each subject
 correlations_a_b <- 0
 for(i in 1: length(unique(simulated_df_all_subjects$id))){
   
-  correlations_a_b[i] <-  cor(simulated_df_all_subjects[a_df$id == i, ]$var_a, simulated_df_all_subjects[a_df$id == i, ]$var_b) 
+  correlations_a_b[i] <-  cor(simulated_df_all_subjects[simulated_df_all_subjects$id == i, ]$var_a, simulated_df_all_subjects[simulated_df_all_subjects$id == i, ]$var_b) 
   
 }
-
+correlations_a_b
 mean(correlations_a_b )
 
 # here are the correlations depicted
+library(tidyverse)
 simulated_df_all_subjects %>% 
   ggplot(aes(x = var_a, y = var_b)) +
   geom_point() +
@@ -146,7 +150,7 @@ plot(simulated_df_all_subjects[simulated_df_all_subjects$id==i, ]$var_a,
   abline(lm(simulated_df_all_subjects[simulated_df_all_subjects$id==i, ]$var_a~ 
             simulated_df_all_subjects[simulated_df_all_subjects$id==i,]$var_b ), col="red"))
   
-  text(x=0, y=-5.5, labels = paste("r =",  round(cor(simulated_df_all_subjects[a_df$id == i, ]$var_a, simulated_df_all_subjects[a_df$id == i, ]$var_b),2)))
+  text(x=0, y=-5.5, labels = paste("r =",  round(cor(simulated_df_all_subjects[simulated_df_all_subjects$id == i, ]$var_a, simulated_df_all_subjects[simulated_df_all_subjects$id == i, ]$var_b),2)))
 
   mtext("correlations between the two variables per individual", side = 3, line = - 1.5, outer = TRUE)
   
@@ -165,17 +169,17 @@ simulated_df_all_subjects_long %>%
 # using base
 
 par(mfrow=c(3,1))
-pdf("rplot.pdf") 
+#pdf("rplot.pdf") 
 variables <- unique(simulated_df_all_subjects_long$var_type)
 for(i in 1: length(variables)){
   
  plot( simulated_df_all_subjects_long[variables=i]$trials, simulated_df_all_subjects_long[variables=i]$values,
-       main = variabls[i],
+       main = variables[i],
        xlab = "trials", ylab = "value", ylim = c(-8,11), col = "#2E9FDF", frame = "FALSE"
        )
   
 }
-dev.off()
+#dev.off()
 
 # if you need to correlate variables using the long dataset, it is very simple
 cor(simulated_df_all_subjects_long[simulated_df_all_subjects_long$var_type == "var_a", ]$values, 
