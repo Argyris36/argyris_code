@@ -22,7 +22,7 @@ multiple.func <- function(x) {
 #two empty vectors
 test1 <- list()
 test2 <- list()
-
+#correlations_by_grp <- list()
 #the loop
 for(i in 1:length(unique(df$grp))){
   
@@ -30,9 +30,12 @@ for(i in 1:length(unique(df$grp))){
   
   test2[[i]]<- sapply(test1[[i]][,2:ncol(df)], multiple.func)
   
+  #correlations_by_grp[[i]] <- cor(test1[[i]][,2:ncol(df)])
+  
 }
 
 test2
+#correlations_by_grp
 
 end_time_my <- Sys.time()
 
@@ -40,10 +43,15 @@ time.taken_my <- round(end_time_my - st_time_my,2)
 
 
 
+# correlation amongst all
+
+
+
 
 
 # the tidyverse solution --------------------------------------------------
 start_time_tidy <- Sys.time()
+library(tidyverse)
 df %>% 
   group_by(grp) %>% 
   summarize(
@@ -55,10 +63,62 @@ end_time_tidy <- Sys.time()
 
 time.taken_tidy <- round(end_time_tidy- start_time_tidy,2)
 
+
+
+
+
+
+
+
+# The tapply solution -----------------------------------------------------
+st_time_tapply <- Sys.time()
+
+grouped_results <- list()
+for (i in 1: ncol(df) ){
+ 
+grouped_results[[i]] <-  with (df, tapply(df[,i], list(grp), FUN=multiple.func))
+
+}
+
+names(grouped_results) <- colnames(df[1:ncol(df)])
+
+st_end_tapply <- Sys.time()
+time.taken_tapply <- round(st_end_tapply - st_time_tapply,2)
+
+
+####another tapply solution!!!!!
+beginning <- Sys.time()
+lets_see <- lapply(df, function(x) with (df, tapply(x, list(grp), FUN=multiple.func))) # a fantastic one liner
+ending <- Sys.time()
+ending - beginning
+
+lets_see 
+
 time.taken_my
 time.taken_tidy
+time.taken_tapply
 
 
+###understand these
+take_it_up <- list()
+for(i in 1:5){
+  
+  take_it_up [[i]] <- data.frame(with(df, tapply(df[,i], grp, multiple.func)) )
+
+}
+reduce(full_join , take_it_up)
+
+
+
+xx <- data.frame(group = rep(1:4, 100), a = rnorm(400) , b = rnorm(400) )
+head(xx)
+
+
+DataCov <- do.call( rbind, lapply( split(xx, xx$group),
+                                   function(x) data.frame(group=x$group[1], mCov=cov(x$a, x$b)) ) )
+
+DataCov
+######
 
 #### a problem of plotting
 
