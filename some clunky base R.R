@@ -1,53 +1,63 @@
+
+# -------------------------------------------------------------------------
+
+# doing stats by groups in r ----------------------------------------------
+
+# -------------------------------------------------------------------------
+
+
+
+
+# example dataframe -------------------------------------------------------
+
+
 df <- data.frame(
-  grp = sample(2, 1000000, replace = TRUE),
-  a = rnorm(1000000),
-  b = rnorm(1000000),
-  c = rnorm(1000000),
-  d = rnorm(1000000)
+  grp = sample(2, 100, replace = TRUE),
+  a = rnorm(100),
+  b = rnorm(100),
+  c = rnorm(100),
+  d = rnorm(100)
 )
 df
 
 
 
 
-# my solution -------------------------------------------------------------
+# create a function with lots of parameters -------------------------------
 
-st_time_my <- Sys.time()
 # write a quick function that does whatever you want to summarise
 multiple.func <- function(x) {
   c( mean = mean(x), sd = sd(x), min = min(x), max = max(x))
   
 }
 
+
+
+
+# my original solution -------------------------------------------------------------
+st_time_my <- Sys.time()
+
 #two empty vectors
 test1 <- list()
 test2 <- list()
-#correlations_by_grp <- list()
+correlations_by_grp <- list() # in case you also wanted to do correlations by group
 #the loop
 for(i in 1:length(unique(df$grp))){
   
   test1[[i]] <-  df[df[1]==i, ]
   
-  test2[[i]]<- sapply(test1[[i]][,2:ncol(df)], multiple.func)
+  test2[[i]]<- data.frame(sapply(test1[[i]][,2:ncol(df)], multiple.func))
   
-  #correlations_by_grp[[i]] <- cor(test1[[i]][,2:ncol(df)])
+  correlations_by_grp[[i]] <- cor(test1[[i]][,2:ncol(df)]) # in case you also wanted to do correlations by group
   
 }
 
-test2
-#correlations_by_grp
+test2 # this is a very elegant solution; only downside is that it would be cumbersome to do more than one by group
+correlations_by_grp
 
 end_time_my <- Sys.time()
 
 time.taken_my <- round(end_time_my - st_time_my,2)
-
-
-
-# correlation amongst all
-
-
-
-
 
 # the tidyverse solution --------------------------------------------------
 start_time_tidy <- Sys.time()
@@ -63,40 +73,81 @@ end_time_tidy <- Sys.time()
 
 time.taken_tidy <- round(end_time_tidy- start_time_tidy,2)
 
+time.taken_tidy
 
 
+# this is a good solution but not flexible in terms of functions that can be used.
 
 
-
-
-
-# The tapply solution -----------------------------------------------------
+# my first tapply solution -----------------------------------------------------
 st_time_tapply <- Sys.time()
 
 grouped_results <- list()
 for (i in 1: ncol(df) ){
  
-grouped_results[[i]] <-  with (df, tapply(df[,i], list(grp), FUN=multiple.func))
+grouped_results[[i]] <-  data.frame(rep(paste0("grp_", colnames(df[,i, drop=F])),2),
+                                        with (df, tapply(df[,i], list(grp), FUN=multiple.func)))
 
 }
+grouped_results
+df_of_grouped_data <- do.call("rbind",grouped_results)
+
+
+df_of_grouped_data 
 
 names(grouped_results) <- colnames(df[1:ncol(df)])
 
 st_end_tapply <- Sys.time()
 time.taken_tapply <- round(st_end_tapply - st_time_tapply,2)
+time.taken_tapply
+
+df_for_tapply_output <- data.frame(with(df,tapply(a, list(grp), multiple.func)))
+
+# comment: quite lengthy but works well and can handle more than one group
 
 
-####another tapply solution!!!!!
+
+####most elegant tapply solution!!!!!
 beginning <- Sys.time()
-lets_see <- lapply(df, function(x) with (df, tapply(x, list(grp), FUN=multiple.func))) # a fantastic one liner
+lets_see <- do.call("rbind",lapply(df[2:ncol(df)], function(x) data.frame(with (df, tapply(x, list(grp), FUN=multiple.func))))) # a fantastic one liner
+lets_see
+
+# this is by far the most elegant and most versatile solution
+# only downside is that it comes out as a list.
+
+
 ending <- Sys.time()
 ending - beginning
 
-lets_see 
 
-time.taken_my
-time.taken_tidy
-time.taken_tapply
+
+
+# now try some solutions with two groups ----------------------------------
+
+
+
+df_two_grp <- data.frame(
+  grp_1 = rep(c("boy", "girl"), 50),
+  grp_2 =  sample(c("dep", "non_dep"), 100, replace = TRUE),
+  a = rnorm(100),
+  b = rnorm(100),
+  c = rnorm(100),
+  d = rnorm(100)
+)
+head(df_two_grp)
+
+#### using the elegant tapply solution above. Notice I have turned it into a dataframe
+lets_see_2 <- do.call("rbind", lapply(df_two_grp[3:ncol(df_two_grp)], function(x) data.frame(with (df_two_grp, tapply(x, list(grp_1, grp_2), FUN=multiple.func)) )))# a fantastic one liner
+
+# this does work well
+
+
+
+# correlations by groups --------------------------------------------------
+
+
+# correlation by two groups
+do.call("rbind",lapply(split(df_two_grp, list(df_two_grp$grp_1, df_two_grp$grp_2)), function(x) data.frame(cor(df_two_grp$a, df_two_grp$b))))
 
 
 ###understand these
@@ -107,7 +158,7 @@ for(i in 1:5){
 
 }
 reduce(full_join , take_it_up)
-
+take_it_up 
 
 
 xx <- data.frame(group = rep(1:4, 100), a = rnorm(400) , b = rnorm(400) )
@@ -118,6 +169,15 @@ DataCov <- do.call( rbind, lapply( split(xx, xx$group),
                                    function(x) data.frame(group=x$group[1], mCov=cov(x$a, x$b)) ) )
 
 DataCov
+
+
+
+lapply(split(df, df$grp), function(x) cor(df$a, df$b)) 
+
+lm_test <- lapply(split(df, df$grp), function(x) lm(x$a~x$b))
+
+lm_test$"1"[[1]][2]
+
 ######
 
 #### a problem of plotting
