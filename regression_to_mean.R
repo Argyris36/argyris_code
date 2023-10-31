@@ -8,8 +8,19 @@ mean_mfq = 5
 sd_mfq = 4
 
 
-all_values_1 <- truncnorm::rtruncnorm(n_all, mfq_min, mfq_max, mean_mfq, sd_mfq) # generate a truncated normal 
+all_values_1 <- data.frame(values = truncnorm::rtruncnorm(n_all, mfq_min, mfq_max, mean_mfq, sd_mfq)) # generate a truncated normal 
                                                 #distribution emulating the short mfq values
+library(RColorBrewer)
+
+all_values_1 %>% 
+  ggplot(aes(x= values)) +
+  geom_histogram(bins =20, fill = brewer.pal(8, "Blues")[4])+
+  ggtitle("distribution of depression scores")+
+  geom_vline(xintercept = 10, linetype = "dashed", colour = "red") +
+  annotate("text", x = 11.5, y = 8, label = "Depression Caseness \n Threshold", color = "red", size = 4, angle = 90, vjust = -0.5) +
+  theme_minimal()+
+  ylab("")
+  
 dichot_values <- ifelse(all_values_1>=10, 1, 0) # dichotomise values using 10 as a threshold
 
 df_all_values <- data.frame(all_values_1, dichot_values, x_var = rep(0,n_all)) # create dataset that 
