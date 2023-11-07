@@ -1,5 +1,9 @@
-Dataset_for_Argyris_25_10_23 <- read_excel("~/Downloads/Dataset_for_Argyris_25.10.23.xlsx")
 library(tidyverse)
+library(readxl)
+library(lme4)
+
+Dataset_for_Argyris_25_10_23 <- read_excel("~/Downloads/Dataset_for_Argyris_25.10.23.xlsx")
+
 Dataset_for_Argyris_25_10_23 <- Dataset_for_Argyris_25_10_23 %>% 
   mutate(efficacy = as.numeric(active_response_rate)-as.numeric(control_response_rate)) 
 
@@ -175,18 +179,51 @@ Dataset_for_Argyris_25_10_23_long %>%
 
 #slope graph with means and CIs MY FAVOURITE
 Dataset_for_Argyris_25_10_23_long %>% 
-ggplot(aes(x = type_response_rate, y = response_rate)) + 
-  #geom_boxplot()+ 
-
-  stat_summary(fun.data = "mean_cl_boot", colour = "red", size = 1)+
+  ggplot(aes(x = type_response_rate, y = response_rate)) + 
   geom_line(aes(group = study), size=1, color='gray', alpha=0.6)+ 
-
+  
   geom_point(aes(group=study),size=5,shape=21, alpha = 0.4)+
-  facet_wrap(~psy_or_med)
+  facet_wrap(~psy_or_med)+
+  ggtitle("Response rates of depressed adolescents to medication and psychotherapy",
+          subtitle = "data from RCTs INCLUDING WL; means and 95%CIs in red")+
+  ylab("Response Rate %")+
+  scale_x_discrete(breaks=c("active_response_rate","control_response_rate"),
+                   labels=c("response to active", "response to control"))+
+  theme(axis.text.x.bottom =  element_text(angle = 45, size = 12, vjust = 0.9, hjust = 1))+
+  theme(strip.text.x = element_text(size = rel(1.5), face = "bold"))+
+  theme(plot.title = element_text(size = rel(2)))+
+  theme(plot.subtitle = element_text(size = rel(1.5)))+
+  theme(axis.title.y = element_text(size= rel(1.5)))+
+  xlab(NULL) +
+  stat_summary(aes(y = response_rate, group = psy_or_med), 
+               fun.data = "mean_cl_boot", colour = "red", size = 1, geom= "line")+
+  stat_summary(aes(y = response_rate, group = psy_or_med), 
+               fun.data = "mean_cl_boot", colour = "red", size = 1)
 
 
-
-
+#slope graph with means and CIs without WL MY OTHER FAVOURITE
+Dataset_for_Argyris_25_10_23_long %>% 
+  filter(!control_type=="wl") %>% 
+  ggplot(aes(x = type_response_rate, y = response_rate)) + 
+  geom_line(aes(group = study), size=1, color='gray', alpha=0.6)+ 
+  
+  geom_point(aes(group=study),size=5,shape=21, alpha = 0.4)+
+  facet_wrap(~psy_or_med)+
+  ggtitle("Response rates of depressed adolescents to medication and psychotherapy",
+          subtitle = "data from RCTs EXCLUDING WL; means and 95%CIs in red")+
+  ylab("Response Rate %")+
+  scale_x_discrete(breaks=c("active_response_rate","control_response_rate"),
+                   labels=c("response to active", "response to control"))+
+  theme(axis.text.x.bottom =  element_text(angle = 45, size = 12, vjust = 0.9, hjust = 1))+
+  theme(strip.text.x = element_text(size = rel(1.5), face = "bold"))+
+  theme(plot.title = element_text(size = rel(2)))+
+  theme(plot.subtitle = element_text(size = rel(1.5)))+
+  theme(axis.title.y = element_text(size= rel(1.5)))+
+  xlab(NULL) +
+    stat_summary(aes(y = response_rate, group = psy_or_med), 
+                   fun.data = "mean_cl_boot", colour = "red", size = 1, geom= "line")+
+stat_summary(aes(y = response_rate, group = psy_or_med), 
+                   fun.data = "mean_cl_boot", colour = "red", size = 1)
 
 # now the LMEs
 model_null<- lmer(response_rate ~ 1 + (1| study) , data = Dataset_for_Argyris_25_10_23_long)
@@ -204,6 +241,38 @@ summary(model_with_type_by_psy_or_med_RE)
 
 
 
-# examine just the controls
+# 
+
+df_for_perm <- Dataset_for_Argyris_25_10_23_long[Dataset_for_Argyris_25_10_23_long$type_response_rate=="control_response_rate", ]
+n_shuffle <- 1000
+vec_for_perm <- 0
+shuffled_data<-list()
+
+for (i in 1: n_shuffle){
+
+  
+shuffled_data <-lapply(1:n_shuffle, function(x) df_for_perm[sample(nrow(df_for_perm),  replace = TRUE),])
+
+vec_for_perm[i] <- t.test(df_for_perm$response_rate~ shuffled_data[[i]]$psy_or_med,  na.rm = T)$estimate[[1]]-
+                   t.test(df_for_perm$response_rate~ shuffled_data[[i]]$psy_or_med,  na.rm = T)$estimate[[2]]
+    
+}
+mean(vec_for_perm) # these are the permuted values for the difference in response rates between groups. The null distribution
+
+
+observed_difference <- t.test(df_for_perm$response_rate~ df_for_perm$psy_or_med,  na.rm = T)$estimate[[1]]-
+    t.test(df_for_perm$response_rate~ df_for_perm$psy_or_med,  na.rm = T)$estimate[[2]] # this is the observed difference
+
+#this depicts the difference: 
+  df_plot_perm <- data.frame(vec_for_perm)
+
+  df_plot_perm  %>% 
+    ggplot(aes(vec_for_perm))+
+    geom_histogram(binwidth = 2)+ 
+    geom_vline(xintercept = observed_difference, colour = "red", linetype = "dashed", size = 3)+
+    ggtitle("Difference between medication and psychotherapy control arms", subtitle = "histogram of permutation derived null distribution, red line is observed difference") +
+    theme(plot.title = element_text(size = rel(2)))+
+    theme(plot.subtitle = element_text(size = rel(1.5)))
+
 
 
