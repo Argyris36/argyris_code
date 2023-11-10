@@ -306,12 +306,15 @@ vec_for_perm <- 0
 shuffled_data<-list()
 
 for (i in 1: n_shuffle){
-
   
-shuffled_data <-lapply(1:n_shuffle, function(x) df_for_perm[sample(nrow(df_for_perm),  replace = TRUE),])
-
-vec_for_perm[i] <- t.test(df_for_perm$response_rate~ shuffled_data[[i]]$psy_or_med,  na.rm = T)$estimate[[1]]-
-                   t.test(df_for_perm$response_rate~ shuffled_data[[i]]$psy_or_med,  na.rm = T)$estimate[[2]]
+#shuffled_data <-lapply(1:n_shuffle, function(x) df_for_perm[sample(nrow(df_for_perm),  replace = F),])
+  
+shuffling_function <- function(df){df[sample(nrow(df),  replace = F),]}
+  
+shuffled_dfs <- map(1:n_shuffle, ~shuffling_function(df_for_perm))
+  
+vec_for_perm[i] <- t.test(df_for_perm$response_rate~ shuffled_dfs[[i]]$psy_or_med,  na.rm = T)$estimate[[1]]-
+                   t.test(df_for_perm$response_rate~ shuffled_dfs[[i]]$psy_or_med,  na.rm = T)$estimate[[2]]
     
 }
 mean(vec_for_perm) # these are the permuted values for the difference in response rates between groups. The null distribution
@@ -319,6 +322,8 @@ mean(vec_for_perm) # these are the permuted values for the difference in respons
 
 observed_difference <- t.test(df_for_perm$response_rate~ df_for_perm$psy_or_med,  na.rm = T)$estimate[[1]]-
     t.test(df_for_perm$response_rate~ df_for_perm$psy_or_med,  na.rm = T)$estimate[[2]] # this is the observed difference
+
+
 
 #this depicts the difference: 
   df_plot_perm <- data.frame(vec_for_perm)
