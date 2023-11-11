@@ -274,13 +274,13 @@ plot_psychometrics <- df_psychometrics %>%
   geom_hline(yintercept = 10.5, linetype = "dotted") +
   
   
-  annotate("text", x=2.4, y=7.5, label="Sens = 0.92\nSpec = 0.91") +
+  annotate("text", x=2.4, y=7.9, label="Sens = 0.92\nSpec = 0.91") +
   
-  annotate ("text", x = 2.4, y = 11.5, label = "Sens = 1.00\nSpec = 0.55") +
+  annotate ("text", x = 2.4, y = 1.2, label = "Sens = 1.00\nSpec = 0.55") +
   
-  annotate ("text", x = 2.4, y = 1.5, label = "Sens = 0.18\nSpec = 0.99") +
+  annotate ("text", x = 2.4, y = 11.8, label = "Sens = 0.18\nSpec = 0.99") +
   
-  ggtitle("Values of a rating scale with good discrimination") +
+  ggtitle("A rating scale with good discrimination") +
   
   xlab("disease status") +
   ylab("depression score") 
@@ -398,13 +398,13 @@ plot_psychometrics <- df_psychometrics %>%
   geom_hline(yintercept = 10.5, linetype = "dotted") +
   
   
-  annotate("text", x=2.4, y=11.5, label="Sens = 0.70\nSpec = 0.74") +
+  annotate("text", x=2.4, y=11.7, label="Sens = 0.70\nSpec = 0.74") +
   
-  annotate ("text", x = 2.4, y = 15.5, label = "Sens = 0.91\nSpec = 0.32") +
+  annotate ("text", x = 2.4, y = 2.5, label = "Sens = 0.91\nSpec = 0.32") +
   
-  annotate ("text", x = 2.4, y = 2.5, label = "Sens = 0.50\nSpec = 0.80") +
+  annotate ("text", x = 2.4, y = 16.2, label = "Sens = 0.50\nSpec = 0.80") +
   
-  ggtitle("Values of a rating scale with good discrimination") +
+  ggtitle("A rating scale with poor discrimination") +
   
   xlab("disease status") +
   ylab("depression score") 

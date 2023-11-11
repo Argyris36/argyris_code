@@ -4,7 +4,7 @@ library(lme4)
 
 #Dataset_for_Argyris_25_10_23 <- read_excel("~/Downloads/Dataset_for_Argyris_25.10.23.xlsx")
 
-Dataset_for_Argyris_25_10_23 <- read_excel("~/Downloads/Dataset_for_Argyris_25.10.23 (1).xlsx")
+Dataset_for_Argyris_25_10_23 <- read_excel("~/Downloads/Dataset_for_Argyris_25.10.23-2.xlsx")
 
 Dataset_for_Argyris_25_10_23$study_n <- as.numeric(Dataset_for_Argyris_25_10_23$study_n)
 
@@ -519,3 +519,50 @@ Dataset_for_Argyris_25_10_23_long %>%
     theme(axis.title.x = element_text(size= rel(1.5)))  
   
   
+  
+  if (!require("devtools")) {
+    install.packages("devtools")
+  }
+  devtools::install_github("MathiasHarrer/dmetar")
+  library(meta)  
+  library(dmetar)
+  
+  
+df_for_met_test <- df_for_perm %>% 
+  drop_na() %>% 
+  filter(type_response_rate == "control_response_rate",
+         str_detect(study, "TADS", negate = TRUE)) %>% 
+  mutate(half_n = study_n/2) %>% 
+  mutate(event = (response_rate*half_n)/100, resp_rate = response_rate) %>% 
+  select(study, event, half_n, resp_rate, response_rate, psy_or_med)
+  
+
+  m.prop <- metaprop(event = event,
+                     n = half_n,
+                     studlab = study,
+                     data = df_for_met_test,
+                     method = "GLMM",
+                     sm = "PLOGIT",
+                     fixed = FALSE,
+                     random = TRUE,
+                     hakn = TRUE,
+                     subgroup =  psy_or_med, 
+                     subgroup.name = "psy_or_med",
+                     print.subgroup.name =T, 
+                     test.subgroup = T, 
+                     prediction.subgroup = T,
+                     
+                     title = "test")
+
+summary(m.prop)
+
+pdf(file = "forestplot.pdf", width = 15, height = 20)
+forest.meta(m.prop, 
+            sortvar = TE,
+            prediction = TRUE, 
+            print.tau2 = FALSE,
+            leftlabs = c("Author", "g", "SE"))
+dev.off()
+
+
+
