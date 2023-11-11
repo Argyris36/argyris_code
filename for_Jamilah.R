@@ -662,9 +662,9 @@ for (country in countries) {
   
   # Plot the network using ggraph and ggplot2 with blue colors
   print(ggraph(g, layout = layout) +
-          geom_edge_link(aes(color = weight),  size = 200, arrow = arrow(length = unit(0.25, "cm")), lineend = "round") +
-          geom_node_point(size = 5, color = "black") +
-          geom_node_text(aes(label = name), vjust = 1.5) +  # Add symptom labels
+          geom_edge_link(aes(color = weight, edge_width = 1),  arrow = arrow(length = unit(0.25, "cm")), lineend = "round") +
+          geom_node_point(size = 5, color = "blue") +
+          geom_node_text(aes(label = name), colour = "red", size = 5, vjust = 1.5) +  # Add symptom labels
           scale_color_gradient(low = "blue", high = "blue") +  # Use blue color
           theme_void() +
           ggtitle(paste("Figure 3. Network Visualization:", country)))
