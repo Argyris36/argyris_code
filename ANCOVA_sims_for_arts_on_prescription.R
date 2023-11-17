@@ -122,11 +122,6 @@ df_to_plot %>%
 
 
 
-ancova_sim_func (df_means = df_means, sd_across = sd_T1, 
-                 n_subjects = n_per_arm[i] , number_sims = 1, correlations_across
-                 = within_corr)
-
-
 # # from https://hqlo.biomedcentral.com/articles/10.1186/1477-7525-10-156
 # mean_T1 <- 43.5 # the biggest trial in that list, the PEIP
 # sd_T1 <- 10.4 # from that trial
