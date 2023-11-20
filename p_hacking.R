@@ -84,11 +84,26 @@ how_many_significant_p_values[i] <- sum(simulated_models[[i]]$p.value<0.05)
 }
 how_many_significant_p_values 
   
-simulated_models[[1]]
+model_with_one_sig <- simulated_models[[1]]
 
-simulated_models[[ which(how_many_significant_p_values == max(how_many_significant_p_values )) ]]
+library(openxlsx)
+## Create a new workbook and add a worksheet
+wb <- createWorkbook("Creator of workbook")
+addWorksheet(wb, sheetName = "model_with_one_sig")
+writeData(wb, sheet = 1, x = model_with_one_sig)
+addWorksheet(wb, sheetName = "model_with_many_sig")
+writeData(wb, sheet = 2, x = model_with_many_sig)
+## Save workbook to working directory
+## Not run: 
+saveWorkbook(wb, file = "p_hacking.xlsx", overwrite = TRUE)
+
+## End(Not run)
+
+model_with_many_sig <- simulated_models[[ which(how_many_significant_p_values == max(how_many_significant_p_values )) ]]
 
 sum(how_many_significant_p_values>1)/length(how_many_significant_p_values)
+
+table(how_many_significant_p_values)
 
 # simulated_p_values
 # sum(simulated_p_values>1)/length(simulated_p_values)
