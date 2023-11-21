@@ -211,7 +211,7 @@ plot_irrit_gender_stats <- df_irrit_gender_stats %>%
   ylab("percentage") +
   theme(axis.text.x.bottom =  element_text(angle = 45, size = 8, vjust = 0.9, hjust = 1)) +
   theme(panel.background  = element_blank())
-
+plot_irrit_gender_stats 
 # 
 # paste0("n = ", n_total, 
 #        ", χ2 = ", round( as.numeric(chi_sq_value), 1), ", df = 4"
@@ -517,6 +517,163 @@ for (i in 1:length(list_coeffs_df)) {
 
 # Save the Excel workbook
 saveWorkbook(wb, file = "coefficents_lmer.xlsx", overwrite = TRUE)
+
+
+# network analyses --------------------------------------------------------
+df_for_argyris_30percent <- read_excel("~/Downloads/df_for_argyris_30percent-2.xlsx")
+
+pisa_net <- df_for_argyris_30percent %>% 
+  select (c
+          (CNTRYID, WB154Q01HA,
+            WB154Q02HA,
+            WB154Q03HA,
+            WB154Q04HA,
+            WB154Q05HA ,
+            WB154Q06HA,
+            WB154Q07HA ,
+            WB154Q08HA,
+            WB154Q09HA,
+            SENWT)
+  )
+
+pisa_net <- 
+  pisa_net %>% 
+  rename(
+    "headache" ="WB154Q01HA",
+    "stomach" = "WB154Q02HA" ,
+    "back" = "WB154Q03HA",
+    "depressed" = "WB154Q04HA",
+    "irritability" = "WB154Q05HA",
+    "nervous" = "WB154Q06HA",
+    "sleep" = "WB154Q07HA",
+    "dizzy" = "WB154Q08HA",
+    "anxious" = "WB154Q09HA" 
+  )
+
+################################ missing data - listwise deletion
+pisa_net <- na.omit(pisa_net) 
+table(pisa_net$CNTRYID)
+
+################################################# Fused network (random sample )
+#s_B <- filter(pisa_net, CNTRYID == "Bulgaria") %>%
+# select(headache, stomach, back, depressed, irritability, nervous, sleep, dizzy, anxious) %>%
+#cor()
+#s_G <- filter(pisa_net, CNTRYID == "Georgia") %>%
+#select(headache, stomach, back, depressed, irritability, nervous, sleep, dizzy, anxious) %>%
+#cor()
+#s_H <- filter(pisa_net, CNTRYID == "Hong Kong") %>%
+#select(headache, stomach, back, depressed, irritability, nervous, sleep, dizzy, anxious) %>%
+#cor()
+#s_I <- filter(pisa_net, CNTRYID == "Ireland") %>%
+#select(headache, stomach, back, depressed, irritability, nervous, sleep, dizzy, anxious) %>%
+#cor()
+#s_M <- filter(pisa_net, CNTRYID == "Mexico") %>%
+# select(headache, stomach, back, depressed, irritability, nervous, sleep, dizzy, anxious) %>%
+# cor()
+#s_P <- filter(pisa_net, CNTRYID == "Panama") %>%
+# select(headache, stomach, back, depressed, irritability, nervous, sleep, dizzy, anxious) %>%
+# cor()
+#s_S <- filter(pisa_net, CNTRYID == "Serbia") %>%
+#  select(headache, stomach, back, depressed, irritability, nervous, sleep, dizzy, anxious) %>%
+#  cor()
+#s_SP <- filter(pisa_net, CNTRYID == "Spain") %>%
+#  select (headache, stomach, back, depressed, irritability, nervous, sleep, dizzy, anxious) %>%
+#  cor()
+#s_U <- filter(pisa_net, CNTRYID == "United Arab Emirates") %>%
+#  select(headache, stomach, back, depressed, irritability, nervous, sleep, dizzy, anxious) %>%
+#  cor()
+
+#Jamilah's Modified code to incorporate weighted variable 
+library(psych)
+
+
+# Assuming pisa_net is your data frame
+weighted_cor <- function(country) {
+  country_data <- filter(pisa_net, CNTRYID == country) %>%
+    select(headache, stomach, back, depressed, irritability, nervous, sleep, dizzy, anxious)
+  
+  weights <- filter(pisa_net, CNTRYID == country) %>%
+    select(SENWT) %>%
+    unlist()  # Convert the data frame to a vector
+  
+  if (length(weights) != nrow(country_data)) {
+    stop("Length of 'SENWT' does not equal the number of rows in the data.")
+  }
+  
+  weighted_cor_matrix <- cov.wt(country_data, wt = weights)$cov
+  
+  return(weighted_cor_matrix)
+}
+
+# Example usage
+s_B <- weighted_cor("Bulgaria")
+s_G <- weighted_cor("Georgia")
+s_H <- weighted_cor("Hong Kong")
+s_I <- weighted_cor("Ireland")
+s_M <- weighted_cor("Mexico")
+s_P <- weighted_cor("Panama")
+s_S <- weighted_cor("Serbia")
+s_SP <- weighted_cor("Spain")
+s_U <- weighted_cor("United Arab Emirates")
+
+table(pisa_net$CNTRYID)
+
+library(EstimateGroupNetwork)
+network1 <- EstimateGroupNetwork(list("Bulgaria" = s_B,
+                                      "Georgia" = s_G,
+                                      "HongKong" = s_H,
+                                      "Ireland" = s_I,
+                                      "Mexico" = s_M,
+                                      "Panama" = s_P,
+                                      "Serbia" = s_S,
+                                      "Spain" = s_SP,
+                                      "UnitedArabEmirates" = s_U),
+                                 n = c(1081, 1215, 1519, 1498, 1779, 1351, 1370, 7904, 4832))
+
+#lavbels for network graphs/centrality plots
+shortnames <- c("headache", "stomach", "back", "depressed", "irritability", "nervous", "sleep", "dizzy", "anxious")
+
+#install.packages(c("qgraph", "igraph", "ggraph", "ggplot2", "RColorBrewer"))  # Uncomment and run if you haven't installed the packages
+library(qgraph)
+library(igraph)
+library(ggraph)
+library(ggplot2)
+library(RColorBrewer)
+
+# Define the list of countries
+countries <- c("Bulgaria", "Georgia", "HongKong", "Ireland", "Mexico", "Panama", "Serbia", "Spain", "UnitedArabEmirates")
+
+# Set the PDF filename
+pdf_filename <- "network_visualizations.pdf"
+
+# Open the PDF file
+pdf(pdf_filename, width = 14, height = 8)
+
+# Loop through each country
+for (country in countries) {
+  # Extract the network for the current country
+  current_network <- network1[[country]]
+  
+  # Convert the adjacency matrix to an igraph object
+  g <- graph_from_adjacency_matrix(current_network, mode = "undirected", weighted = TRUE)
+  
+  # Create a layout for the plot
+  layout <- layout_with_fr(g)
+  
+  # Plot the network using ggraph and ggplot2 with blue colors
+  print(ggraph(g, layout = layout) +
+          geom_edge_link(aes(color = weight, edge_width = 1),  arrow = arrow(length = unit(0.25, "cm")), lineend = "round") +
+          geom_node_point(size = 5, color = "blue") +
+          geom_node_text(aes(label = name), colour = "red", size = 5, vjust = 1.5) +  # Add symptom labels
+          scale_color_gradient(low = "blue", high = "blue") +  # Use blue color
+          theme_void() +
+          ggtitle(paste("Figure 3. Network Visualization:", country)))
+}
+
+# Close the PDF file
+dev.off()
+
+
 
 
 
