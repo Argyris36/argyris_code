@@ -1,8 +1,6 @@
 
 # search keywords and patterns in pdf -------------------------------------
 
-
-
 library(pdfsearch)
 
 
