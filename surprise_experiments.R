@@ -64,6 +64,9 @@ dev.off()
 
 library(lme4)
 library(parameter)
+
+# test the ICC, i.e. variance explained by random effects.
+# first for IDs
 test_icc_id <- list()
 icc_results_id <- list()
 for(i in 1:length(my_splits)){
@@ -75,6 +78,8 @@ for(i in 1:length(my_splits)){
 }
 icc_results_id
 
+
+# first for IDs and nesting by pilot (i.e. number of experiment)
 test_icc_pilot <- list()
 icc_results_pilot <- list()
 for(i in 1:length(my_splits)){
@@ -85,15 +90,45 @@ for(i in 1:length(my_splits)){
   icc_results_pilot[[i]] <- performance::icc(test_icc_pilot[[i]])
 }
 
+# now check the differences in adjusted iccs
+differences_icc <- 0
+for(i in 1: length(my_splits)){
+differences_icc[i] <- icc_results_id[[i]][2] - icc_results_pilot[[i]][2]
+}
+ 
+format(differences_icc, scientific = F) #  adding the nesting makes no difference
 
-for
-icc_results_id[[1]][1] - icc_results_pilot[[1]][1]
+# now run lme models for random interecept only and rint + random slope and choose between them
 
+# first lmes with random intercept models
+rint_models <- list()
+for(i in 1:length(my_splits)){
+  rint_models[[i]] <- lmer(Mood ~ SubjPE + (1| Random_ID), data = 
+                               df_surprises[df_surprises$pilot_nr==pilots[i],], 
+                             REML = FALSE, 
+                             control = lmerControl(optimizer = "bobyqa"))
+}
+rint_models
 
-performance::icc(model[[i]])
-test_mod <- lmer(Mood ~ SubjPE + (1| Random_ID), data = 
-                   df_surprises[df_surprises$pilot_nr=="Pilot 7",], 
+# now  lmes with random slopes
+rslope_models <- list()
+for(i in 1:length(my_splits)){
+  rslope_models[[i]] <- lmer(Mood ~ SubjPE + (SubjPE| Random_ID), data = 
+                   df_surprises[df_surprises$pilot_nr==pilots[i],], 
             REML = FALSE, 
             control = lmerControl(optimizer = "bobyqa"))
+}
+rslope_models
+
+# now compare between them
+p_vals <- 0
+for(i in 1: length(my_splits)){
+p_vals[i] <-  (anova(rint_models[[i]], rslope_models[[i]]))$`Pr(>Chisq)`[2]
+}
+
+format(p_vals, scientific = F) # the p-values show that there is always a significant difference
+
+
+
 summary(test_mod)
 standardize_parameters(test_mod)
