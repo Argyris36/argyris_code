@@ -29,7 +29,7 @@ correlations_df <- cors_by_pilot  %>%
   summarise(mean_cor = mean(cor))
 
 correlations_df <- correlations_df %>% arrange(match(pilot_nr, pilots))
-
+correlations_df
   
 # now plot across all pilots the relationship between subjective PE and Mood
 pdf("mood_subj_PE_plts6_to_10.pdf")
@@ -39,6 +39,7 @@ pilots <- unique(df_surprises$pilot_nr)
 pe_mood_plots <- list()
 
 my_splits <- (split(df_surprises, df_surprises$pilot_nr))
+my_splits <- my_splits[pilots] # make sure to re-arrange the order to be from 6-10 
 
 for(i in 1:length(my_splits)){
   
@@ -63,7 +64,7 @@ dev.off()
 
 
 library(lme4)
-library(parameter)
+library(parameters)
 
 # test the ICC, i.e. variance explained by random effects.
 # first for IDs
@@ -130,5 +131,28 @@ format(p_vals, scientific = F) # the p-values show that there is always a signif
 
 
 
-summary(test_mod)
-standardize_parameters(test_mod)
+mix_models_per_pilot <- list() # the lme objects for each pilot
+mix_models_coefficients <- list() # the coefficients for each pilot
+std_param_mix_models_per_pilot <- list() # the standardised coefficients for each lme object
+dfs_RE_raw_pe_mood <- list() # the dataframes that contain raw values and coefficeints (may not need this)
+for(i in 1: length(my_splits)){
+
+  mix_models_per_pilot[[i]] <-  lmer(Mood ~ SubjPE + (SubjPE| Random_ID), data = 
+       df_surprises[df_surprises$pilot_nr==pilots[i],], 
+     REML = FALSE, 
+     control = lmerControl(optimizer = "bobyqa"))
+  std_param_mix_models_per_pilot[[i]] <- parameters:: standardise_parameters( mix_models_per_pilot[[i]])
+ 
+  mix_models_coefficients[[i]] <-  coef(mix_models_per_pilot[[i]])
+ mix_models_coefficients[[i]] <- data.frame(mix_models_coefficients[[i]]$Random_ID)
+ mix_models_coefficients[[i]]$Random_ID <- rownames(mix_models_coefficients[[i]])
+ colnames(mix_models_coefficients[[i]]) <-c( "intercept", "slope", "Random_ID")
+ 
+ #now merge these datasets with the raw values 
+ dfs_RE_raw_pe_mood[[i]] <- left_join(my_splits[[i]], mix_models_coefficients[[i]], by = "Random_ID" )
+ 
+  }
+names(std_param_mix_models_per_pilot) <- pilots
+std_param_mix_models_per_pilot$`Pilot 7`$Std_Coefficient[1] # to get intercept for example
+
+
