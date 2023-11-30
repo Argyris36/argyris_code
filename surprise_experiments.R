@@ -217,17 +217,18 @@ ggplot(df_all_surprise_experiments, aes(x=SubjPE, y=Mood)) +
   geom_smooth(method = "lm", size = 0.5, se = FALSE, aes(group=Random_ID, color=Social_Anxiety)) +
   scale_color_manual(values = c("low" = "lightblue", "high" = "pink")) +
   geom_abline(intercept = intercept, slope = slope, color="purple", linetype="dashed", size=1) +
-  xlab("SubjPE: feedback - prediction") + 
+  xlab("Subjective Prediction Error: feedback - prediction") + 
   ylab("Mood") +
   # theme_minimal() +
-  theme(axis.text.x = element_text(size = 9), axis.text.y = element_text(size = 9)) +
-  annotate("text", x = Inf, y = Inf, label = paste("positive slope without social anxiety =", 100*round(perc_pos_slop[1,2],2), "%"), hjust = 1.1, vjust = 90, color = "black", size = 3.7) +
-  annotate("text", x = Inf, y = Inf, label = paste("positive slope with social anxiety =", 100*round(perc_pos_slop[2,2],2), "%"), hjust = 1.1, vjust = 92, color = "black", size = 3.7)+
+  # theme(axis.text.x = element_text(size = 9), axis.text.y = element_text(size = 9)) +
+  # annotate("text", x = Inf, y = Inf, label = paste("positive slope without social anxiety =", 100*round(perc_pos_slop[1,2],2), "%"), hjust = 1.1, vjust = 90, color = "black", size = 3.7) +
+  # annotate("text", x = Inf, y = Inf, label = paste("positive slope with social anxiety =", 100*round(perc_pos_slop[2,2],2), "%"), hjust = 1.1, vjust = 92, color = "black", size = 3.7)+
   ggtitle("Relationship between Mood and Subjective Prediction Errors",
           subtitle = paste("estimated slopes of the association in n = ", 
                            length(unique(df_all_surprise_experiments$Random_ID))))+
   theme(plot.title = element_text(size=22), plot.subtitle = element_text(size = 18))+
   theme(legend.title = element_text(size = 16), legend.text = element_text(size = 14))+
+  theme(axis.title = element_text(size = 16)) +
   annotate("label", x = 0, y = 55, label = paste("beta = ", round(standard_beta$Std_Coefficient[2],2), ", 95%CI = ",
                                                  round(standard_beta$CI_low[2],2), ",", 
                                                  round(standard_beta$CI_low[2],2))) 
