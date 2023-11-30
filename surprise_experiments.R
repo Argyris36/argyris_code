@@ -230,6 +230,6 @@ ggplot(df_all_surprise_experiments, aes(x=SubjPE, y=Mood)) +
   theme(legend.title = element_text(size = 16), legend.text = element_text(size = 14))+
   theme(axis.title = element_text(size = 16)) +
   annotate("label", x = 0, y = 55, label = paste("beta = ", round(standard_beta$Std_Coefficient[2],2), ", 95%CI = ",
-                                                 round(standard_beta$CI_low[2],2), ",", 
-                                                 round(standard_beta$CI_low[2],2))) 
+                                                 round(standard_beta$CI_low[2],2), "-", 
+                                                 round(standard_beta$CI_high[2],2))) 
 
