@@ -33,7 +33,7 @@ correlations_df <- cors_by_pilot  %>%
 
 correlations_df <- correlations_df %>% arrange(match(pilot_nr, pilots))
 correlations_df
-  
+
 # now plot across all pilots the relationship between subjective PE and Mood
 pdf("mood_subj_PE_plts6_to_10.pdf")
 
@@ -46,15 +46,15 @@ my_splits <- my_splits[pilots] # make sure to re-arrange the order to be from 6-
 
 for(i in 1:length(my_splits)){
   
-plot <- my_splits[[i]] %>% 
-  ggplot(aes(x = SubjPE, y = Mood)) +
-  geom_smooth(method = "lm", colour = "red") +
-  geom_point(alpha = 0.2) +
-  facet_wrap(~Random_ID)+
-  ggtitle(paste(pilots[i], "overall r = ", round(correlations_df[i,2], 2)))
-
-# Store the plot in the list
-pe_mood_plots[[i]] <- plot
+  plot <- my_splits[[i]] %>% 
+    ggplot(aes(x = SubjPE, y = Mood)) +
+    geom_smooth(method = "lm", colour = "red") +
+    geom_point(alpha = 0.2) +
+    facet_wrap(~Random_ID)+
+    ggtitle(paste(pilots[i], "overall r = ", round(correlations_df[i,2], 2)))
+  
+  # Store the plot in the list
+  pe_mood_plots[[i]] <- plot
 }
 
 # Print  plots
@@ -77,9 +77,9 @@ library(parameters)
 rint_models <- list()
 for(i in 1:length(my_splits)){
   rint_models[[i]] <- lmer(Mood ~ SubjPE + (1| Random_ID), data = 
-                               df_surprises[df_surprises$pilot_nr==pilots[i],], 
-                             REML = FALSE, 
-                             control = lmerControl(optimizer = "bobyqa"))
+                             df_surprises[df_surprises$pilot_nr==pilots[i],], 
+                           REML = FALSE, 
+                           control = lmerControl(optimizer = "bobyqa"))
 }
 rint_models
 
@@ -87,16 +87,16 @@ rint_models
 rslope_models <- list()
 for(i in 1:length(my_splits)){
   rslope_models[[i]] <- lmer(Mood ~ SubjPE + (SubjPE| Random_ID), data = 
-                   df_surprises[df_surprises$pilot_nr==pilots[i],], 
-            REML = FALSE, 
-            control = lmerControl(optimizer = "bobyqa"))
+                               df_surprises[df_surprises$pilot_nr==pilots[i],], 
+                             REML = FALSE, 
+                             control = lmerControl(optimizer = "bobyqa"))
 }
 rslope_models
 
 # now compare between them
 p_vals <- 0
 for(i in 1: length(my_splits)){
-p_vals[i] <-  (anova(rint_models[[i]], rslope_models[[i]]))$`Pr(>Chisq)`[2]
+  p_vals[i] <-  (anova(rint_models[[i]], rslope_models[[i]]))$`Pr(>Chisq)`[2]
 }
 
 format(p_vals, scientific = F) # the p-values show that there is always a significant difference
@@ -108,22 +108,22 @@ mix_models_coefficients <- list() # the coefficients for each pilot
 std_param_mix_models_per_pilot <- list() # the standardised coefficients for each lme object
 dfs_RE_raw_pe_mood <- list() # the dataframes that contain raw values and coefficeints (may not need this)
 for(i in 1: length(my_splits)){
-
+  
   mix_models_per_pilot[[i]] <-  lmer(Mood ~ SubjPE + (SubjPE| Random_ID), data = 
-       df_surprises[df_surprises$pilot_nr==pilots[i],], 
-     REML = FALSE, 
-     control = lmerControl(optimizer = "bobyqa"))
+                                       df_surprises[df_surprises$pilot_nr==pilots[i],], 
+                                     REML = FALSE, 
+                                     control = lmerControl(optimizer = "bobyqa"))
   std_param_mix_models_per_pilot[[i]] <- parameters:: standardise_parameters( mix_models_per_pilot[[i]])
- 
+  
   mix_models_coefficients[[i]] <-  coef(mix_models_per_pilot[[i]])
- mix_models_coefficients[[i]] <- data.frame(mix_models_coefficients[[i]]$Random_ID)
- mix_models_coefficients[[i]]$Random_ID <- rownames(mix_models_coefficients[[i]])
- colnames(mix_models_coefficients[[i]]) <-c( "intercept", "slope", "Random_ID")
- 
- #now merge these datasets with the raw values 
- dfs_RE_raw_pe_mood[[i]] <- left_join(my_splits[[i]], mix_models_coefficients[[i]], by = "Random_ID" )
- 
-  }
+  mix_models_coefficients[[i]] <- data.frame(mix_models_coefficients[[i]]$Random_ID)
+  mix_models_coefficients[[i]]$Random_ID <- rownames(mix_models_coefficients[[i]])
+  colnames(mix_models_coefficients[[i]]) <-c( "intercept", "slope", "Random_ID")
+  
+  #now merge these datasets with the raw values 
+  dfs_RE_raw_pe_mood[[i]] <- left_join(my_splits[[i]], mix_models_coefficients[[i]], by = "Random_ID" )
+  
+}
 names(std_param_mix_models_per_pilot) <- pilots
 std_param_mix_models_per_pilot$`Pilot 7`$Std_Coefficient[1] # to get intercept for example
 
@@ -161,9 +161,9 @@ icc_results_pilot
 # now test whether adding slope improves fit
 
 big_model_1 <- lmer (Mood ~ SubjPE + (1| Random_ID) ,
-                      data = df_all_surprise_experiments, 
-REML = FALSE, 
-control = lmerControl(optimizer = "bobyqa"))
+                     data = df_all_surprise_experiments, 
+                     REML = FALSE, 
+                     control = lmerControl(optimizer = "bobyqa"))
 
 
 big_model_2 <- lmer (Mood ~ SubjPE + (SubjPE| Random_ID) ,
@@ -201,16 +201,16 @@ only_first_row_df_all_surprise_experiments_with_anxiety_status %>%
 
 table(only_first_row_df_all_surprise_experiments_with_anxiety_status$Social_Anxiety)
 table(table(only_first_row_df_all_surprise_experiments_with_anxiety_status$positve_mood_slopes, 
-                 only_first_row_df_all_surprise_experiments_with_anxiety_status$high_social_anxiety))
+            only_first_row_df_all_surprise_experiments_with_anxiety_status$high_social_anxiety))
 perc_pos_slop <- prop.table(table( 
-                only_first_row_df_all_surprise_experiments_with_anxiety_status$high_social_anxiety,
-                only_first_row_df_all_surprise_experiments_with_anxiety_status$positve_mood_slopes))
+  only_first_row_df_all_surprise_experiments_with_anxiety_status$high_social_anxiety,
+  only_first_row_df_all_surprise_experiments_with_anxiety_status$positve_mood_slopes))
 
 chisq.test(table(only_first_row_df_all_surprise_experiments_with_anxiety_status$positve_mood_slopes, 
                  only_first_row_df_all_surprise_experiments_with_anxiety_status$high_social_anxiety))
 
 
-intercept <- mean(df_all_surprise_experiments$intercpt)
+intercept <- mean(df_all_surprise_experiments$intercept)
 slope <- mean(df_all_surprise_experiments$slope)
 
 ggplot(df_all_surprise_experiments, aes(x=SubjPE, y=Mood)) +
@@ -220,8 +220,15 @@ ggplot(df_all_surprise_experiments, aes(x=SubjPE, y=Mood)) +
   xlab("SubjPE: feedback - prediction") + 
   ylab("Mood") +
   # theme_minimal() +
-   theme(axis.text.x = element_text(size = 9), axis.text.y = element_text(size = 9)) +
-   annotate("text", x = Inf, y = Inf, label = paste("positive slope without social anxiety =", 100*round(perc_pos_slop[1,2],2), "%"), hjust = 1.1, vjust = 90, color = "black", size = 3.7) +
+  theme(axis.text.x = element_text(size = 9), axis.text.y = element_text(size = 9)) +
+  annotate("text", x = Inf, y = Inf, label = paste("positive slope without social anxiety =", 100*round(perc_pos_slop[1,2],2), "%"), hjust = 1.1, vjust = 90, color = "black", size = 3.7) +
   annotate("text", x = Inf, y = Inf, label = paste("positive slope with social anxiety =", 100*round(perc_pos_slop[2,2],2), "%"), hjust = 1.1, vjust = 92, color = "black", size = 3.7)+
-  ggtitle("Relationship between Mood and Subjective Prediction Errors", 
-          subtitle = paste("beta = ", round(standard_beta$Std_Coefficient[2],2), ", 95%CI = ", standard_beta$CI))
+  ggtitle("Relationship between Mood and Subjective Prediction Errors",
+          subtitle = paste("estimated slopes of the association in n = ", 
+                           length(unique(df_all_surprise_experiments$Random_ID))))+
+  theme(plot.title = element_text(size=22), plot.subtitle = element_text(size = 18))+
+  theme(legend.title = element_text(size = 16), legend.text = element_text(size = 14))+
+  annotate("label", x = 0, y = 55, label = paste("beta = ", round(standard_beta$Std_Coefficient[2],2), ", 95%CI = ",
+                                                 round(standard_beta$CI_low[2],2), ",", 
+                                                 round(standard_beta$CI_low[2],2))) 
+
