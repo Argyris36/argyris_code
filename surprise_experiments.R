@@ -1,7 +1,8 @@
 library(tidyverse)
+library(lme4)
+library(lmerTest)
 
-
-df_surprises <-  read.csv("~/Downloads/all_pilots_wide_8var.csv")
+df_surprises <-  read.csv("~/Downloads/all_pilots_with_mini_spin.csv")
 
 
 dim(df_surprises)
@@ -24,6 +25,8 @@ cors_by_pilot <- df_surprises %>%
   summarize(cor=cor(SubjPE, Mood))
 
 
+pilots <- unique(df_surprises$pilot_nr)
+
 correlations_df <- cors_by_pilot  %>% 
   group_by(pilot_nr) %>% 
   summarise(mean_cor = mean(cor))
@@ -34,7 +37,7 @@ correlations_df
 # now plot across all pilots the relationship between subjective PE and Mood
 pdf("mood_subj_PE_plts6_to_10.pdf")
 
-pilots <- unique(df_surprises$pilot_nr)
+
 
 pe_mood_plots <- list()
 
@@ -66,38 +69,7 @@ dev.off()
 library(lme4)
 library(parameters)
 
-# test the ICC, i.e. variance explained by random effects.
-# first for IDs
-test_icc_id <- list()
-icc_results_id <- list()
-for(i in 1:length(my_splits)){
- test_icc_id[[i]] <- lmer(Mood ~ SubjPE + (1| Random_ID), data = 
-                         df_surprises[df_surprises$pilot_nr==pilots[i],], 
-                       REML = FALSE, 
-                       control = lmerControl(optimizer = "bobyqa")) 
- icc_results_id[[i]] <- performance::icc(test_icc_id[[i]])
-}
-icc_results_id
 
-
-# first for IDs and nesting by pilot (i.e. number of experiment)
-test_icc_pilot <- list()
-icc_results_pilot <- list()
-for(i in 1:length(my_splits)){
-  test_icc_pilot[[i]] <- lmer(Mood ~ SubjPE + (1| Random_ID/ pilot_nr), data = 
-                             df_surprises[df_surprises$pilot_nr==pilots[i],], 
-                           REML = FALSE, 
-                           control = lmerControl(optimizer = "bobyqa")) 
-  icc_results_pilot[[i]] <- performance::icc(test_icc_pilot[[i]])
-}
-
-# now check the differences in adjusted iccs
-differences_icc <- 0
-for(i in 1: length(my_splits)){
-differences_icc[i] <- icc_results_id[[i]][2] - icc_results_pilot[[i]][2]
-}
- 
-format(differences_icc, scientific = F) #  adding the nesting makes no difference
 
 # now run lme models for random interecept only and rint + random slope and choose between them
 
@@ -156,3 +128,100 @@ names(std_param_mix_models_per_pilot) <- pilots
 std_param_mix_models_per_pilot$`Pilot 7`$Std_Coefficient[1] # to get intercept for example
 
 
+
+# Put all datasets together now 
+df_all_surprise_experiments <- do.call(rbind,dfs_RE_raw_pe_mood)
+
+
+# test the ICC, i.e. variance explained by random effects.
+# first for IDs
+
+test_icc_id <- lmer(Mood ~  (1| Random_ID), data = 
+                      df_all_surprise_experiments, 
+                    REML = FALSE, 
+                    control = lmerControl(optimizer = "bobyqa")) 
+icc_results_id <- performance::icc(test_icc_id)
+
+icc_results_id
+
+
+#  nesting by pilot (i.e. number of experiment)
+
+
+test_icc_pilot <- lmer(Mood ~  (1| pilot_nr) , data = 
+                         df_all_surprise_experiments, 
+                       REML = FALSE, 
+                       control = lmerControl(optimizer = "bobyqa")) 
+icc_results_pilot <- performance::icc(test_icc_pilot)
+icc_results_pilot
+
+# it seems that pilot number explains very little of the variance
+
+
+# now test whether adding slope improves fit
+
+big_model_1 <- lmer (Mood ~ SubjPE + (1| Random_ID) ,
+                      data = df_all_surprise_experiments, 
+REML = FALSE, 
+control = lmerControl(optimizer = "bobyqa"))
+
+
+big_model_2 <- lmer (Mood ~ SubjPE + (SubjPE| Random_ID) ,
+                     data = df_all_surprise_experiments, 
+                     REML = FALSE, 
+                     control = lmerControl(optimizer = "bobyqa"))
+summary(big_model_2)
+standard_beta <- parameters:: standardise_parameters (big_model_2)
+AIC(big_model_1, big_model_2)
+
+big_model_3 <- lmer (Mood ~ SubjPE*Social_Anxiety + (SubjPE| Random_ID) ,
+                     data = df_all_surprise_experiments, 
+                     REML = FALSE, 
+                     control = lmerControl(optimizer = "bobyqa"))
+summary(big_model_3)
+anova(big_model_2, big_model_3)
+
+
+# example of how to get positive slopes per dataframe here. Will g --------
+
+
+df_all_surprise_experiments_with_anxiety_status <-df_all_surprise_experiments %>% 
+  group_by(Random_ID) %>% 
+  filter(row_number()==1) %>% 
+  mutate(positve_mood_slopes = case_when(slope>0~1, slope <=0 ~0)) %>% 
+  mutate(high_social_anxiety = case_when(Social_Anxiety=="high"~1, Social_Anxiety=="low"~0))
+
+glimpse(df_all_surprise_experiments_with_anxiety_status)
+
+only_first_row_df_all_surprise_experiments_with_anxiety_status <- df_all_surprise_experiments_with_anxiety_status %>% 
+  distinct(Random_ID, .keep_all = TRUE)
+
+only_first_row_df_all_surprise_experiments_with_anxiety_status %>% 
+  count(high_social_anxiety, positve_mood_slopes)
+
+table(only_first_row_df_all_surprise_experiments_with_anxiety_status$Social_Anxiety)
+table(table(only_first_row_df_all_surprise_experiments_with_anxiety_status$positve_mood_slopes, 
+                 only_first_row_df_all_surprise_experiments_with_anxiety_status$high_social_anxiety))
+perc_pos_slop <- prop.table(table( 
+                only_first_row_df_all_surprise_experiments_with_anxiety_status$high_social_anxiety,
+                only_first_row_df_all_surprise_experiments_with_anxiety_status$positve_mood_slopes))
+
+chisq.test(table(only_first_row_df_all_surprise_experiments_with_anxiety_status$positve_mood_slopes, 
+                 only_first_row_df_all_surprise_experiments_with_anxiety_status$high_social_anxiety))
+
+
+intercept <- mean(df_all_surprise_experiments$intercpt)
+slope <- mean(df_all_surprise_experiments$slope)
+
+ggplot(df_all_surprise_experiments, aes(x=SubjPE, y=Mood)) +
+  geom_smooth(method = "lm", size = 0.5, se = FALSE, aes(group=Random_ID, color=Social_Anxiety)) +
+  scale_color_manual(values = c("low" = "lightblue", "high" = "pink")) +
+  geom_abline(intercept = intercept, slope = slope, color="purple", linetype="dashed", size=1) +
+  xlab("SubjPE: feedback - prediction") + 
+  ylab("Mood") +
+  # theme_minimal() +
+   theme(axis.text.x = element_text(size = 9), axis.text.y = element_text(size = 9)) +
+   annotate("text", x = Inf, y = Inf, label = paste("positive slope without social anxiety =", 100*round(perc_pos_slop[1,2],2), "%"), hjust = 1.1, vjust = 90, color = "black", size = 3.7) +
+  annotate("text", x = Inf, y = Inf, label = paste("positive slope with social anxiety =", 100*round(perc_pos_slop[2,2],2), "%"), hjust = 1.1, vjust = 92, color = "black", size = 3.7)+
+  ggtitle("Relationship between Mood and Subjective Prediction Errors", 
+          subtitle = paste("beta = ", round(standard_beta$Std_Coefficient[2],2), ", 95%CI = ", standard_beta$CI))
