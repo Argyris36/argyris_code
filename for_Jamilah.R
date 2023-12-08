@@ -233,7 +233,7 @@ library(tidyverse)
 df_for_argyris_30percent <- read_excel("~/Downloads/df_for_argyris_30percent.xlsx")
 
 df_for_argyris_30percent_reduced <- df_for_argyris_30percent %>% 
-  select (c
+  dplyr:: select (c
           (CNTSTUID, CNTRYID, WB154Q01HA,
             WB154Q02HA,
             WB154Q03HA,

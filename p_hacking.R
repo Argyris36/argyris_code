@@ -69,11 +69,11 @@ return(all_models)
 
 n_sims <- 100
 
-simulated_p_values <- replicate(n_sims, lm_variability_function(50))
+#simulated_p_values <- replicate(n_sims, lm_variability_function(50))
 
 
 
-simulated_models <- lapply (1:n_sims, function(x) lm_variability_function(50))
+simulated_models <- lapply (1:n_sims, function(x) lm_variability_function(30))
 
 how_many_significant_p_values <- 0
 
@@ -84,26 +84,37 @@ how_many_significant_p_values[i] <- sum(simulated_models[[i]]$p.value<0.05)
 }
 how_many_significant_p_values 
   
+# extract the first model 
 model_with_one_sig <- simulated_models[[1]]
-
-library(openxlsx)
-## Create a new workbook and add a worksheet
-wb <- createWorkbook("Creator of workbook")
-addWorksheet(wb, sheetName = "model_with_one_sig")
-writeData(wb, sheet = 1, x = model_with_one_sig)
-addWorksheet(wb, sheetName = "model_with_many_sig")
-writeData(wb, sheet = 2, x = model_with_many_sig)
-## Save workbook to working directory
-## Not run: 
-saveWorkbook(wb, file = "p_hacking.xlsx", overwrite = TRUE)
-
-## End(Not run)
-
+# extract the model with most significant findings
 model_with_many_sig <- simulated_models[[ which(how_many_significant_p_values == max(how_many_significant_p_values )) ]]
 
-sum(how_many_significant_p_values>1)/length(how_many_significant_p_values)
+# # save models in excel commented out for the moment
+# library(openxlsx)
+# ## Create a new workbook and add a worksheet
+# wb <- createWorkbook("Creator of workbook")
+# addWorksheet(wb, sheetName = "model_with_one_sig")
+# writeData(wb, sheet = 1, x = model_with_one_sig)
+# addWorksheet(wb, sheetName = "model_with_many_sig")
+# writeData(wb, sheet = 2, x = model_with_many_sig)
+# ## Save workbook to working directory
+# saveWorkbook(wb, file = "p_hacking.xlsx", overwrite = TRUE)
 
+
+#
+sum(how_many_significant_p_values>1)/length(how_many_significant_p_values)
 table(how_many_significant_p_values)
+
+df_sig_values_percentages <- data.frame(table(how_many_significant_p_values))
+
+df_sig_values_percentages %>% 
+  ggplot(aes(how_many_significant_p_values, Freq, fill = how_many_significant_p_values))+
+  geom_bar(stat = "identity")+
+  ggtitle("p-hacking", subtitle = "capitalising on chance")+
+  xlab("number of variables significant")+
+  ylab("Percentage")+
+  theme_minimal()
+
 
 # simulated_p_values
 # sum(simulated_p_values>1)/length(simulated_p_values)

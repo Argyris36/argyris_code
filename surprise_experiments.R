@@ -223,13 +223,51 @@ ggplot(df_all_surprise_experiments, aes(x=SubjPE, y=Mood)) +
   # theme(axis.text.x = element_text(size = 9), axis.text.y = element_text(size = 9)) +
   # annotate("text", x = Inf, y = Inf, label = paste("positive slope without social anxiety =", 100*round(perc_pos_slop[1,2],2), "%"), hjust = 1.1, vjust = 90, color = "black", size = 3.7) +
   # annotate("text", x = Inf, y = Inf, label = paste("positive slope with social anxiety =", 100*round(perc_pos_slop[2,2],2), "%"), hjust = 1.1, vjust = 92, color = "black", size = 3.7)+
-  ggtitle("Relationship between Mood and Subjective Prediction Errors",
+  ggtitle("Relationship between Mood and Surprises",
           subtitle = paste("estimated slopes of the association in n = ", 
                            length(unique(df_all_surprise_experiments$Random_ID))))+
-  theme(plot.title = element_text(size=22), plot.subtitle = element_text(size = 18))+
-  theme(legend.title = element_text(size = 16), legend.text = element_text(size = 14))+
-  theme(axis.title = element_text(size = 16)) +
+  theme(plot.title = element_text(size=14), plot.subtitle = element_text(size = 10))+
+  theme(legend.title = element_text(size = 9), legend.text = element_text(size = 8))+
+  theme(axis.title = element_text(size = 10)) +
   annotate("label", x = 0, y = 55, label = paste("beta = ", round(standard_beta$Std_Coefficient[2],2), ", 95%CI = ",
                                                  round(standard_beta$CI_low[2],2), "-", 
                                                  round(standard_beta$CI_high[2],2))) 
+
+
+# now create one for each group
+# 
+# 
+# intercept_high_social_anx <- mean(df_all_surprise_experiments
+#                                   [df_all_surprise_experiments$Social_Anxiety == "high",]$intercept)
+# slope_high_social_anx <- mean(df_all_surprise_experiments
+#                               [df_all_surprise_experiments$Social_Anxiety == "high",]$slope)
+# 
+# intercept_low_social_anx <- mean(df_all_surprise_experiments
+#                                  [df_all_surprise_experiments$Social_Anxiety == "low",]$intercept)
+# slope_low_social_anx <- mean(df_all_surprise_experiments
+#                              [df_all_surprise_experiments$Social_Anxiety == "low",]$slope)
+# 
+# ggplot(df_all_surprise_experiments, aes(x=SubjPE, y=Mood)) +
+#   geom_smooth(method = "lm", size = 0.5, se = FALSE, aes(group=Random_ID, color=Social_Anxiety)) +
+#   scale_color_manual(values = c("low" = "lightblue", "high" = "pink")) +
+#   geom_abline(intercept = intercept_high_social_anx, slope_high_social_anx = slope, color="pink", linetype="dashed", size=2) +
+#   geom_abline(intercept = intercept_low_social_anx, slope_low_social_anx = slope, color="lightblue", linetype="dashed", size=2) +
+#   xlab("Subjective Prediction Error: feedback - prediction") + 
+#   ylab("Mood") +
+#   # theme_minimal() +
+#   # theme(axis.text.x = element_text(size = 9), axis.text.y = element_text(size = 9)) +
+#   # annotate("text", x = Inf, y = Inf, label = paste("positive slope without social anxiety =", 100*round(perc_pos_slop[1,2],2), "%"), hjust = 1.1, vjust = 90, color = "black", size = 3.7) +
+#   # annotate("text", x = Inf, y = Inf, label = paste("positive slope with social anxiety =", 100*round(perc_pos_slop[2,2],2), "%"), hjust = 1.1, vjust = 92, color = "black", size = 3.7)+
+#   ggtitle("Relationship between Mood and Subjective Prediction Errors",
+#           subtitle = paste("estimated slopes of the association in n = ", 
+#                            length(unique(df_all_surprise_experiments$Random_ID))))+
+#   theme(plot.title = element_text(size=22), plot.subtitle = element_text(size = 18))+
+#   theme(legend.title = element_text(size = 16), legend.text = element_text(size = 14))+
+#   theme(axis.title = element_text(size = 16)) +
+#   annotate("label", x = 0, y = 55, label = paste("beta = ", round(standard_beta$Std_Coefficient[2],2), ", 95%CI = ",
+#                                                  round(standard_beta$CI_low[2],2), "-", 
+#                                                  round(standard_beta$CI_high[2],2))) 
+# 
+# 
+
 
