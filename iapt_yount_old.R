@@ -85,7 +85,7 @@ mean_outcome_old <- 9.44
 sd_outcome_old <- 6.8
 
 
-threshold_phq <- 5.2
+threshold_phq <- 6
 set.seed(1974)
 phq_val_base_young <- truncnorm::rtruncnorm(n = iapt_cont_table_col_marg_young, 0, 27, mean_base_young , sd_base_young )
 
