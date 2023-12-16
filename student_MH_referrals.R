@@ -64,9 +64,11 @@ p_ethn <- test %>%
   geom_text(data = filter(test, date == "2022-12-01"),
             aes(label = ethnicity),
             hjust = 0,  
-            position=position_jitter(width=1,height=2) ) +
+            position=position_jitter(width=1.5,height=3) ) +
   coord_cartesian(clip = 'off') +
   # geom_dl(aes(label = ethnicity), method = list(dl.combine( "last.points")), cex = 0.8) +
    theme(legend.position = 'none',
-         plot.margin = margin(0.5, 2.6, 0.1, 0.1, "cm")) 
-
+         plot.margin = margin(0.5, 2.6, 0.1, 0.1, "cm")) +
+  theme(axis.title.x = element_blank())+
+  theme(axis.title.y = element_text(size=15) )
+p_ethn 
