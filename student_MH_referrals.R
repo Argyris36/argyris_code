@@ -12,10 +12,11 @@ pivot_longer(cols =c(  "White" ,  "Mixed"  , "Asian" ,  "Black"  , "Chinese", "O
 
 View(long_df_student_mh_refs_by_ethnicity)
 
-test <- long_df_student_mh_refs_by_ethnicity %>% 
+df_dates_totals <- long_df_student_mh_refs_by_ethnicity %>% 
   group_by(Year, Month) %>% 
   mutate(total_n_year_month = colSums(across(is.numeric)), 
          date = ymd(paste(Year, Month, "01", sep = "-")))
+
 
 verticals <- as.Date(paste0(c(2018:2022),"-01-01"))
 
@@ -24,7 +25,7 @@ labels <- c(2017:2022)
 df_labels <- data.frame(
                         dates_labels = dates_labels,
                         labels = labels)
-p <- test %>% 
+p <- df_dates_totals %>% 
   ggplot(aes(x = date, y = total_n_year_month ))+ 
   geom_line()+
   geom_vline(xintercept = verticals, colour = "red", 
@@ -42,10 +43,10 @@ p +
   ggtitle("Student Referrals to IAPT-Services by Year and Month")
   
 
-test <- test %>% 
+df_dates_totals_missing <- df_dates_totals %>% 
   filter(!ethnicity == "Missing")
 
-p_ethn <- test %>% 
+p_ethn <- df_dates_totals_missing %>% 
   ggplot(aes(x = date, y = numbers, , color = ethnicity))+ 
   geom_line()+
   geom_vline(xintercept = verticals, colour = "red", 
@@ -72,3 +73,23 @@ p_ethn <- test %>%
   theme(axis.title.x = element_blank())+
   theme(axis.title.y = element_text(size=15) )
 p_ethn 
+
+
+  
+
+# get the cumulative sums for one year
+df_cum_sums <- df_dates_totals %>% 
+  filter(Year == "2022") %>% 
+  summarise(totals = sum(numbers), .groups = "drop") %>% 
+  # mutate(date = make_date(Year, Month)) %>% 
+  mutate(date = ymd(paste(Year, Month, "01", sep = "-"))) %>% 
+  arrange(date) %>% 
+  mutate(cumulative_sum = cumsum(totals)) %>% 
+  mutate(perc_cum_sum = cumulative_sum/sum(totals))
+
+
+plot(df_cum_sums$date, df_cum_sums$perc_cum_sum) # doesn't look informative
+
+  
+
+
