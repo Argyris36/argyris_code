@@ -15,9 +15,9 @@ View(long_df_student_mh_refs_by_ethnicity)
 df_dates_totals <- long_df_student_mh_refs_by_ethnicity %>% 
   group_by(Year, Month) %>% 
   mutate(total_n_year_month = colSums(across(is.numeric)), 
-         date = ymd(paste(Year, Month, "01", sep = "-")))
+         date = ymd(paste(Year, Month, "01", sep = "-"))) 
 
-
+colnames(df_dates_totals)
 verticals <- as.Date(paste0(c(2018:2022),"-01-01"))
 
 dates_labels <-  as.Date(paste0(c(2017:2022),"-06-01"))
@@ -62,7 +62,7 @@ p_ethn <- df_dates_totals_missing %>%
           subtitle = "by self-reported ethnicity")+
   theme(plot.title = element_text(size = 20, face = "bold"), 
          plot.subtitle = element_text(size = 18, face = "bold")) +
-  geom_text(data = filter(test, date == "2022-12-01"),
+  geom_text(data = filter( df_dates_totals_missing , date == "2022-12-01"),
             aes(label = ethnicity),
             hjust = 0,  
             position=position_jitter(width=1.5,height=3) ) +
@@ -75,21 +75,29 @@ p_ethn <- df_dates_totals_missing %>%
 p_ethn 
 
 
-  
+
+
 
 # get the cumulative sums for one year
-df_cum_sums <- df_dates_totals %>% 
-  filter(Year == "2022") %>% 
-  summarise(totals = sum(numbers), .groups = "drop") %>% 
-  # mutate(date = make_date(Year, Month)) %>% 
-  mutate(date = ymd(paste(Year, Month, "01", sep = "-"))) %>% 
-  arrange(date) %>% 
-  mutate(cumulative_sum = cumsum(totals)) %>% 
+years <- unique (df_dates_totals$Year)
+df_cum_sums <- list()
+for (i in 1: length(years)){
+
+df_cum_sums[[i]] <- df_dates_totals %>%
+  filter(Year ==  years[i]) %>%
+  summarise(totals = sum(numbers), .groups = "drop") %>%
+  # mutate(date = make_date(Year, Month)) %>%
+  mutate(date = ymd(paste(Year, Month, "01", sep = "-"))) %>%
+  arrange(date) %>%
+  mutate(cumulative_sum = cumsum(totals)) %>%
   mutate(perc_cum_sum = cumulative_sum/sum(totals))
+}
 
+# tried it for one of them, doesn't look informative
 
-plot(df_cum_sums$date, df_cum_sums$perc_cum_sum) # doesn't look informative
+test<- df_cum_sums[[1]] %>% 
+  ggplot(aes(x = date, y = perc_cum_sum))+
+  geom_line(colour = "red")
 
-  
 
 
