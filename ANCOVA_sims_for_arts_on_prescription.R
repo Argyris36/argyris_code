@@ -120,6 +120,24 @@ df_to_plot %>%
   scale_x_continuous("sample size", breaks = n_per_arm)
   
 
+#### I have added here the simulations done using an R library. 
+#### It largely agrees with the above under certain conditions
+library(Superpower)
+
+power_arts_prescr = ANCOVA_analytic(
+  design = "2b*2b", # a 2x2
+  mu = c(43.5, 38.3, # means as above
+         43.5, 43.5),
+  n_cov = 3, # some number of covariates--hadn't done this above
+  sd = 10.4, # as above
+  r2 = .4, # the overall R-squared of the model
+  alpha_level = .05, # alpha level
+  beta_level = .2, # 1-beta for power
+  round_up = TRUE
+)
+
+# Print main results
+power_arts_prescr 
 
 
 # # from https://hqlo.biomedcentral.com/articles/10.1186/1477-7525-10-156
