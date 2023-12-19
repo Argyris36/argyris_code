@@ -122,6 +122,7 @@ df_to_plot %>%
 
 #### I have added here the simulations done using an R library. 
 #### It largely agrees with the above under certain conditions
+### check here: https://cran.r-project.org/web/packages/Superpower/vignettes/ANCOVAs.html
 library(Superpower)
 
 power_arts_prescr = ANCOVA_analytic(

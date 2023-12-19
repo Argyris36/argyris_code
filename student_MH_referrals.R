@@ -3,14 +3,15 @@
 library(tidyverse)
 library(lubridate)
 library(ggrepel)
+
+# data I exctracted from Rob's excel sent on 16th Dec 2023
 df_student_mh_refs_by_ethnicity <- read_excel("df_student_mh_refs_by_ethnicity.xlsx")
 
-
+# turn to long
 long_df_student_mh_refs_by_ethnicity <- df_student_mh_refs_by_ethnicity %>% 
 pivot_longer(cols =c(  "White" ,  "Mixed"  , "Asian" ,  "Black"  , "Chinese", "Other" ,  "Missing"), names_to = "ethnicity", 
              values_to = "numbers")
 
-View(long_df_student_mh_refs_by_ethnicity)
 
 df_dates_totals <- long_df_student_mh_refs_by_ethnicity %>% 
   group_by(Year, Month) %>% 
@@ -30,7 +31,7 @@ p <- df_dates_totals %>%
   geom_line()+
   geom_vline(xintercept = verticals, colour = "red", 
              linetype= "dashed")+
-  scale_x_date(date_breaks = "1 month", date_labels =  "%b") +
+  scale_x_date(date_breaks = "2 month", date_labels =  "%b") +
 
   theme_classic() +
   theme(axis.text.x=element_text(angle=60, hjust=1, size = 12)) 
@@ -40,7 +41,11 @@ p +
            y = 200, label = df_labels$labels, size = 6 )+
   ylab("Total Stuent Referrals Per Year")+
   xlab("Months of the Year") +
-  ggtitle("Student Referrals to IAPT-Services by Year and Month")
+  ggtitle("Student Referrals to IAPT-Services by Year and Month")+
+  theme(plot.title = element_text(size = 20, face = "bold"), 
+        plot.subtitle = element_text(size = 18, face = "bold"))+
+  theme(axis.title.x = element_blank())+
+  theme(axis.title.y = element_text(size=15) )
   
 
 df_dates_totals_missing <- df_dates_totals %>% 
@@ -65,7 +70,7 @@ p_ethn <- df_dates_totals_missing %>%
   geom_text(data = filter( df_dates_totals_missing , date == "2022-12-01"),
             aes(label = ethnicity),
             hjust = 0,  
-            position=position_jitter(width=1.5,height=3) ) +
+            position=position_jitter(width=1.5,height=4) ) +
   coord_cartesian(clip = 'off') +
   # geom_dl(aes(label = ethnicity), method = list(dl.combine( "last.points")), cex = 0.8) +
    theme(legend.position = 'none',
