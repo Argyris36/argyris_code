@@ -44,7 +44,7 @@ ratio_over_prevalence <- df_response_ratio%>%
   ylim(0,1)+
   ggtitle("Effects of treatment response dilution over prevalence") +
   labs(subtitle = "plotted over prevalence")+
-  ylab("ratio of responding without SE over rest")+
+  ylab("ratio of responding without side effects over rest")+
   xlab("number of people treated")
 ratio_over_prevalence 
 
@@ -53,7 +53,7 @@ ratio_over_response_rate <- df_response_ratio%>%
   ggplot(aes(x= response , y =ratio_responders_no_SE_all )) +
   geom_point()+
   ylim(0,1)+
-  ggtitle("Effects of treatment response dilution over prevalence") +
+  ggtitle("Effects of treatment response dilution over rate of response") +
   labs(subtitle = "plotted over response rate")+
   ylab("ratio of responding without SE over rest")+
   xlab("rate of response")+

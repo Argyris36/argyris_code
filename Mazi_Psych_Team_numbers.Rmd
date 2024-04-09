@@ -1,0 +1,132 @@
+---
+title: "Report on Number of Beneficiaries of the Psychological Help Centre of Mazi Gia to Paidi"
+author: "Professor Argyris Stringaris, UCL and NKUA, Scientific Director Mazi"
+date: "2024-04-09"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+  word_document: default
+---
+
+```{r echo=F, message=F, warning=FALSE}
+#import data
+library(tidyverse)
+library(readxl)
+helpline_activity <- read_excel("~/Downloads/helpline_activity.xlsx")
+```
+
+## Overview
+I am summarising here in numbers the work that the Psychological Help Centre of Mazi Gia to Paidi has done over the last 5 years. 
+First, some definitions:
+
+- Psychlogical Help Centre is the term I use for what is often called "grammi" or 115 25 at Mazi. 
+- Psychoeducation refers mainly to the work that we have started doing at schools since 2023. It does not include talks or conferences (e.g. like what we are going to do in October). This is a plan that we have developed to work closely with schools, inspired by the Anna Freud Model in the UK.
+- Calls refers to answering phone calls that we receive through 115 25
+
+The data I am analysing here start in 2020. They were sent to me by the Lead of the Psychological Help Centre, Eleni Koutsopoulou. I have made two adjustments to the raw data. First, I have imputed values for 2022 psychoed by taking the average of the two years before. Second, I have also imputed April's 2024 numbers basedon the planned activities and calls so far. 
+
+
+
+## Overall activity of the Psychological Help Centre between 2020 - 2023
+
+As can be seen in Figure 1, overall the number of calls has decreased dramatically since 2020, probably a reflection of the start of several other generalist (11036) and more specialist mental health call lines that were developed (red line). 
+At the same time, the number of beneficiaries whom we were able to reach through our school work increased dramatically (green line). 
+As a result, we were able to return at the end of 2023 roughly to the same numbers of beneficiaries per year as in 2020 (blue line. 
+
+```{r warning= F, echo= F, message=F}
+
+df_calls <- data.frame(rowsum(helpline_activity[helpline_activity$type == "calls", 2: (ncol(helpline_activity)-2)], 
+       c(helpline_activity[helpline_activity$type == "calls",]$year)))
+
+
+df_psychoeducation <- data.frame(rowsum(helpline_activity[helpline_activity$type == "psychoeducation", 2: (ncol(helpline_activity)-2)], 
+                              c(helpline_activity[helpline_activity$type == "psychoeducation",]$year)))
+
+
+
+
+df_all_per_year <- rbind(data.frame(calls = rowSums(df_calls), psychoeducation = rowSums(df_psychoeducation)))
+df_all_per_year$year <- 2020:2024
+df_all_per_year$`sum of activities` <- df_all_per_year$psychoeducation+ df_all_per_year$calls
+
+df_all_per_year_long <- pivot_longer(df_all_per_year, !year, names_to = "type of activity", values_to = "number of beneficiaries")
+
+library(tidyverse)
+df_all_per_year_long %>% 
+ggplot(aes(x = year, y = `number of beneficiaries`, colour = `type of activity`))+
+  geom_point()+
+  geom_line()+
+  ggtitle("Activity of Mazi Psychological Help Centre")
+```
+
+Figure 1. 
+
+
+## Overall activity of the Psychological Help Centre between 2020 - 2024 from January to April.
+
+Figure 2 below is an additional analysis that focuses on data from January until April, i.e. what we have available for this year (2024) up to now.
+As can be seen there is strong increase in activity for those four months with an exponential increase in case so that for the months of January to April we have an increase by close to 20%.
+
+```{r echo = F, message= F, warning=F}
+
+df_up_to_April <- helpline_activity[, c("year", "January", "Februaary", "March", "April", "type")]
+
+
+
+colnames(df_up_to_April) <- c("year", "January", "February", "March", "April", "type") 
+month_order <- c("January", "February", "March", "April")
+df_up_to_April_long <- pivot_longer(df_up_to_April, !c(year, type), names_to = "month", values_to = "number of beneficiaries")
+df_up_to_April_long$month <- factor(df_up_to_April_long$month, levels = month_order)
+
+
+
+sum_benef <-
+  df_up_to_April_long %>% 
+group_by(year) %>% 
+summarise(sum_benef = sum(`number of beneficiaries`)) %>%
+  mutate(percentage_increase = (sum_benef - lag(sum_benef)) / lag(sum_benef) * 100)
+
+
+
+sum_benef  %>% 
+  ggplot(aes(x = year, y =  sum_benef))+
+  geom_point()+
+  geom_line()+
+  ggtitle("Activity of Mazi Psychological Help Centre in the last 5 years", subtitle = " combined psychoeducation and calls, months from January to April" )+
+  ylab("number of beneficiaries")
+
+#Increase per year
+# round((sum_benef[sum_benef$year == "2024",]$sum_benef - sum_benef[sum_benef$year == "2020",]$sum_benef)/sum_benef[sum_benef$year == "2020",]$sum_benef*100, )
+```
+Figure 2. 
+
+## Possible recent resurgence of the number of calls
+
+As indicated by Figure 3 below, there is an indication that the number of calls have either increased or stabilised, as evidenced by comparing the data on phone calls between 2023 and 2024. We will have to see how this is reflected in the next months' number of beneficiaries. Please note that **no adverts have gone out recently for 115 25**. It is possible that our presence in the schools also helps boost the phone calls we receive.
+```{r echo = F, message=F, warning=F}
+
+df_up_to_April_long[(df_up_to_April_long$year == "2023" |df_up_to_April_long$year == "2024") & df_up_to_April_long$type == "calls", ] %>%
+  ggplot(aes(x = month, y =  `number of beneficiaries`, colour = as.factor(year)))+
+  geom_point()+
+  geom_line(aes(group = as.factor(year)))+
+  ggtitle("Calls for Mazi Psychological Help until April", subtitle = "Years 2023 and 2024")
+```
+Figure 3. 
+
+
+## Implications 
+
+- Each year, close to 4000 people and their families benefit from the acitivities of Mazi's Psychological Help Centre. I will soon send a detailed report, providing qualitative data on the actual work that the Help Centre is performing. 
+
+- Despite a precipitous decline in calls, which occurred as a result of stiff competition with state-funded universal and other mental health help lines, we have been able to return to pre-pandemic numbers of total beneficiaries. 
+
+- We may be experiencing a slight increase in phone calls or at least a stablisation. This may be the result of our presence in schools.
+
+- This return to pre-pandemic numbers of overall beneficiaries is due to our new strategy of approaching schools and providing help where it is most needed. 
+
+- We must collect more data over time to monitor our acitivities. I am preparing additional reports on outcomes from school work and an in depth report on what the Psychological Help Centre actually does on a day to day basis. 
+
+
+  
+  
