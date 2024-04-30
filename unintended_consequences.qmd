@@ -6,7 +6,7 @@ editor: visual
 
 ## Background
 
--   Mental health problems are potentially lethal and a leading cause of disability worldwide. Moreover, in some Western societies, mental health problems amongst young people are increasing for reasons yet unknown. This leads justified concerns about how to help those children and generate services that help.
+-   Mental health problems are potentially lethal and a leading cause of disability worldwide. Moreover, in some Western societies, mental health problems amongst young people are increasing for reasons yet unknown. This leads justified concerns about how to help those children and generate services that help..
 
 -   However, some of the people labelled as having a mental health problem will not have one and some the labels attributed to people's conditions will be the wrong ones. Such errors are inevitable for any form of measurement, not just in psychiatry, but across the sciences. This paper is concerned with the some of the important clinical and public health consequences of misclassifying people as having a disorder when they don't or labelling them with the wrong disorder.
 
