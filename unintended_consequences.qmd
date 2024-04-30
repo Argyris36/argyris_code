@@ -1,0 +1,67 @@
+---
+title: "Unintended Consequences: What can go wrong if we expand the boundaries of disorders."
+format: pdf
+editor: visual
+---
+
+## Background
+
+-   Mental health problems are potentially lethal and a leading cause of disability worldwide. Moreover, in some Western societies, mental health problems amongst young people are increasing for reasons yet unknown. This leads justified concerns about how to help those children and generate services that help.
+
+-   However, some of the people labelled as having a mental health problem will not have one and some the labels attributed to people's conditions will be the wrong ones. Such errors are inevitable for any form of measurement, not just in psychiatry, but across the sciences. This paper is concerned with the some of the important clinical and public health consequences of misclassifying people as having a disorder when they don't or labelling them with the wrong disorder.
+
+-   Both the extent of mislabelling and its origins are a subject of a long debate in psychiatry and psychology and are not the primary concern of this article. Suffice it to say, that mislabelling can occur at multiple levels. At the most fundamental level, the very existence of a label may be disputed, such as the notion of "pediatric bipolar disorder", the idea that mania in children as young as 5 is common and manifests as irritability. At another level, a disorder may be accepted, but its boundaries may be unduly expanded, for example when normative sadness or fear are labelled as depression or anxiety disorders. This can be the consequence of problems of measurement (e.g. when questionnaires are relied upon instead of interviews for diagnosis), or because there are shifts (e.g. cultural) in what the threshold should be for considering distress a disorder. Also, given that language is the main tool of arriving at a diagnosis in psychiatry, shifts in how descriptors such as "depression" or "OCD" are used may have a profound influence on responses in questionnaires and interview questions.
+
+-   The consequences of mislabelling are manifold and can affect both the individual being mislabelled, e.g. because they receive the wrong treatment, as well as their families and society, e.g. due to the misallocation of resources. Indeed, the rise in prescription rates for e.g. anti-psychotics or anti-depressants in children and adolescents lead to concerns about over- as well as mis-diagnosis.
+
+In this article, we provide a generalisable account of the consequences of over-and/or mis-labelling of mental health problems. We are not seeking to be exhaustive in listing the consequences, but rather to provide a framework for clinicians, researchers and policy-makers to think about the problem. We attempt conceptual refinements by using analogies with other areas of medicine, and introduce formalisms and simulations to quantify the phenomena in question.
+
+## Forms of mislabelling
+
+There are several ways in which misclassfication can occur, here we consider the following two. They are inter-related and we believe that they cover a broad ground of problems.
+
+**Over-recognition**: This happens when we call as a sign of mental illness something that is normative. Consider a practitioner diagnosing a child with normative school-related anxiety as having an anxiety disorder, or a child with transient sadness as having depression. In medicine outside psychiatry, such problems arise when there is overestimation of the degree of a problem (e.g. whether an abdominal pain requires exploratory laparotomy, i.e. surgical incision to inspect internal organs) or m
+
+**Mis-attribution**: This occurs when two things look similar to each other and one is mistaken for another. Examples from psychiatry include the misattribution of mania to the emotional instability that is a concomitant of chronic trauma and/or personality structure, or of labelling OCD-related beliefs as psychosis.
+
+Both these situations are not unique to psychiatry, but can be found across medicine.
+
+As a non-psychiatric analogy for over-recognition, consider a pregnant woman and whether an obstetrician will advise her to have surgery (caesarean section), because of an underlying serious problem that prevents the woman from to giving birth through normal vaginal delivery. Indeed, the vast difference in rates of caesarean sections between countries (e.g. Greece X, UK Y) at the same rate of birth complications, is strong indication of a problem of over-recognition.
+
+An analogy for mis-attribution is the use of antibiotics for conditions such as tonsillitis. As with many other conditions, the symptoms and signs of tonsillitis caused by viruses are often indistinguishable from those caused by bacteria. Antibiotics only work for bacterial infections. Yet, different doctors and doctors in different countries prescribe antibiotics at dramatically different rates, an indication of a problem of misattribution.
+
+## Consequences of mislabelling and misattribution
+
+Both these over-recognition and misattribution examples have two things in common: First, what works for one condition may not be necessary or may not work for another condition. Second, each condition would likely have a different natural course and therefore a different probability and/or time course of recovery or further complications. Moreover, each treatment comes with a different probability of harm, e.g. rate of side effects. We formalise some of the key concepts.
+
+Let there be a sample of people, *S*, who present with a mental health phenomenon that we call *X* , which may be misclassified with a probability *P(mis)*.
+
+The misclassification can be of either type, i.e. over-recognition (e.g. normative sadness to depression) or mis-attribution (e.g. OCD to psychosis).
+
+Figure 1 depicts the misclassfication as the first branching point emanating from the sample.
+
+The efficacy of the treatment may or may differ between those correctly and incorrectly classified (e.g. lithium salts will not be efficacious in OCD, in the same way antibiotics are not helpful in viral tonsilitis). They may also be the same (e.g. CBT for anxiety may also be beneficial for those without a disorder). We therefore define two probabilities of response to the treatment
+
+*P(treatment_response_correct)*
+
+*P(treatment_response_incorrect)*
+
+For which in most conceivable cases, *P(treatment_response_correct) \> P(treatment_response_incorrect)* since the indicated treatment should be more efficacious.
+
+The harm caused by the treatment should not differ between those correctly and incorrectly classified in the way that side effects of antibiotics are no different between those with and those without any form of tonsilitis.
+
+*P(treatment_harm)*
+
+This allows us to express the intuitive and widely applied measure of the risk-benefit ratio as,
+
+\_P(*treatment_response_correct)*)\_/\_P(*treatment_harm*)\_
+
+for the complex condition, and
+
+\_P(*treatment_response_incorrect)*)\_/\_P(*treatment_harm*)\_
+
+for the simple condition.
+
+In Fig. 1, the second branching points on the tree diagram demonstrate the different outcomes for efficacy. The far end of the tree diagram carries the risk-benefit ratios for each group.
+
+Figure 2, uses the formalisms of figure 1 to demonstrate the effects that classification errors can have on the risk-benefit ratio.
