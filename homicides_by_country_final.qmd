@@ -1,0 +1,50 @@
+---
+title: "homicides by country"
+author: "Argyris Stringaris"
+format: pdf
+editor: visual
+---
+
+## Crime by region, time and gender
+
+```{r}
+
+library(tidyverse)
+
+
+# Data from https://www.unodc.org/documents/data-and-analysis/gsh/2023/Global_study_on_homicide_2023_web.pdf
+# https://en.wikipedia.org/wiki/Crime_drop#cite_note-unodc-data-10
+# time trends you can get here: https://dataunodc.un.org/content/data/homicide/homicide-rate
+
+Overall_crime_rate <- c(21.3, 1.1, 8.8, 2.2)
+Female_Rate <- 0.07*Overall_crime_rate
+Male_Rate <- Overall_crime_rate - Female_Rate
+
+data <- data.frame(
+  Country = c("Βραζιλία 2022", "Ελλάδα 2022","Ευρώπη 1994", "Ευρώπη 2022"),
+  Male_Rate = Male_Rate
+)
+
+# Females are about 7% of the total (see pages 150 and 151 of UNODC report)
+data$Female_Rate <- Female_Rate
+
+
+
+# make long
+data_long <- tidyr::pivot_longer(data, cols = c(Male_Rate, Female_Rate),
+                                 names_to = "Sex", values_to = "Rate")
+
+# plot
+p <- ggplot(data_long, aes(x = Country, y = Rate, fill = Sex)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Ποσοστό Ανθρωποκτονιών ανά 100,000 κατοίκους",
+       subtitle = "ανά γεωγραφική περιοχή και φύλο",
+       y = "",
+       x = "Γεωγραφική Περιοχή ") +
+  labs(fill = "Φύλο")+ 
+  scale_fill_discrete(labels = c("Γυναίκες","Ἀνδρες"))+
+  theme_minimal()
+
+p
+
+```

@@ -1,0 +1,272 @@
+---
+title: "Modelling Mondays"
+author: "Argyris Stringaris"
+date: "05-06-2024"
+format: pdf
+editor: visual
+---
+
+## Motivation
+
+What is Data Generating Process (DGP) and what is a likelihood function?
+
+Typically, we think of a DGP as a mathematical formula that gives rise to a distribution. For example, the IQ curve can be generated through the Gaussian, named after Karl Friedrich Gauß--very much worth reading about also in the novel The Measuring of the World, by Kehlmann (where the parallel lives of Gauß and Humboldt are presented).
+
+![](Carl_Friedrich_Gauss_1840_by_Jensen.jpeg)
+
+![](measuring_the_world.jpg)
+
+But in a more abstract way, the question is, what are the mechanisms through which a set of data are generated, be it voting patterns, brain data or league games.
+
+Consider, for example, a sample of the general population filling in a questionnaire about depression. Figure 1a. shows a typical pattern, that of a right skewed truncated distribution. The "mechanism" that gives rise to the right skew is the fact that there are far more people without many symptoms and hence many people close to the zero mark. It is also truncated because scores can't go below zero and can't go above the max of the sum of the scale. By contrast, Figure 1b, shows the
+
+```{r echo = F, warning = F, message = F }
+library(stevemisc)
+library(tidyverse)
+
+samples <- c(10^2, 10^3, 10^4, 10^5, 10^6, 5*10^6, 10*10^6)
+mean_a <- 4.9 
+sd <- 4.49
+mean_b <- 12
+
+
+
+df_pop <- data.frame(
+
+values = rbnorm(samples[4], mean_a, sd, 0, 26, round = TRUE, seed = 1974), 
+
+origin = rep("general population", samples[4])
+)
+
+df_comm <- data.frame(
+
+values = rbnorm(samples[4], mean_b, sd, 0, 26, round = TRUE, seed = 1974),
+
+origin = rep("clinical population", samples[4])
+)
+
+
+df_gen_vs_clin <- rbind(df_pop, df_comm)
+
+
+df_gen_vs_clin %>% 
+ggplot(aes(x = values, fill= origin))+
+  geom_histogram(position = "identity", alpha = 0.4, bins = 40)+
+  ggtitle ("Two Data Generating Processes",
+           subtitle = "Score on a Depression Questionnaire")
+  
+  
+```
+
+In general, we always want to consider the DGS so as to:
+
+a\) understand what gives rise to the data.
+
+b\) mathematically describe (at least) how the data arise.
+
+c\) estimate parameters (related to b)
+
+d\) simulate the process to study it better.
+
+## The omniscient person: knowing the DGS and the correct parameter.
+
+This is someone who knows the function and its probability, is certain about the DGS. Let's say that theyknow that they are dealing with the normal distribution, which is formalised as:
+
+$$
+f(x | \theta) = \frac{1}{\sqrt{2\pi\sigma^2}} \cdot e^{-\frac{(x - \theta)^2}{2\sigma^2}}
+$$ {#eq-1}
+
+where, *x* is the point of interest of the probability density function, $\theta$ is the mean (location parameter) of the normal distribution, and $\sigma$ is the standard deviation (spread parameter).
+
+```{r echo = F, warning = F, message = F}
+# this is a function for the pdf, you can get it through dnorm.
+pdf_normal <- function(x, theta, sigma) {
+  density <- 1 / (sqrt(2 * pi * sigma^2)) * exp(-((x - theta)^2) / (2 * sigma^2))
+  return(density)
+}
+
+
+x <- seq(from = 40, to = 180,by = 1) #giving it a typical range for IQs
+theta <- 100 # we know this as the mean
+sigma <- 15 # the sd
+
+pdf_value <- pdf_normal(x, theta, sigma)
+
+df_values_and_parameter <- data.frame(x, pdf_value)
+df_values_and_parameter %>% 
+  ggplot(aes(x, pdf_value))+
+geom_point()
+
+
+# sum(pdf_value) check what this sums up to
+
+```
+
+You will all recognise this as the standard IQ curve.
+
+Please note from Equation 1 that here the point is that the situation is phrased as:
+
+$$f(x | \theta, \sigma)$$
+
+i.e. we ask what the probability is of obtaining these data given the parameters $\theta$.
+
+The situation where you are certain about the correct parameter and only need to know the frequency of individual values or set of values is a very convenient one to be in. Often however, in the real world we may have an intuition about what the DGP might be but not know the parameter(s). That is when we ask about the likelihood.
+
+## A real person: having data, intuiting the DGS, and not knowing the parameter.
+
+Consider having collected some data, having some intuition about the DGS and needing to find out the parameter amongst a set of parameters.
+
+This is a more likely situation which I will illustrate here by trying to recover the mean parameter from synthetic data.
+
+For the moment it is safe to say that what were trying to do here is to invert the process above, i.e. what you do with the probability density function. Instead of asking what data are likely to occur given a parameter (such as the mean and sd) that you *already* know about, here you ask, what is the most likely parameter that has given rise to the data I have.
+
+$$
+L(\mu, \sigma^2 | x_1, x_2, \ldots, x_n) = \prod_{i=1}^{n} \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{(x_i - \mu)^2}{2\sigma^2}\right)
+$$ {#eq-2}
+
+Equation 2 states precisely that: what is the likelihood of this mean and variance, given all these data points? Equation 2 on the right hand side contains the PDF, as above, but what it says is that it takes the probability at each step and multiplies them altogether, this is what that giant Greek $\Pi$ stands for, the product.
+
+Notice that when I tried this with fewer data points, I was able to get the likelihood, but when I increased them, I needed the natural log. Try it for yourself.
+
+```{r echo = F, warning = F, message = F}
+# I am using the above pdf to define the log-likelihood function 
+
+log_likelihood_normal <-  function(x, theta, sigma) {
+  log_pdf <- log(1 / (sqrt(2 * pi * sigma^2)) * exp(-((x - theta)^2) / (2 * sigma^2)))
+  log_likelihood <- sum(log_pdf)  # Log-likelihood for the entire dataset
+  return(log_likelihood)
+}
+
+
+
+#I could also have done this. Note what happens if you leave out the log...
+# log_likelihood_normal <- function(mu, x) {
+#   log_pdf <- dnorm(x, mean = mu, sd = 15, log = TRUE)  # Log of probability density function
+#   log_likelihood <- sum(log_pdf)  # Log-likelihood for the entire dataset
+#   return(log_likelihood)
+# }
+# 
+
+# I am making synthetic iq data
+set.seed(1974)  
+data <- rnorm(1000, mean = 100, sd = 15) 
+
+# log likelihood for the different mean values
+mu_values <- seq(60, 120, by = 0.1)  # Range of mu values to test
+log_likelihood_values <- sapply(mu_values, function(mu) log_likelihood_normal(data, mu, 15))
+
+# This gives me the MLE
+mle <- mu_values[which.max(log_likelihood_values)] # close to 100!
+
+
+df_log_likelihood <- data.frame(mu_values, log_likelihood_values)
+df_log_likelihood %>% 
+  ggplot(aes(x = mu_values, y = log_likelihood_values))+
+  geom_point()+
+  geom_vline(xintercept = mle, colour = "red")+
+  ggtitle("A Likelihood Function for IQ")+
+  ylab("Log-Likelihood")+
+  xlab("Means IQ points")
+
+```
+
+```{r echo = F, warning = F, message = F}
+# Here I have created the likelihood function for a binomial 
+likelihood_binomial <- function(p, k, n) {
+  pmf <- choose(n, k) * p^k * (1 - p)^(n - k)  #PDF
+  likelihood <- prod(pmf)  # just the product
+  return(likelihood)
+}
+
+# I plucked these numbers out of thin air, but could equally have created proper synthetic data as above using the Bernoulli distribution.
+k <- c(3, 4, 5)  # Number of successes, e.g. heads 
+n <- c(10, 10, 10)  # Total number of trials, in this case coin tosses
+
+# Calculate the likelihood for different values of p
+p_values <- seq(0, 1, by = 0.01)
+likelihood_values <- sapply(p_values, function(p) likelihood_binomial(p, k, n))
+
+# now plot
+df_likelihood_binomial <- data.frame(p_values, likelihood_values)
+
+df_likelihood_binomial %>% 
+  
+  ggplot (aes(x = p_values, y = likelihood_values))+
+  geom_point()+
+  ggtitle("Likelihood for Coin Tosses (Binomial Distribution)")+
+  xlab("probabilities")+
+  ylab("likelihood values")
+  
+
+```
+
+Now let's turn to the simple linear regression model. Let's start by asking how to think formally of the data generating mechanism of any linear model. It should be a
+
+$$
+y_i = \beta_0 + \beta_1 x_i + \epsilon_i 
+$$ {#eq-3}
+
+where, $\epsilon_i$ follows a normal distribution with mean zero and variance $\sigma^2$
+
+$$
+L(\beta_0, \beta_1 | x_1, y_1, x_2, y_2, \ldots, x_n, y_n) = \prod_{i=1}^{n} f(y_i | \beta_0 + \beta_1 x_i)
+$$ {#eq-4}
+
+where $$f(y_i | \beta_0 + \beta_1 x_i) $$ is the probability density function (PDF) of the normal distribution with mean $( \mu_i = \beta_0 + \beta_1 x_i )$ and constant variance \$ \\sigma\^2 \$
+
+To demonstrate this, I will first create synthetic data
+
+```{r echo = F, warning = F, message = F}
+# Some synthetic data
+set.seed(1974)  
+n <- 100  # obs
+x <- rnorm(n, mean = 5, sd = 2)  # predictor
+epsilon <- rnorm(n, mean = 0, sd = 1)  # error 
+beta0 <- 2  # intercept arbitrary
+beta1 <- 0.6  # slope also arbitrary
+y <- beta0 + beta1 * x + epsilon  # simulate the dependent variable
+
+# Define the likelihood function for simple linear regression
+likelihood_linear_regression <- function(beta0, beta1, x, y) {
+  mu <- beta0 + beta1 * x  # predicted values
+  log_likelihood <- sum(dnorm(y, mean = mu, sd = 1, log = TRUE))  # log-likelihood i have used # dnorm to save space, could have equally used the spelt out function that I created above
+  return(log_likelihood)
+}
+
+# The log-likelihood for different values of beta0 and beta1 REMIND ME TO TELL YOU ABOUT THE #PLAUSIBLE RANGE!
+beta0_values <- seq(0, 4, by = 0.1)  
+beta1_values <- seq(0, 1, by = 0.01)  
+log_likelihood_values <- outer(beta0_values, beta1_values, # the outer function allows me to #have a vector of the two parameters, which you then pass each through the vectorised #function. This can be mind boggling and I have created below an example with a simpler input #and function
+                               Vectorize(function(b0, b1) likelihood_linear_regression(b0, b1, x, y)))
+
+# The MLE for beta0 and beta1
+max_indices <- which(log_likelihood_values == max(log_likelihood_values), arr.ind = TRUE)
+mle_beta0 <- beta0_values[max_indices[1]]
+mle_beta1 <- beta1_values[max_indices[2]]
+
+# Plot log-likelihood surface A PAIN!
+library(plot3D)
+persp3D(beta0_values, beta1_values, log_likelihood_values, xlab = "Beta0", ylab = "Beta1", zlab = "Log-Likelihood",
+        main = "Log-Likelihood Surface for Simple Linear Regression")
+points3D(mle_beta0, mle_beta1, max(log_likelihood_values), col = "red", pch = 16)
+
+
+```
+
+In the code chunk below, I explain how the outer product and vectorisation works.
+
+```{r warning = F, message = F , echo = F}
+# Show the above with a simple function
+simple_function <- function(a, b) {
+  return((a + b)^2)
+}
+
+# Create input vectors
+input_vector_a <- c(1, 2, 3)
+input_vector_b <- c(10, 20, 30)
+
+# Apply the function to all combinations of elements from the input vectors
+result_matrix <- outer(input_vector_a, input_vector_b, Vectorize(simple_function))
+
+
+```

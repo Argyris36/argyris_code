@@ -1,0 +1,480 @@
+---
+title: "Greek Police Data on Youth Crime over the last 10 years"
+author: "Argyris Stringaris"
+date: "2024-04-23"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+
+
+### Source of Data
+I have received these data upon request from the Greek Police. They came in two Excel files, one with data batween 2014 - 2018 and the other between 2020-2023.
+```{r message = F, warning = F, echo = FALSE}
+library(tidyverse)
+library(readxl)
+# Some data wrangling first.
+df_greek_police_stats <- read_excel("~/Downloads/''Αίτημα για χορήγηση στατιστικών στοιχείων παραβατικότητας ανηλίκων''./\u0083\u0084\u0088\u0089\u0092\u0086\u0091_4/\u0080\u008c\u0086\u008a\u0088\u0089\u008e\u0088 \u0083\u0090\u0080\u0091\u0092\u0084\u0091_\u0084\u008f\u0088\u0089\u0090\u0080\u0092\u0084\u0088\u0080_2014-2019.xlsx")
+
+# cleaning has to be done by hand unfortunately as there is no discernible pattern. 
+
+# get rid of first few rows 
+df_greek_police_stats <- df_greek_police_stats[-c(1:8),]
+
+# change column names
+colnames(df_greek_police_stats) <-  c("crime", paste0(rep((2014:2019), each = 2), c("_cases", "_perpetrators")))
+
+
+# pull all articles of the criminal code together
+#df_greek_police_stats$articles_crim_code <- round(extract_numeric(df_greek_police_stats$crime), 0)
+
+df_greek_police_stats$articles_crim_code <- gsub("\\D", "", df_greek_police_stats$crime)
+
+
+
+df_greek_police_stats <- df_greek_police_stats %>% 
+  mutate(crime_new = recode(crime,
+"ΑΡΘΡΟ 167 (ΑΝΤΙΣΤΑΣΗ)" = "state_power_",
+"ΑΡΘΡΟ 169 (ΑΠΕΙΘΕΙΑ)" = "state_power_",
+"ΑΡΘΡΟ 173 (ΑΠΟΔΡΑΣΗ ΚΡΑΤΟΥΜΕΝΟΥ)" = "state_power_",
+"ΑΡΘΡΟ 182 (ΠΑΡΑΒΙΑΣΗ ΠΕΡΙΟΡΙΣΜΩΝ ΔΙΑΜΟΝΗΣ)" = "state_power_",
+"ΑΡΘΡΟ 183 (ΔΙΕΓΕΡΣΗ)" = "state_power_",
+"ΑΡΘΡΟ 187 (ΕΓΚΛΗΜΑΤΙΚΗ ΟΡΓΑΝΩΣΗ)" = "state_power_",
+"ΑΡΘΡΟ 189 (ΔΙΑΤΑΡΑΞΗ ΤΗΣ ΚΟΙΝΗΣ ΕΙΡΗΝΗΣ)" = "state_power_",
+"ΑΡΘΡΟ 190 (ΔΙΑΤΑΡΑΞΗ ΤΗΣ ΕΙΡΗΝΗΣ ΤΩΝ ΠΟΛΙΤΩΝ)" =  "state_power_",
+
+
+"ΑΡΘΡΟ 198 (ΚΑΚΟΒΟΥΛΗ ΒΛΑΣΦΗΜΙΑ)" = "religion_",
+
+"ΑΡΘΡΟ 207 (ΠΑΡΑΧΑΡΑΞΗ)" = "counterfeit_", 
+"ΑΡΘΡΟ 208 (ΚΥΚΛΟΦΟΡΙΑ ΠΑΡΑΧΑΡΑΓΜΕΝΩΝ ΝΟΜΙΣΜΑΤΩΝ)" = "counterfeit_", 
+"ΑΡΘΡΟ 45 & 208 (ΣΥΝΑΥΤΟΥΡΓΟΙ ΣΕ ΚΥΚΛ. ΠΑΡΑΧΑΡ. ΝΟΜΙΣΜΑΤΩΝ)" = "counterfeit_",
+
+
+"ΑΡΘΡΟ 216 (ΠΛΑΣΤΟΓΡΑΦΙΑ)" = "forgery_",
+"ΑΡΘΡΟ 45 & 216 (ΣΥΝΑΥΤΟΥΡΓΟΙ ΣΕ ΠΛΑΣΤΟΓΡΑΦΙΑ)" = "forgery_",
+"ΑΡΘΡΟ 217 (ΠΛΑΣΤΟΓΡΑΦΙΑ ΠΙΣΤΟΠΟΙΗΤΙΚΩΝ)" = "forgery_",
+
+
+
+"ΑΡΘΡΟ 224 (ΨΕΥΔΟΡΚΙΑ)" = "lying_",
+"ΑΡΘΡΟ 225 (ΨΕΥΔΗΣ ΑΝΩΜΟΤΗ ΚΑΤΑΘΕΣΗ)" = "lying_",
+"ΑΡΘΡΟ 229 (ΨΕΥΔΗΣ ΚΑΤΑΜΗΝΥΣΗ)" = "lying_",
+"ΑΡΘΡΟ 231 (ΥΠΟΘΑΛΨΗ ΕΓΚΛΗΜΑΤΙΑ)" = "lying_",
+"ΑΡΘΡΟ 232 (ΠΑΡΑΣΙΩΠΗΣΗ ΕΓΚΛΗΜΑΤΩΝ)" = "lying_",
+
+
+
+"ΑΡΘΡΟ 264 (ΕΜΠΡΗΣΜΟΣ)" = "explosives_",
+"ΑΡΘΡΟ 270 (ΕΚΡΗΞΗ)" = "explosives_",
+"ΑΡΘΡΟ 272 (ΠΑΡΑΒΑΣΕΙΣ ΣΧΕΤΙΚΕΣ ΜΕ ΤΙΣ ΕΚΡΗΚΤΙΚΕΣ ΥΛΕΣ)" = "explosives_",
+
+
+"ΑΡΘΡΟ 290 (ΔΙΑΤΑΡΑΞΗ ΤΗΣ ΑΣΦΑΛΕΙΑΣ ΤΩΝ ΣΥΓΚΟΙΝΩΝΙΩΝ)" = "transport_", 
+
+
+"ΑΡΘΡΟ 299 (ΑΝΘΡΩΠΟΚΤΟΝΙΑ ΜΕ ΠΡΟΘΕΣΗ)" = "homicide_intent_", 
+"ΑΡΘΡΟ 42 & 299 (ΑΠΟΠΕΙΡΑ ΑΝΘΡΩΠΟΚΤΟΝΙΑΣ ΜΕ ΠΡΟΘΕΣΗ)" = "homicide_intent_attempt_", 
+"ΑΡΘΡΟ 42,45 & 299 (ΣΥΝΑΥΤΟΥΡΓΟΙ. ΣΕ ΑΠΟΠ. ΑΝΘΡ. ΜΕ ΠΡΟΘΕΣΗ)" = "homicide_intent_attempt_conspire_", 
+"ΑΡΘΡΟ 46 & 299 (ΗΘΙΚΟΣ ΑΥΤΟΥΡΓΟΣ & ΑΜΕΣΟΣ.ΣΥΝΕΡΓ. ΣΕ ΑΝΘΡ.)" = "homicide_intent_attempt_mastermind_", 
+"ΑΡΘΡΟ 299 & 380 (ΑΝΘΡΩΠΟΚΤΟΝΙΑ -ΛΗΣΤΕΙΑ)" = "homicide_intent_attempt_robbery_",
+"ΑΡΘΡΟ 302 (ΑΝΘΡΩΠΟΚΤΟΝΙΑ ΑΠΟ ΑΜΕΛΕΙΑ)" = "homicide_intent_attempt_negligence_",
+"ΑΡΘΡΟ 307 (ΠΑΡΑΛΕΙΨΗ ΛΥΤΡΩΣΗΣ ΑΠΟ ΚΙΝΔΥΝΟ ΖΩΗΣ)" = "homicide_intent_attempt_dereliction_",
+
+
+
+"ΑΡΘΡΟ 308 (ΑΠΛΗ ΣΩΜΑΤΙΚΗ ΒΛΑΒΗ)" = "bodily_harm_simple_",
+"ΑΡΘΡΟ 308Α (ΑΠΡΟΚΛΗΤΗ ΣΩΜΑΤΙΚΗ ΒΛΑΒΗ)" = "bodily_harm_unprovoked_",
+"ΑΡΘΡΟ 309 (ΕΠΙΚΙΝΔΥΝΗ ΣΩΜΑΤΙΚΗ ΒΛΑΒΗ)" = "bodily_harm_dangerous_",
+"ΑΡΘΡΟ 42 & 309 (ΑΠΟΠΕΙΡΑ ΕΠΙΚΙΝΔΥΝΗΣ ΣΩΜΑΤΙΚΗΣ ΒΛΑΒΗΣ)"  = "bodily_harm_attempt_dangerous_",
+"ΑΡΘΡΟ 310 (ΒΑΡΙΑ ΣΩΜΑΤΙΚΗ ΒΛΑΒΗ)" =  "bodily_harm_griveous_",
+"ΑΡΘΡΟ 311 (ΘΑΝΑΤΗΦΟΡΑ ΣΩΜΑΤΙΚΗ ΒΛΑΒΗ)" =  "bodily_harm_lethal_",
+"ΑΡΘΡΟ 312 (ΠΡΟΚΛΗΣΗ ΒΛΑΒΗΣ ΜΕ ΣΥΝΕΧΗ ΣΚΛΗΡΗ ΣΥΜΠΕΡΙΦΟΡΑ)" = "bodily_harm_harm_tough_behaviour_",
+"ΑΡΘΡΟ 313 (ΣΥΜΠΛΟΚΗ)" = "bodily_harm_altercation_",
+"ΑΡΘΡΟ 314 (ΣΩΜΑΤΙΚΗ ΒΛΑΒΗ ΑΠΟ ΑΜΕΛΕΙΑ)" = "bodily_harm_negligence_",
+
+
+"ΑΡΘΡΟ 322 (ΑΡΠΑΓΗ)" = "freedom_",
+"ΑΡΘΡΟ 323α (ΕΜΠΟΡΙΑ ΑΝΘΡΩΠΩΝ)" = "freedom_",
+"ΑΡΘΡΟ 324 (ΑΡΠΑΓΗ ΑΝΗΛΙΚΩΝ)" = "freedom_",
+"ΑΡΘΡΟ 325 (ΠΑΡΑΝΟΜΗ ΚΑΤΑΚΡΑΤΗΣΗ)" = "freedom_",
+"ΑΡΘΡΟ 327 (ΑΚΟΥΣΙΑ ΑΠΑΓΩΓΗ)" = "freedom_",
+"ΑΡΘΡΟ 328 (ΕΚΟΥΣΙΑ ΑΠΑΓΩΓΗ)" = "freedom_",
+"ΑΡΘΡΟ 330 (ΠΑΡΑΝΟΜΗ ΒΙΑ)" = "freedom_",
+"ΑΡΘΡΟ 331 (ΑΥΤΟΔΙΚΙΑ)" = "freedom_",
+"ΑΡΘΡΟ 333 (ΑΠΕΙΛΗ)" = "freedom_",
+"ΑΡΘΡΟ 334 (ΔΙΑΤΑΡΑΞΗ ΟΙΚΙΑΚΗΣ ΕΙΡΗΝΗΣ)" = "freedom_",
+
+
+"ΑΡΘΡΟ 336 (ΒΙΑΣΜΟΣ)" = "sex_",
+"ΑΡΘΡΟ 42 & 336 (ΑΠΟΠΕΙΡΑ ΒΙΑΣΜΟΥ)" = "sex_",
+"ΑΡΘΡΟ 337 (ΠΡΟΣΒΟΛΗ ΤΗΣ ΓΕΝΕΤΗΣΙΑΣ ΑΞΙΟΠΡΕΠΕΙΑΣ)" = "sex_",
+"ΑΡΘΡΟ 338 (ΚΑΤΑΧΡΗΣΗ ΣΕ ΑΣΕΛΓΕΙΑ)" = "sex_",
+"ΑΡΘΡΟ 339 (ΑΠΟΠΛΑΝΗΣΗ ΠΑΙΔΙΩΝ)" = "sex_",
+"ΑΡΘΡΟ 345 (ΑΙΜΟΜΙΞΙΑ)" = "sex_",
+"ΑΡΘΡΟ 348 (ΔΙΕΥΚΟΛΥΝΣΗ ΑΚΟΛΑΣΙΑΣ ΑΛΛΩΝ)" = "sex_",
+"ΑΡΘΡΟ 348Α (ΠΟΡΝΟΓΡΑΦΙΑ ΑΝΗΛΙΚΩΝ)" = "sex_",
+"ΑΡΘΡΟ 349 (ΜΑΣΤΡΟΠΕΙΑ)" = "sex_",
+
+
+
+"ΑΡΘΡΟ 361 (ΕΞΥΒΡΙΣΗ)" = "honour_",
+"ΑΡΘΡΟ 362 (ΔΥΣΦΗΜΗΣΗ)" = "honour_",
+"ΑΡΘΡΟ 363 (ΣΥΚΟΦΑΝΤΙΚΗ ΔΥΣΦΗΜΗΣΗ)" = "honour_",
+
+
+"ΑΡΘΡΟ 372 (ΚΛΟΠΗ)" = "ownership_",
+"ΑΡΘΡΟ 42 & 372 (ΑΠΟΠΕΙΡΑ ΚΛΟΠΗΣ)" = "ownership_",
+"ΑΡΘΡΟ 45 & 372 (ΣΥΝΑΥΤΟΥΡΓΟΙ ΣΕ ΚΛΟΠΗ)" = "ownership_",
+"ΑΡΘΡΟ 42,45 & 372 (ΣΥΝΑΥΤΟΥΡΓΟΙ ΣΕ ΑΠΟΠ.ΚΛΟΠΗΣ)" = "ownership_",
+"ΑΡΘΡΟ 374 (ΔΙΑΚΕΚΡΙΜΕΝΕΣ ΠΕΡΙΠΤΩΣΕΙΣ ΚΛΟΠΗΣ)" = "ownership_",
+"ΑΡΘΡΟ 45 & 374 (ΣΥΝΑΥΤΟΥΡΓΟΙ ΣΕ ΔΙΑΚΕΚΡΙΜΕΝΕΣ ΠΕΡΙΠΤ. ΚΛΟΠΗΣ)" = "ownership_",
+"ΑΡΘΡΟ 42,45 & 374 (ΣΥΝΑΥΤΟΥΡΓΟΙ ΣΕ ΑΠΟΠ. ΔΙΑΚ. ΠΕΡΙΠΤ. ΚΛΟΠΗΣ)" = "ownership_",
+"ΑΡΘΡΟ 375 (ΥΠΕΞΑΙΡΕΣΗ)" = "ownership_",
+"ΑΡΘΡΟ 377 (ΚΛΟΠΕΣ & ΥΠΕΞΑΙΡΕΣΕΙΣ ΕΥΤΕΛΟΥΣ ΑΞΙΑΣ)" = "ownership_",
+"ΑΡΘΡΟ 380 (ΛΗΣΤΕΙΑ)" = "ownership_",
+"ΑΡΘΡΟ 42 & 380 (ΑΠΟΠΕΙΡΑ ΛΗΣΤΕΙΑΣ)" = "ownership_",
+"ΑΡΘΡΟ 45 & 380 (ΣΥΝΑΥΤΟΥΡΓΟΙ ΣΕ ΛΗΣΤΕΙΑ)" = "ownership_",
+"ΑΡΘΡΟ 42,45 & 380 (ΣΥΝΑΥΤΟΥΡΓΟΙ ΣΕ ΑΠΟΠ.ΛΗΣΤΕΙΑΣ)" = "ownership_",
+"ΑΡΘΡΟ 381 (ΦΘΟΡΑ ΞΕΝΗΣ ΙΔΙΟΚΤΗΣΙΑΣ)" = "ownership_",
+
+
+"ΑΡΘΡΟ 385 (ΕΚΒΙΑΣΗ)" = "property_",
+"ΑΡΘΡΟ 386 (ΑΠΑΤΗ)"= "property_",
+"ΑΡΘΡΟ 42 & 386 (ΑΠΟΠΕΙΡΑ ΑΠΑΤΗΣ)"= "property_",
+"ΑΡΘΡΟ 394 (ΑΠΟΔΟΧΗ & ΔΙΑΘΕΣΗ ΠΡΟΙΟΝΤΩΝ ΕΓΚΛΗΜΑΤΟΣ)"= "property_",
+
+
+"ΑΡΘΡΟ 407 (ΕΠΑΙΤΕΙΑ)" = "begging_", 
+"ΑΡΘΡΟ 409 (ΠΑΡΑΜΕΛΗΣΗ ΑΠΟΤΡΟΠΗΣ ΑΠΟ ΕΠΑΙΤΕΙΑ)" = "begging_", 
+
+
+"Ν.4139/2013 (ΠΕΡΙ ΕΞΑΡΤΗΣΙΟΓΟΝΩΝ ΟΥΣΙΩΝ)" = "other_", 
+"Ν.2696/1999 (ΠΕΡΙ ΚΟΚ)" = "other_", 
+"Ν.2168/1993 (ΠΕΡΙ ΟΠΛΩΝ)" = "other_", 
+"Ν.3386/2005 (ΠΕΡΙ ΑΛΛΟΔΑΠΩΝ)" = "other_"
+
+))
+
+df_greek_police_stats$crime_codes <-  paste0(df_greek_police_stats$crime_new, df_greek_police_stats$articles_crim_code)
+
+rows_with_numbers <- grepl("\\d", df_greek_police_stats$crime_codes)
+
+df_greek_police_stats <- df_greek_police_stats[rows_with_numbers,]
+
+
+
+# get rid of last row
+df_greek_police_stats <- df_greek_police_stats[-nrow(df_greek_police_stats), ]
+
+
+
+
+df_greek_police_stats$crime_type <- sapply(strsplit(df_greek_police_stats$crime_new, "_"), "[", 1)
+
+
+
+
+
+df_greek_police_stats_long <- df_greek_police_stats%>% 
+  pivot_longer(!c(crime, crime_new, crime_codes, articles_crim_code, crime_type), names_to = "year", values_to = "count")
+
+
+
+
+df_greek_police_stats_long <- separate(df_greek_police_stats_long, year, into = c("year", "type"), sep = "_")
+
+
+
+df_summaries <-  df_greek_police_stats_long %>% 
+  # filter(type == "cases") %>% 
+    group_by(crime_type, year, type) %>%
+  summarize(total_cases = sum(as.numeric(count), na.rm = T))
+
+
+
+```
+
+
+
+```{r  message = F, warning = F, echo = FALSE}
+df_greek_police_stats_2  <- read_excel("~/Downloads/''Αίτημα για χορήγηση στατιστικών στοιχείων παραβατικότητας ανηλίκων''./\u0083\u0084\u0088\u0089\u0092\u0086\u0091_4/\u0080\u008c\u0086\u008a\u0088\u0089\u008e\u0088 \u0083\u0090\u0080\u0091\u0092\u0084\u0091_\u0084\u008f\u0088\u0089\u0090\u0080\u0092\u0084\u0088\u0080_2020-2023.xlsx")
+View(df_greek_police_stats_2)
+
+# get rid of first few rows 
+df_greek_police_stats_2 <- df_greek_police_stats_2[-c(1:8),]
+
+# change column names
+colnames(df_greek_police_stats_2) <-  c("crime", paste0(rep((2020:2023), each = 2), c("_cases", "_perpetrators")))
+
+
+df_greek_police_stats_2$articles_crim_code <- gsub("\\D", "", df_greek_police_stats_2$crime)
+
+
+df_greek_police_stats_2 <- df_greek_police_stats_2 %>% 
+  mutate(crime_new = recode(crime,
+                            
+"ΑΡΘΡΟ 167 (ΒΙΑ ΚΑΤΑ ΥΠΑΛΛΗΛΩΝ ΚΑΙ ΔΙΚΑΣΤΙΚΩΝ ΠΡΟΣΩΠΩΝ)" = "state_power_", 
+"ΑΡΘΡΟ 169 (ΑΠΕΙΘΕΙΑ)" = "state_power_",
+"ΑΡΘΡΟ 173 (ΑΠΟΔΡΑΣΗ ΚΡΑΤΟΥΜΕΝΟΥ)" = "state_power_",
+"ΑΡΘΡΟ 187 (ΕΓΚΛΗΜΑΤΙΚΗ ΟΡΓΑΝΩΣΗ)" = "state_power_",
+"ΑΡΘΡΟ 189 (ΔΙΑΤΑΡΑΞΗ ΤΗΣ ΚΟΙΝΗΣ ΕΙΡΗΝΗΣ)" = "state_power_",
+
+
+"ΑΡΘΡΟ 207 (ΠΑΡΑΧΑΡΑΞΗ ΝΟΜΙΣΜΑΤΟΣ ΚΑΙ ΑΛΛΩΝ ΜΕΣΩΝ ΠΛΗΡΩΜΗΣ)" = "counterfeit_",
+"ΑΡΘΡΟ 208 (ΚΥΚΛΟΦΟΡΙΑ ΠΛΑΣΤΩΝ ΝΟΜΙΣΜΑΤΩΝ ΚΑΙ ΑΛΛΩΝ ΜΕΣΩΝ ΠΛΗΡΩΜΗΣ)" = "counterfeit_",
+
+"ΑΡΘΡΟ 216 (ΠΛΑΣΤΟΓΡΑΦΙΑ)" = "forgery_",
+"ΑΡΘΡΟ 45 & 216 (ΣΥΝΑΥΤΟΥΡΓΟΙ ΣΕ ΠΛΑΣΤΟΓΡΑΦΙΑ)" = "forgery_",
+"ΑΡΘΡΟ 217 (ΠΛΑΣΤΟΓΡΑΦΙΑ ΠΙΣΤΟΠΟΙΗΤΙΚΩΝ)" = "forgery_",
+
+
+"ΑΡΘΡΟ 224 (ΨΕΥΔΗΣ ΚΑΤΑΘΕΣΗ)" = "lying_",
+"ΑΡΘΡΟ 229 (ΨΕΥΔΗΣ ΚΑΤΑΜΗΝΥΣΗ)" = "lying_",
+"ΑΡΘΡΟ 231 (ΥΠΟΘΑΛΨΗ)" = "lying_",
+
+"ΑΡΘΡΟ 264 (ΕΜΠΡΗΣΜΟΣ)" = "explosives_",
+"ΑΡΘΡΟ 270 (ΕΚΡΗΞΗ)" = "explosives_",
+"ΑΡΘΡΟ 272 (ΚΑΤΑΣΚΕΥΗ ΚΑΙ ΚΑΤΟΧΗ ΕΚΡΗΚΤΙΚΩΝ & ΕΜΠΡΗΣΤΙΚΩΝ ΥΛΩΝ)" = "explosives_",
+
+
+"ΑΡΘΡΟ 290 (ΕΠΙΚΙΝΔΥΝΕΣ ΠΑΡΕΜΒΑΣΕΙΣ ΣΤΗΝ ΟΔΙΚΗ ΣΥΓΚΟΙΝΩΝΙΑ)" = "transport",
+"ΑΡΘΡΟ 292 (ΠΑΡΑΚΩΛΥΣΗ ΣΥΓΚΟΙΝΩΝΙΩΝ)" = "transport",
+
+
+
+"ΑΡΘΡΟ 299 (ΑΝΘΡΩΠΟΚΤΟΝΙΑ ΜΕ ΔΟΛΟ)" = "homicide_intent_", 
+"ΑΡΘΡΟ 42 & 299 (ΑΠΟΠΕΙΡΑ ΑΝΘΡΩΠΟΚΤΟΝΙΑΣ ΜΕ ΔΟΛΟ)" = "homicide_intent_attempt_",
+"ΑΡΘΡΟ 42,45 & 299 (ΣΥΝΑΥΤΟΥΡΓΟΙ. ΣΕ ΑΠΟΠ. ΑΝΘΡ. ΜΕ ΔΟΛΟ)" = "homicide_intent_attempt_conspire_", 
+"ΑΡΘΡΟ 299 & 380 (ΑΝΘΡΩΠΟΚΤΟΝΙΑ -ΛΗΣΤΕΙΑ)" = "homicide_intent_attempt_robbery_", 
+"ΑΡΘΡΟ 302 (ΑΝΘΡΩΠΟΚΤΟΝΙΑ ΑΠΟ ΑΜΕΛΕΙΑ)" = "homicide_intent_attempt_negligence_",
+"ΑΡΘΡΟ 307 (ΠΑΡΑΛΕΙΨΗ ΠΡΟΣΦΟΡΑΣ ΒΟΗΘΕΙΑΣ)" = "homicide_intent_attempt_dereliction_",
+
+
+"ΑΡΘΡΟ 308 (ΣΩΜΑΤΙΚΗ ΒΛΑΒΗ)" = "bodily_harm", 
+"ΑΡΘΡΟ 308Α (ΑΠΡΟΚΛΗΤΗ ΣΩΜΑΤΙΚΗ ΒΛΑΒΗ)" = "bodily_harm_unprovoked_", 
+"ΑΡΘΡΟ 309 (ΕΠΙΚΙΝΔΥΝΗ ΣΩΜΑΤΙΚΗ ΒΛΑΒΗ)" = "bodily_harm_dangerous_",
+"ΑΡΘΡΟ 42 & 309 (ΑΠΟΠΕΙΡΑ ΕΠΙΚΙΝΔΥΝΗΣ ΣΩΜΑΤΙΚΗΣ ΒΛΑΒΗΣ)" = "bodily_harm_attempt_dangerous_", 
+"ΑΡΘΡΟ 310 (ΒΑΡΙΑ ΣΩΜΑΤΙΚΗ ΒΛΑΒΗ)" = "bodily_harm_griveous_",
+"ΑΡΘΡΟ 312 (ΣΩΜΑΤΙΚΗ ΒΛΑΒΗ ΑΔΥΝΑΜΩΝ ΑΤΟΜΩΝ)" = "bodily_harm_weak_",
+"ΑΡΘΡΟ 313 (ΣΥΜΠΛΟΚΗ)" = "bodily_harm_altercation_",
+"ΑΡΘΡΟ 314 (ΣΩΜΑΤΙΚΗ ΒΛΑΒΗ ΑΠΟ ΑΜΕΛΕΙΑ)" = "bodily_harm_negligence_",
+
+
+"ΑΡΘΡΟ 322 (ΑΡΠΑΓΗ)" = "freedom_",
+"ΑΡΘΡΟ 323α (ΕΜΠΟΡΙΑ ΑΝΘΡΩΠΩΝ)" = "freedom_",
+"ΑΡΘΡΟ 324 (ΑΡΠΑΓΗ ΑΝΗΛΙΚΩΝ)" = "freedom_",
+"ΑΡΘΡΟ 325 (ΠΑΡΑΝΟΜΗ ΚΑΤΑΚΡΑΤΗΣΗ)" = "freedom_",
+"ΑΡΘΡΟ 330 (ΠΑΡΑΝΟΜΗ ΒΙΑ)" = "freedom_",
+"ΑΡΘΡΟ 333 (ΑΠΕΙΛΗ)" = "freedom_",
+"ΑΡΘΡΟ 334 (ΔΙΑΤΑΡΑΞΗ ΟΙΚΙΑΚΗΣ ΕΙΡΗΝΗΣ)" = "freedom_",
+
+
+"ΑΡΘΡΟ 336 (ΒΙΑΣΜΟΣ)" = "sex_",
+"ΑΡΘΡΟ 42 & 336 (ΑΠΟΠΕΙΡΑ ΒΙΑΣΜΟΥ)" = "sex_",
+"ΑΡΘΡΟ 337 (ΠΡΟΣΒΟΛΗ ΤΗΣ ΓΕΝΕΤΗΣΙΑΣ ΑΞΙΟΠΡΕΠΕΙΑΣ)" = "sex_",
+"ΑΡΘΡΟ 338 (ΚΑΤΑΧΡΗΣΗ ΑΝΙΚΑΝΟΥ ΠΡΟΣ ΑΝΤΙΣΤΑΣΗ ΣΕ ΓΕΝΕΤΗΣΙΑ ΠΡΑΞΗ)" = "sex_",
+"ΑΡΘΡΟ 339 (ΓΕΝΕΤΗΣΙΕΣ ΠΡΑΞΕΙΣ ΜΕ ΑΝΗΛΙΚΟΥΣ Ή ΕΝΩΠΙΟΝ ΤΟΥΣ)" = "sex_",
+"ΑΡΘΡΟ 345 (ΓΕΝΕΤΗΣΙΑ ΠΡΑΞΗ ΜΕΤΑΞΥ ΣΥΓΓΕΝΩΝ)" = "sex_",
+"ΑΡΘΡΟ 348 (ΔΙΕΥΚΟΛΥΝΣΗ ΠΡΟΣΒΟΛΩΝ ΤΗΣ ΑΝΗΛΙΚΟΤΗΤΑΣ)" = "sex_",
+"ΑΡΘΡΟ 348Α (ΠΟΡΝΟΓΡΑΦΙΑ ΑΝΗΛΙΚΩΝ)" = "sex_",
+
+
+"ΑΡΘΡΟ 361 (ΕΞΥΒΡΙΣΗ)" = "honour_",
+"ΑΡΘΡΟ 362 (ΔΥΣΦΗΜΗΣΗ)" = "honour_",
+"ΑΡΘΡΟ 363 (ΣΥΚΟΦΑΝΤΙΚΗ ΔΥΣΦΗΜΗΣΗ)" = "honour_",
+
+
+"ΑΡΘΡΟ 372 (ΚΛΟΠΗ)" = "ownership_", 
+"ΑΡΘΡΟ 42 & 372 (ΑΠΟΠΕΙΡΑ ΚΛΟΠΗΣ)" = "ownership_", 
+"ΑΡΘΡΟ 45 & 372 (ΣΥΝΑΥΤΟΥΡΓΟΙ ΣΕ ΚΛΟΠΗ)" = "ownership_",  
+"ΑΡΘΡΟ 42,45 & 372 (ΣΥΝΑΥΤΟΥΡΓΟΙ ΣΕ ΑΠΟΠ.ΚΛΟΠΗΣ)" = "ownership_",  
+"ΑΡΘΡΟ 374 (ΔΙΑΚΕΚΡΙΜΕΝΗ ΚΛΟΠΗ)" = "property", 
+"ΑΡΘΡΟ 45 & 374 (ΣΥΝΑΥΤΟΥΡΓΟΙ ΣΕ ΔΙΑΚΕΚΡΙΜΕΝΗ ΚΛΟΠΗ)" = "ownership_",  
+"ΑΡΘΡΟ 42,45 & 374 (ΣΥΝΑΥΤΟΥΡΓΟΙ ΣΕ ΑΠΟΠ. ΔΙΑΚ. ΚΛΟΠΗΣ)" = "ownership_",  
+"ΑΡΘΡΟ 374Α (ΑΥΘΑΙΡΕΤΗ ΧΡΗΣΗ ΜΕΤΑΦΟΡΙΚΟΥ ΜΕΣΟΥ)" = "ownership_", 
+"ΑΡΘΡΟ 375 (ΥΠΕΞΑΙΡΕΣΗ)" = "ownership_", 
+"ΑΡΘΡΟ 377 (ΚΛΟΠΗ & ΥΠΕΞΑΙΡΕΣΗ ΜΙΚΡΗΣ ΑΞΙΑΣ)" = "ownership_",  
+"ΑΡΘΡΟ 378 (ΦΘΟΡΑ ΞΕΝΗΣ ΙΔΙΟΚΤΗΣΙΑΣ)" = "ownership_", 
+"ΑΡΘΡΟ 380 (ΛΗΣΤΕΙΑ)" = "ownership_", 
+"ΑΡΘΡΟ 42 & 380 (ΑΠΟΠΕΙΡΑ ΛΗΣΤΕΙΑΣ)" = "ownership_",  
+"ΑΡΘΡΟ 45 & 380 (ΣΥΝΑΥΤΟΥΡΓΟΙ ΣΕ ΛΗΣΤΕΙΑ)" = "ownership_", 
+"ΑΡΘΡΟ 42,45 & 380 (ΣΥΝΑΥΤΟΥΡΓΟΙ ΣΕ ΑΠΟΠ.ΛΗΣΤΕΙΑΣ)" = "ownership_", 
+
+"ΑΡΘΡΟ 385 (ΕΚΒΙΑΣΗ)" = "property_",
+"ΑΡΘΡΟ 386 (ΑΠΑΤΗ)" = "property_",
+"ΑΡΘΡΟ 42 & 386 (ΑΠΟΠΕΙΡΑ ΑΠΑΤΗΣ)" = "property_",
+"ΑΡΘΡΟ 394 (ΑΠΟΔΟΧΗ & ΔΙΑΘΕΣΗ ΠΡΟΙΟΝΤΩΝ ΕΓΚΛΗΜΑΤΟΣ)" = "property_",
+
+"Ν.4139/2013 (ΠΕΡΙ ΕΞΑΡΤΗΣΙΟΓΟΝΩΝ ΟΥΣΙΩΝ)" = "other_",
+"Ν.2696/1999 (ΠΕΡΙ ΚΟΚ)" = "other_",
+"Ν.2168/1993 (ΠΕΡΙ ΟΠΛΩΝ)" = "other_",
+"Ν.3386/2005 (ΠΕΡΙ ΑΛΛΟΔΑΠΩΝ)" = "other_"
+
+
+))
+
+
+
+df_greek_police_stats_2$crime_codes <-  paste0(df_greek_police_stats_2$crime_new, df_greek_police_stats_2$articles_crim_code)
+
+rows_with_numbers <- grepl("\\d", df_greek_police_stats_2$crime_codes)
+
+df_greek_police_stats_2 <- df_greek_police_stats_2[rows_with_numbers,]
+
+
+
+
+
+
+df_greek_police_stats_2$crime_type <- sapply(strsplit(df_greek_police_stats_2$crime_new, "_"), "[", 1)
+
+
+
+
+
+df_greek_police_stats_long_2 <- df_greek_police_stats_2%>% 
+  pivot_longer(!c(crime, crime_new, crime_codes, articles_crim_code, crime_type), names_to = "year", values_to = "count")
+
+
+
+
+df_greek_police_stats_long_2 <- separate(df_greek_police_stats_long_2, year, into = c("year", "type"), sep = "_")
+
+
+
+df_summaries_2 <-  df_greek_police_stats_long_2 %>% 
+  # filter(type == "cases") %>% 
+    group_by(crime_type, year, type) %>%
+  summarize(total_cases = sum(as.numeric(count), na.rm = T))
+
+
+
+
+
+```
+
+
+```{r  message = F, warning = F, echo = FALSE}
+# leave out categories that are not in common 
+# setdiff(unique(df_summaries$crime_type), unique(df_summaries_2$crime_type))
+df_summaries <-
+  df_summaries %>% 
+  filter(!c(crime_type == "begging" | crime_type == "religion"))
+
+
+df_summaries_total <- rbind(df_summaries, df_summaries_2)
+
+
+# create summary variable
+
+df_summaries_total$crime_type_summary <- ifelse(df_summaries_total$crime_type == "bodily", "bodily", "all_else")
+
+df_summaries_total_categorical <- df_summaries_total %>% group_by(year,crime_type_summary, type ) %>%  summarize(total_cases = sum(as.numeric(total_cases), na.rm = T))
+
+
+
+```
+
+
+### All Crime Categories betweeen 2014 and 2023 in under 18 year olds
+I have used the major groupings of the Greek Police which correspond to categories of the Greek Penal Code
+```{r echo = F, message = F, warning = F}
+df_summaries_total %>% 
+  filter(type == "cases") %>% 
+  ggplot(aes(x = year, y = total_cases, group = as.factor(crime_type), colour = as.factor(crime_type) )) +
+  geom_point()+
+  geom_line() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+   guides(colour = guide_legend(title = NULL))+
+   ylab("Number of Cases")+
+   ggtitle("Bodily Harm Cases in People <18 years in Greece since 2014",
+           subtitle = "All Crime Categories")
+  
+```
+
+
+### Bodily Harm compared with the rest grouped together
+```{r echo = F, message = F, warning = F}
+df_summaries_total_categorical %>% 
+  filter(type == "cases") %>% 
+  ggplot(aes(x = year, y = total_cases, group = as.factor(crime_type_summary), colour = as.factor(crime_type_summary) )) +
+  geom_point()+
+  geom_line()+
+   ylab("Number of Cases")+
+   ggtitle("Bodily Harm Cases in People <18 years in Greece since 2014",
+           subtitle = "All other categories merged into one")+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+   guides(colour = guide_legend(title = NULL))
+```
+
+
+### Same as the first graph but removing Other and Ownership Crimes
+Done this to have a bit more spread on the y-axis
+```{r echo = F, message = F, warning = F}
+
+df_summaries_total %>% 
+  filter(type == "cases"  & !crime_type == "other" & !crime_type == "ownership") %>% 
+  ggplot(aes(x = year, y = total_cases, group = as.factor(crime_type), colour = as.factor(crime_type) )) +
+  geom_point()+
+  geom_line()+
+   ylab("Number of Cases")+
+   ggtitle("Bodily Harm Cases in People <18 years in Greece since 2014",
+           subtitle = "Excluded Ownership and Other")+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+   guides(colour = guide_legend(title = NULL))
+```
+
+
+
+
+
+```{r  message = F, warning = F, echo = FALSE}
+df_bodily_only <- df_greek_police_stats_long %>% 
+  filter(crime_type == "bodily")
+df_bodily_only_2 <- df_greek_police_stats_long_2 %>% 
+  filter(crime_type == "bodily")
+
+df_bodily_only_total <- rbind(df_bodily_only, df_bodily_only_2)
+
+
+
+
+df_bodily_only_total_summaries <- 
+  df_bodily_only_total %>% 
+  group_by(year, crime, type) %>% 
+  summarize(total_cases = sum(as.numeric(count), na.rm = T))
+  
+
+# use this to keep only what is in the brackets
+df_bodily_only_total_summaries$greek_labels <- 
+    gsub(".*\\((.*)\\).*", "\\1", df_bodily_only_total_summaries$crime)
+
+
+  
+
+```
+
+
+### Breakdown of categories within Bodily Harm
+Here you can see the changes in several of the bodily harm categories according to the Greek Penal Code
+```{r echo = F, message = F, warning = F}
+ df_bodily_only_total_summaries %>% 
+   filter(type == "cases") %>% 
+  ggplot(aes(x = year, y = total_cases, group = as.factor(greek_labels), colour = as.factor(greek_labels) )) +
+  geom_point()+
+  geom_line()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+   guides(colour = guide_legend(title = NULL))+
+   ylab("Number of Cases")+
+   ggtitle("Bodily Harm Cases in People <18 years in Greece since 2014")
+```
+
+
+
+
+
+
+
