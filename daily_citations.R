@@ -48,7 +48,25 @@ citations_df <- update_citations_df(citations_df, scholar_id)
 write.csv(citations_df, "citations_df.csv", row.names = FALSE)
 
 
-citations_df
+
+citations_df$end_date <- rep("2024-12-31",nrow(citations_df))
+
+citations_df$dates_for_citations <- 365 - as.numeric(as.Date(citations_df$end_date) - as.Date(citations_df$date))  
+
+citations_df$citations_by_days <- citations_df$citations/citations_df$dates_for_citations*365
+
+citations_df %>%
+  ggplot(aes(date, citations)) +
+  geom_point()+
+  ggtitle("number of citations per day")
+
+citations_df %>%
+  ggplot(aes(date, citations_by_days)) +
+  geom_point()+
+  ggtitle("number of citations per day")+
+  ylim(2500, 3500)
+
+
 
 
 # put this into the terminal
