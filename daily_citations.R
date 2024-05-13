@@ -1,7 +1,7 @@
 # code to get citations per day
 
 library(scholar)
-library(dplyr)
+library(tidyverse)
 
 # Function to fetch citations for the current date
 fetch_citations <- function(scholar_id) {
@@ -55,15 +55,21 @@ citations_df$dates_for_citations <- 365 - as.numeric(as.Date(citations_df$end_da
 
 citations_df$citations_by_days <- citations_df$citations/citations_df$dates_for_citations*365
 
+paste("Your number of citations so far for this year, today on", Sys.Date() , "is", last(citations_df$citations))
+paste("Your predicted number of total citations for this year, today on", Sys.Date() , "is", round(
+  last(citations_df$citations_by_days)))
+
+
+
 citations_df %>%
   ggplot(aes(date, citations)) +
   geom_point()+
-  ggtitle("number of citations per day")
+  ggtitle("number of citations per day so far this year")
 
 citations_df %>%
   ggplot(aes(date, citations_by_days)) +
   geom_point()+
-  ggtitle("number of citations per day")+
+  ggtitle("predicted total number of citations by end of year")+
   ylim(2500, 3500)
 
 
