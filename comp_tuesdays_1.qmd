@@ -181,7 +181,7 @@ I want to take us back to something which whilst obvious, is often forgotten, na
 Here is what I mean. The way to create the game above is to invoke the binomial distribution. This is the following:
 
 $$f(k;n,p) = \binom{n}{k} p^k (1-p)^{n-k}
-$$ {#eq-3}, where $\binom{n}{k}$ is the binomial coefficient (will explain this) and then come the probabilities.
+$$ {#eq-3} where $\binom{n}{k}$ is the binomial coefficient (will explain this) and then come the probabilities.
 
 Let's explain this. The binomial coefficient, basically says: if I have *n* objects and want to choose *k* of them, how many ways can this be done. Think of the following example. I have the letters ABCD; how many ways are there to combine two letters (sequnce doesn't matter, e.g. AB = BA) There are 6 possible ways: AB AC AD BC BD CD to play around with it, look at the code below.
 
@@ -195,8 +195,6 @@ print(ways_to_choose)
 ```
 
 In Equation 3, this quantity is then multiplied with the product of $p^k$ *x* $(1-p)^{n-k}$ . This product is a sequence of possible events of success and failure, for a probability *p* . If you substitute numbers between 1 and, say, 4 (representing possible outcomes in 4 coin tosses) in to them, you would get
-
-$p^0$ *x* $(1-p)^{4-0}$
 
 $p^1$ *x* $(1-p)^{4-1}$
 
@@ -214,13 +212,13 @@ A priori, which one of these outcomes would you expect to be more likely for a f
 
 p <- 0.5
 n <- 4
-k <- 0:4
+k <- 1:4
 the_product<-0
 the_ways_to_choose <- 0
 ultipl_the_two <- 0
 
 outcomes <- 0
-for(i in 0:n){
+for(i in 1:n){
 
   the_product[i] <- p^k[i] * (1-p)^(n-k[i]) # p^k*(1-p)^(n-k)
   
@@ -229,7 +227,7 @@ for(i in 0:n){
   multipl_the_two <- the_product*the_ways_to_choose # this is the formula
   
 }
-
+multipl_the_two # these now are the probabilities for each k-value, e.g. that we have 1, 2, 3 or four times Heads.
 
 dbinom(1:4, 4, 0.5) # check whether what I have done above fits with what the R inbuilt function would give you
 
@@ -237,24 +235,73 @@ dbinom(1:4, 4, 0.5) # check whether what I have done above fits with what the R 
 
 ```
 
-In other words, when we tossed the coin three times, we can have these three possible sequences. The reason this sequence of events
+**Exercise 1.1** Modify the above code to create a game where a coin is tossed 100 times.
+
+a\) Estimate the probabilities for each possible outcome, *k* and store in vector.
+
+b\) Find the outcome, *k* with the maximum probability
+
+c\) Plot all possible outcomes against their probabilities.
+
+d\) check against the standard inbuilt R function
+
+```{r}
+
+p <- 0.5
+n <- 100
+k <- 1:100 # these are all the possible outcomes
+the_product<-0
+the_ways_to_choose <- 0
+ultipl_the_two <- 0
+
+outcomes <- 0
+for(i in 1:n){
+
+  the_product[i] <- p^k[i] * (1-p)^(n-k[i]) # p^k*(1-p)^(n-k)
+  
+  the_ways_to_choose[i] <- choose(n, k[i]) # the coefficient of choosing k items from n
+  
+  multipl_the_two <- the_product*the_ways_to_choose # This is 1a
+  
+}
+
+which.max(multipl_the_two) # this is 1b
+
+plot(k, multipl_the_two) # this is 1c
+
+
+plot(k,dbinom(1:100, 100, 0.5)) # this is 1d
+
+
+
+```
+
+## The binomial for a detective.
+
+Now, suppose that you are the new detective in town. Your first case is that of "Nick the Shark", against whom there are several allegations of setting up fraudulent games. All you have to go by is a sheet of paper where all the outcomes of coin tosses were recorded by one of your informants. There were 271 outcomes that were Heads. You are now asked to find out whether the coin was fair or not.
+
+You would ask for the help of the statistician, but they are all away at a big conference and you must appear in from of the judge who decides on whether the person can remain in detention or not.
+
+The judge has an exceptional understanding of numbers for a legal person and asks you to prove to her your case that Nick is indeed a swindler, as you say, and not the upright occasionally gambling citizen that the defendant maintains that he is.
+
+You spend the night, writing out all outcomes of the coin tosses, all 630 of them.
 
 ```{r echo = F, warning = F, message = F}
 # Here I have created the likelihood function for a binomial 
 likelihood_binomial <- function(p, k, n) {
-  pmf <- choose(n, k) * p^k * (1 - p)^(n - k)  #PDF
-  likelihood <- prod(pmf)  # just the product
-  return(likelihood)
+  log_pmf <- log(choose(n, k) * p^k * (1 - p)^(n - k))  #PDF
+  log_likelihood <- sum(log_pmf)  # just the product
+  return(log_likelihood)
 }
 
-# I plucked these numbers out of thin air, but could equally have created proper synthetic data as above using the Bernoulli distribution.
-k <- c(3, 4, 5)  # Number of successes, e.g. heads 
-n <- c(10, 10, 10)  # Total number of trials, in this case coin tosses
+
+# k <-271 # Number of Heads in Nick's games
+# n <- 630  # Total number of coin tosses in Nick's game
 
 # Calculate the likelihood for different values of p
-p_values <- seq(0, 1, by = 0.01)
-likelihood_values <- sapply(p_values, function(p) likelihood_binomial(p, k, n))
-
+p_values <- seq(0.1, 0.8, by = 0.01)
+likelihood_values <- sapply(p_values, function(p) likelihood_binomial(p, 271, 630))
+p_values[which.max(likelihood_values)]
 # now plot
 df_likelihood_binomial <- data.frame(p_values, likelihood_values)
 
@@ -264,10 +311,76 @@ df_likelihood_binomial %>%
   geom_point()+
   ggtitle("Likelihood for Coin Tosses (Binomial Distribution)")+
   xlab("probabilities")+
-  ylab("likelihood values")
+  ylab("likelihood values")+
+  geom_vline(xintercept = p_values[which.max(likelihood_values)], colour = "red")+
+  geom_vline(xintercept = 0.5, colour = "blue")
   
 
 ```
+
+This is impressive, you have evidence that the parameter that maximises the likelihood is different to 0.5. But the judge gets back at you and says: all this could easily be due to chance. After all, probability is a matter of doing "experiments in the long run"/
+
+You are stunned at the unprecedented numeracy of a lawyer. She warns you that she will throw out the case and you will not get the arrest warrant issued due to insufficient evidence.
+
+How can you demonstrate that the difference between the blue and the red line is not simply due to chance?
+
+## The likelihood ratio test
+
+The question is whether the likelihood at 0.5 (the null) is different to the likelihood at what you found to be the maximum likelihood in the observed data. What if you built the ratio of these two?
+
+Indeed, the likelihood ratio test will allow you to answer the numerate judge's question. Because you have taken logs, the problem simplifies to a subtraction (logging ratios turns to a subtraction).
+
+$$
+ \text{Likelihood  Ratio} = -2*(\text{Log Likelihood}_{0.5} - \text{Log Likelihood}_{ML} )
+$$ {#eq-4}
+
+Now, you may wonder about what that *2* is doing there–not to worry about it for the moment, its presence allows you to assume this difference follows a chi-squared distribution. Don't forget the minus sign–you will need this as the values of the chi-squared distribution are all positive.
+
+```{r echo = F, warning = F, message = F}
+
+# first find the likelihood values at 0.5 and at the MLE
+
+lr_0.5 <- df_likelihood_binomial[df_likelihood_binomial$p_values == 0.5,]$likelihood_values  # this gets you the likelihood at the null, which is 0.5
+lr_ML <- df_likelihood_binomial[which.max(df_likelihood_binomial$likelihood_values),]$likelihood_values # this gets you the likelihood at the max likelihood, its lowest value as per above
+
+LLR = -2*(lr_0.5 - lr_ML)  # this is the ratio you are looking for, the LLR = log likelihood ratio
+
+df <- 1 # there is only one degree of freedom in this subtraction
+
+alpha <- 0.05 # if you fancy this for a significance value
+
+# now take a chi-squared distribution and find the critical value, i.e. the value on the chi-squared distribution that is significant for this alpha and df. 
+critical_value <- qchisq(1 - alpha, df)
+
+# As you can see, the our LLR is much bigger than the critical value, hence it is significant. If you want to know the exact p-value
+
+p_value_LLR_test <- pchisq(LLR, df, lower.tail = FALSE) # and this is your value
+
+p_value_LLR_test
+
+```
+
+After this you can go back to the smart judge and convince her that your finding is very unlikely to have occurred by chance. To help you phrase things better to the judge, I have given you the exercise below.
+
+**Exercise 1.2**
+
+a\) How exactly would you phrase your finding? How unlikely is it that Nick's games have occurred by chance?
+
+b\) How would you construct standard errors and confidence intervals around those estimates? How would phrase the findings about the confidence intervals?
+
+c\) Can you plot confidence intervals on the graph with the red and blue line?
+
+Bonus Questions:
+
+d\) You do a debrief with your team of detectives and informants. On this occasion, your informant had gathered 630 games. But what if he had sampled less, or more? Can you find out how many games he would have needed to have gathered for you to be able to demonstrate this difference to the judge (e.g. would 30 games be enough)? What do you call such a question in science?
+
+## Small diversion: is coin tossing fair?
+
+![](coin_tossing.jpg)
+
+Check out this article here: <https://www.economist.com/science-and-technology/2023/10/15/how-to-predict-the-outcome-of-a-coin-toss>
+
+## Likelihood for the linear regression model
 
 Now let's turn to the simple linear regression model. Let's start by asking how to think formally of the data generating mechanism of any linear model. It should be a
 
@@ -279,7 +392,7 @@ where, $\epsilon_i$ follows a normal distribution with mean zero and variance $\
 
 $$
 L(\beta_0, \beta_1 | x_1, y_1, x_2, y_2, \ldots, x_n, y_n) = \prod_{i=1}^{n} f(y_i | \beta_0 + \beta_1 x_i)
-$$ {#eq-4}
+$$
 
 where $$f(y_i | \beta_0 + \beta_1 x_i) $$ is the probability density function (PDF) of the normal distribution with mean $( \mu_i = \beta_0 + \beta_1 x_i )$ and constant variance $sigma^2$
 
