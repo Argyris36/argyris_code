@@ -64,7 +64,7 @@ Dataset_for_Argyris_25_10_23_long <- pivot_longer(Dataset_for_Argyris_25_10_23,
 
 dim(Dataset_for_Argyris_25_10_23_long)
 
-
+openxlsx:: write.xlsx(Dataset_for_Argyris_25_10_23_long, "Dataset_for_Argyris_25_10_23_long.xlsx")
 
 sum_stats_long_psy_med <- Dataset_for_Argyris_25_10_23_long %>% 
   group_by(psy_or_med, type_response_rate) %>% 
@@ -86,8 +86,8 @@ Dataset_for_Argyris_25_10_23_long %>%
 Dataset_for_Argyris_25_10_23_long %>% 
   filter(!control_type=="wl") %>% 
   ggplot(aes(response_rate))+
-  geom_histogram(aes(fill = psy_or_med), alpha = 0.4)+
-  facet_wrap(~type_response_rate)+
+  geom_histogram(aes(fill = psy_or_med), alpha = 0.4, bins = 10)+
+  facet_wrap(~type_response_rate, ncol = 1)+
   theme(axis.text.x.bottom =  element_text(angle = 45, size = 8, vjust = 0.9, hjust = 1))+
   xlab(NULL)+
   ggtitle("Active and Control Arm Response Rates in Adolescent Depression")
@@ -559,7 +559,6 @@ summary(m.prop)
 pdf(file = "forestplot.pdf", width = 15, height = 20)
 forest.meta(m.prop, 
             sortvar = TE,
-            prediction = TRUE, 
             print.tau2 = FALSE,
             leftlabs = c("Author", "g", "SE"))
 dev.off()

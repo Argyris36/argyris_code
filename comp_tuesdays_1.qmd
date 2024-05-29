@@ -98,7 +98,7 @@ df_values_and_parameter %>%
 geom_point()
 
 
- sum(pdf_value[x<100,]) #check what this sums up to
+# sum(pdf_value[x<100,]) #check what this sums up to
 
 ```
 
@@ -215,7 +215,7 @@ n <- 4
 k <- 1:4
 the_product<-0
 the_ways_to_choose <- 0
-ultipl_the_two <- 0
+multipl_the_two <- 0
 
 outcomes <- 0
 for(i in 1:n){
@@ -249,7 +249,7 @@ d\) check against the standard inbuilt R function
 
 p <- 0.5
 n <- 100
-k <- 1:100 # these are all the possible outcomes
+k <- 1:n # these are all the possible outcomes
 the_product<-0
 the_ways_to_choose <- 0
 ultipl_the_two <- 0
@@ -270,7 +270,7 @@ which.max(multipl_the_two) # this is 1b
 plot(k, multipl_the_two) # this is 1c
 
 
-plot(k,dbinom(1:100, 100, 0.5)) # this is 1d
+#plot(k,dbinom(1:k, n, p)) # this is 1d
 
 
 
@@ -295,12 +295,12 @@ likelihood_binomial <- function(p, k, n) {
 }
 
 
-# k <-271 # Number of Heads in Nick's games
-# n <- 630  # Total number of coin tosses in Nick's game
+ k <-271 # Number of Heads in Nick's games
+ n <- 630  # Total number of coin tosses in Nick's game
 
 # Calculate the likelihood for different values of p
 p_values <- seq(0.1, 0.8, by = 0.01)
-likelihood_values <- sapply(p_values, function(p) likelihood_binomial(p, 271, 630))
+likelihood_values <- sapply(p_values, function(p) likelihood_binomial(p, k, n))
 p_values[which.max(likelihood_values)]
 # now plot
 df_likelihood_binomial <- data.frame(p_values, likelihood_values)
@@ -386,15 +386,15 @@ Now let's turn to the simple linear regression model. Let's start by asking how 
 
 $$
 y_i = \beta_0 + \beta_1 x_i + \epsilon_i 
-$$
+$$ {#eq-5}
 
 where, $\epsilon_i$ follows a normal distribution with mean zero and variance $\sigma^2$
 
 $$
 L(\beta_0, \beta_1 | x_1, y_1, x_2, y_2, \ldots, x_n, y_n) = \prod_{i=1}^{n} f(y_i | \beta_0 + \beta_1 x_i)
-$$
+$$ {#eq-6}
 
-where $$f(y_i | \beta_0 + \beta_1 x_i) $$ is the probability density function (PDF) of the normal distribution with mean $( \mu_i = \beta_0 + \beta_1 x_i )$ and constant variance $sigma^2$
+where $$f(y_i | \beta_0 + \beta_1 x_i) $$ {#eq-7} is the probability density function (PDF) of the normal distribution with mean $( \mu_i = \beta_0 + \beta_1 x_i )$ and constant variance $sigma^2$
 
 To demonstrate this, I will first create synthetic data
 
@@ -452,3 +452,414 @@ result_matrix <- outer(input_vector_a, input_vector_b, Vectorize(simple_function
 
 
 ```
+
+## Of Men and Homicides
+
+Before we revisit the above from a Bayesian perspective , we will need a small detour into probability theory.
+
+About 90% of homicides in Europe are committed by men. How justified is it to say that "men are murderers". Think about this question also by replacing men with immigrant men, foreign men, or foreigners more generally. Think about what may be true in the aggregate (and generates stereotypes) and what is valuable at the individual level. Let's try to tackle this problem in a number of ways.
+
+Let there be a population where,
+
+the probability of homicide in a country be 2.3 in 100,000, i.e. $P(homicide) =$ 2.3\*10\^-5
+
+the probability of being a man in that population be 50%, i.e. $P(man) =$ 0.5, and
+
+the probability that if there is a homicide the perpetrator is a man be 90%, i.e. $P(man|homicide)$ = 0.9
+
+The question is what is the probability that if I see a man on the street, he is a murderer, i.e. $P(homicide|man)$ .
+
+Let's arrive at this step by step.
+
+First, let's remind ourselves what the probability is of two events occurring together:
+
+$$
+P(A \cap B) = P(A) \cdot P(B) $$
+
+This says that the co-occurrence of two events is the product of each event. However, this is only true if the two events are independent of each other, i.e. the occurrence of A has nothing to do with the occurrence of B. Is this the case here with men and homicides. What more general rule can we apply? Let's try to understand this graphically.
+
+![](probability_set.jpg)
+
+When you re-arrange this, you arrive at the very important following formula.
+
+$$
+P(A \cap B) = P(A \mid B) \cdot P(B)
+$$
+
+This formula allows you to calculate conditional probabilities if you have the joint ones and a prevalence, and vice versa. But this does not quite help us because we don't know the joint probability of homicides. For this we employ a trick. Re-arranged equation 9, also holds this way:
+
+$$
+P(A \cap B) = P(B\mid A) \cdot P(A)
+$$
+
+which then means that,
+
+$$
+P(A \mid B) \cdot P(B) = P(B \mid A) \cdot P(A)
+$$ {#eq-10}
+
+So, now you can estimate any of the two conditional probabilities, if you know the rest.
+
+Let's apply this to our homicide example. Remember we need to estimate: $P(homicide|man)$
+
+Therefore, rearranging and substituting our terms into Equation 10, we get:
+
+$$
+P(homicide\mid man) = \frac{P(man\mid homicide).P(homicide)}{P(man)}
+$$ {#eq-11}
+
+**CONGRATULATIONS: you have just entered the world of the Reverend Thomas Bayes! This is his theorem applied to homicides!**
+
+As we will see further down, Bayes links back to the likelihood that we have been discussing and allows us to use priors and
+
+Exercise 3. 1
+
+a\) Calculate conditional probability. b) Do so for a country like Brazil too, where the probability of homicide is about 10-fold higher. c) Comment on whether calling men, foreigners etc murderers may be considered stereotyping. What does it mean for individual prediction and what does it mean for public health and safety.
+
+## Men, Homicides and marginal probabilities
+
+Now let's look at the problem from a different angle. Let's create a table that captures the above in a representative sample, n = 100,000 of the population in Brazil, where the probability of homicide is about 20/10\^5, the gender ratio is assumed to be equal and the probability that a homicide is commited by a man is 0.9.
+
+```{r echo = F, message = F, warning = F}
+# Total obs
+n <- 10^5
+
+# Probabilities as above
+p_male <- 0.5
+p_female <- 0.5
+p_homicide_total <- 20 / 100000 #this is the rate for Brazil
+p_homicide_male <- 0.9 * p_homicide_total
+p_homicide_female <- 0.1 * p_homicide_total
+
+# simulate gender 
+genders <- sample(c("Male", "Female"), size = n, replace = TRUE, prob = c(p_male, p_female))
+
+# Initialize homicide data
+homicides <- rep("No", n)
+
+# number of homicides committed by males and females
+num_homicides_total <- round(p_homicide_total * n)
+num_homicides_male <- round(p_homicide_male * n)
+num_homicides_female <- num_homicides_total - num_homicides_male
+
+# assign homicides to males and females
+male_indices <- which(genders == "Male")
+female_indices <- which(genders == "Female")
+
+male_homicide_indices <- sample(male_indices, num_homicides_male, replace = FALSE)
+female_homicide_indices <- sample(female_indices, num_homicides_female, replace = FALSE)
+
+homicides[male_homicide_indices] <- "Yes"
+homicides[female_homicide_indices] <- "Yes"
+
+# the contingency table
+contingency_table <- table(genders, homicides)
+
+contingency_table
+
+
+```
+
+How do you calculate here $P(homicide|male)$ . Do it by hand. Do it also after substituting the European homicide probability given above. Do you get the same results?
+
+```{r echo = F, message = F, warning = F}
+num_males <- sum(genders == "Male")
+num_male_homicides <- contingency_table["Male", "Yes"]
+p_homicide_given_male <- num_male_homicides / num_males
+paste("P(homicide | male) =", round(p_homicide_given_male,5))
+```
+
+Congratulations, you have just used a **marginal probability**, namely you summed the two outcomes for men, the Nos and Yess, and used them as denominators. This is fundamental in Bayesian statistics, as we shall see in the next few sessions. Here it is very simple. By the way, do it for girls too, what is it? It is an order of magnitude less, as you might expect, but both are very low. Ask yourselves, would gender be a good test to detect suicides?
+
+## Homicides and Probability Trees
+
+Now let's say that a new company comes and tells you that it has excellent sensitivity and specificity with 95% to detect the scent of a criminal. What conditional probabilities do sensitivity and specificity refer to?
+
+Exactly, Sensitivity is $P(Test+|Criminal+)$ where + denotes having the characteristics (test positivity and being a criminal), i.e. how likely is the test to be positive if you are a criminal. The specificity is $P(Test-|Criminal-)$
+
+Below is a probability tree. Where do you find the sensitivity and where do you find the specificity? And how do you estimate the reverse of the sensitivity? This is the key question, you are not that much interested in how the test performs in criminals, but rather **how the test behaves** in the population you are likely to encounter. This is given by $P(Criminal+|Test+)$ , i.e. the probability that you are indeed a criminal if you have a positive test. How do you calculate this and what is your denominator?
+
+![](crime%20probability%20tree.jpg)
+
+This quantity is fundamental to all medical tests and indeed all tests where you want to draw inferences about the goodness of the test in a given population. It is the **Positive Predictive Value and it is a Bayesian quantity.** Using very basic algebra and the rules derived above, I will try to demonstrate this in the picture below.
+
+![](deriving%20Bayes.jpg)
+
+The two key equations here are:
+
+$$
+P(homicide+|test+) = \frac{P(test+|homicide+).P(homicide+)}{P(test+)}
+$$ {#eq-12}
+
+Notice the similarity of this equation with that of Equation 11. I have also added in red some nomenclature that we will be encountering very soon, in the next lesson. Now, as I have derived above, there is another way to derive the same quantity using the known properties of the sensitivity and specificity and the prevalence of the population, without needing any other information.
+
+$$
+P(homicide+|test+) = \frac{P(test+|homicide+).P(homicide+)}{sensitivity.P(homicide+) + (1-specificity).P(homicide+)}
+$$ {#eq-13}
+
+Look at the denominators of both Eq. 12 and 13. These are the marginal likelihoods (also called the evidence). They are cumbersome, but not nearly as complex as what we will be encountering soon, even for solving the same simple binomial problem that we had solved in the last lesson. Indeed, these denominators are often analytically intractable and require approaches such as MCMC algorithms.
+
+We will come to all this.
+
+Meanwhile, I am going to give you some extra code that allows you to play around with sensitivities, specificities, PPV, NPV, but also with the chances of having a disease if someone tells you that you have a negative test (always very important).
+
+Try to understand the basic notion of the Bayesian theorem and apply it to various situations of interest to you, like medical tests, exam results etc. Next time we will pick up again the problem of Nick the Shark and play around with the Bayesian estimation of the finding.
+
+## Week 4: Some more on crime and punishment
+
+### Contingency tables and expected values (a little detour)
+
+Before we delve into some Bayesian stuff, it may be good to remind ourselves of some very simple principles that would help us decide whether men are more likely to commit crimes according to common standards of significance.
+
+Just to remind you, this was our contingency table:
+
+```{r}
+contingency_table
+```
+
+How would you decide on whether the differences are "significant". You did come up with probabilities for this problem above for males and females. But how would you know that they differ?
+
+We will treat this problem using a standard frequentist approach and then turn to a Bayesian answer later in our meetings. What we need to do is create expected values for each cell in the above example. What would you do?
+
+First, you will need the marginals. There are three types of marginals, the row marginals, the column marginals, and the totals.
+
+The command below gives you the row marginals.
+
+```{r}
+marginSums(contingency_table,1)
+```
+
+This one the column ones
+
+```{r}
+marginSums(contingency_table,2)
+```
+
+and here is the totals
+
+```{r}
+marginSums(contingency_table)
+```
+
+or to create the whole table do
+
+```{r}
+addmargins(contingency_table)
+```
+
+$P(gender == female \cap homicide = no)$ = $P(gender == female \mid homicide == no). P(homicide == no)$
+
+$P(gender == female \cap homicide = yes)$ = $P(gender == female \mid homicide == yes). P(homicide == yes)$
+
+$\sum P(females == yes |homicide)$
+
+Can you think of a way to get expected values now?
+
+There are two principle ways to think about it which are complementary. Either to think of the "rule of three" from primary school maths, or to think in a Bayesian (or rather generally more abstract) way about it. I will start with the simple way.
+
+Let's start with Females who do not kill, how many would we expect? This is the top left hand corner cell. We **observe** 50167 who have not committed murder and 2 who have. How many would we have expected in each of these two cells? How do we use the term expected? In the sense that ignore the observed column values and say, well there are 50169 (the row total value) overall in 10\^5 people (the overall total). How many would there be in the 99980 (the No column, in which the first cell is situated). It follows that we obtain the **expected value** by doing $50169*99980/(10^5)$ which is 50159 after rounding .
+
+If you do the same for each one of the cells, you get the following table of **expected** values.
+
+```{r}
+exp_table <- chisq.test(contingency_table)$expected
+exp_table
+```
+
+compare the two tables, what do you see?
+
+How can you formalise this into a statistical answer? This will be an exercise for next time (see below). For the moment, and in the interest of abstracting, what exactly did I do here when I used the rule of three?
+
+Let's write out some simple operations in fancy terms.
+
+What is the probability of being female and not being a murderer on the basis of the observed data?
+
+$$
+P(gender == female\cap homicide == no) = 50167/10^5 = 0.5017
+$$ {#eq-14}
+
+But, let's go even more fancy, let's apply the Bayesian theorem and the relationship between joint and conditional probabilities.
+
+$$
+P(gender == female \cap homicide == no) = P(gender == female |homicide == no).P(homicide == no)
+$$ {#eq-15}
+
+This gives us the same result as you can verify by multiplying the two fractions: 50167/99980 x 99980/10\^5.
+
+This is a bit ridiculous and a near tautology, but humour me for a bit. What if I asked you what the following quantity is (which is the equivalent of Equations 6.8 and 6.9 in the Farrell and Lewandowsky book:
+
+$$
+P(gender == female) = \sum_{\theta} P(\text{female} \mid \text{homiicide}) \cdot P(\text{homicide})
+$$ {#eq-16}
+
+You needn't worry of course, because all you have to do is to calculate eq-16 is to add eq-15 and eq 17 below (which is its counterpart, the cell right next to it, i.e. murdering females.
+
+$$
+P(gender == female \cap homicide == yes) = P(gender == female |homicide == yes).P(homicide == yes)
+$$ {#eq-17}
+
+Which gives you: (2/20\*20/10\^5) and is the same as doing the following simpler calculation.
+
+$$
+P(gender == female|homicide == yes) = 2/10^5 = 2x10^-5
+$$ {#eq-18}
+
+Now, all you have to do is add the results of
+
+Indeed, when you try to add the results of summing eqs 15 and 17, you get to the marginal probability, which is all that equation 18 is asking you to do, except in fancy formalism:
+
+(50167/99980\*99980/105) = 0.50169 which is the same as what you would get if you simply divided the marginal for gender with the total i.e. 50169/10\^5
+
+**PHEW!**
+
+Does all this make sense? It is quite simple but can be mind boggling.
+
+Here is an exercise to consolidate expected values, we will follow up with the Bayesian stuff below.
+
+**Exercise 4.1**
+
+*Once you have solved this exercise, you may get a fundamental insight about model evaluation, at least I did when I grasped this.*
+
+a\) look at the table above with the observed values, let's call this table O_table and also look at the one with the expected values E_table . Try to conceive of them as locations on some imaginary map. All those numbers are nothing but locations on that multi-dimensional map. Indeed, each table is a matrix and a matrix can be thought of as a location in a space that has the matrices dimensions. The question arises then: how far away is O_table from E_table? What simple mathematical operation would allow you to answer this question?
+
+b\) how can you tweak that simple mathematical operation to calcuulate on the distance.
+
+c\) if you want to do the statistical estimation you will need some extra tools. Hint: what is a common way, e.g. used in simple regression estimation to get rid of annoying signs (positive, negative, without taking the absolute though)? another hint: you will need a distribution for deciding. It is very coommon
+
+### Back to Bayes and meeting the beta distribution
+
+From the discourse above, we need to remember equation 17, which I am writing here in its general form:
+
+$$
+P(y) = \sum_{\theta} P(\text{y} \mid \theta) \cdot P(\theta)
+$$ {#eq-19}
+
+This is the broad definition of the marginal likelihood and it is going to pop up very often. Equation 20 is simply its instantiation for continuous variables
+
+$$
+P(y) = \int_{\theta} P(\text{y} \mid \theta) \cdot P(\theta)d\theta
+$$ {#eq-20}
+
+Then of course the fundamental Bayesian equation is written as:
+
+$$
+P(\theta\mid y) = \frac {P(y \mid\theta ). P(\theta)}{\sum_{\theta} P(\text{y} \mid \theta) \cdot P(\theta)}
+$$ {#eq-21}
+
+or, for continuous quantities,
+
+$$
+P(\theta\mid y) = \frac {P(y \mid\theta ). P(\theta)}{\int_{\theta} P(\text{y} \mid \theta) \cdot P(\theta)d\theta}
+$$ {#eq-22}
+
+IMPORTANT: $P(\theta\mid y)$ is the posterior distribution, it is what every Bayesian analysis strives for.
+
+I will skip the chapter on analytic methods for obtaining posteriors in the book in favour of a more conceptual understanding of the beta distribution.
+
+You will all know about the debate between Bayesians and Frequentists. It has been raging for years and it usually focuses on the issue of the **priors** and whether Bayesians are unduly **subjective**. Indeed, Bayesians argue that when you try to make a statement about data, you ought to take prior knowledge into account. Perhaps more importantly, they extend the argument to say, well, you should actually update your model as new knowledge accumulates! Only in this way will you be able to be fair to the state of the world.
+
+I won't go into the various arguments, except to say that even frequentists make a lot of decisions that require scientific **judgement** . The most notable one is the likelihood model that we choose. As we have seen, this is key to all modelling of data. Bayesians would say that their approach provides a principled way of assessing the probability of parameters but also of models. How? We shall see below. I have added some materials about voting patterns and confidence intervals that you may want to study.
+
+For the moment, let's revisit, Nick the gambler.
+
+How would you go about evaluating his honesty in a Bayesian way?
+
+You remember that we used the binomial distribution as our likelihood model to estimate the likelihood of what Nick came up with.
+
+For this let's turn to the beta distribution and highlight some interesting features.
+
+I will start at the end, with a re-writing of the equation 6. 24 in the book for obtainin the posterior distribution of a coin toss with *n* tosses and *k* heads:
+
+$$
+P(\theta \mid k,n) = beta(\theta|\alpha + k, \beta + n -k) 
+$$ {#eq-23}
+
+This basically says that if you toss a coin and want to use a Bayesian approach (and you choose as most Bayesians would) the beta distribution as a prior, all you have do is add something to those priors!
+
+That seems super simple, but requires a lot of maths to arrive at. We will discuss all this at the next lesson. You may want to look here until then: <https://www.statlect.com/probability-distributions/beta-distribution>
+
+But let's start with some basics.
+
+Let's get an intuition for the beta. I am writing out its probability density function:
+
+$$
+f(x; \alpha, \beta) = \frac{x^{\alpha - 1} (1 - x)^{\beta - 1}}{B(\alpha, \beta)}
+$$ {#eq-24}
+
+We can glean that it has bits that look like the binomial in the numerator (and actually also in the denominator). We will delve into this next time.
+
+For the time being let's play around with the beta distribution for different values of its two parameters. I am using the code below.
+
+```{r}
+# i am defining the alpha and beta first
+alpha <- .5
+beta <-.5
+# and the theta, i.e. the possible values of the toss
+theta <- seq(0, 1, length.out = 1000)
+
+prior_dist <- dbeta(theta, alpha, beta)
+plot(theta, prior_dist)
+```
+
+Let now return to Nick...
+
+```{r}
+
+# Parameters
+alpha_prior <- 1 #play around with this and the the beta
+beta_prior <- 1
+heads <- 271 # remember from above?
+tosses <- 635
+
+# Posterior parameters, see formalism above
+alpha_post <- alpha_prior + heads
+beta_post <- beta_prior + (tosses - heads)
+
+# getting very fine grained with the beta to emulate continuity
+theta <- seq(0, 1, length.out = 1000)
+
+# Getting the prior and posterior distribution
+prior_dist <- dbeta(theta, alpha_prior, beta_prior)
+posterior_dist <- dbeta(theta, alpha_post, beta_post)
+
+# Creatjng a long dffor plotting
+df <- data.frame(
+  theta = rep(theta, 2),
+  density = c(prior_dist, posterior_dist),
+  Distribution = rep(c("Prior (Beta(1, 1))", 
+                       paste("Posterior (Beta(", alpha_post, ", ", beta_post, "))", sep = "")), 
+                     each = length(theta))
+)
+
+
+
+# Plot the prior and posterior distributions
+ggplot(df, aes(x = theta, y = density, color = Distribution, fill = Distribution)) +
+  geom_line() +
+  geom_area(alpha = 0.3, position = "identity") +
+  scale_y_continuous(labels = comma) +
+  labs(title = "Prior and Posterior Distributions",
+       x = "Theta (Probability of Heads)",
+       y = "Density") +
+  theme_minimal() +
+  theme(legend.position = "top")
+
+# and back to our original question, what is the maximum value for the parameter?
+theta[which.max(posterior_dist)]
+
+
+```
+
+Now what do you do with this information? Can you get confidence intervals? Yes!
+
+What can you with these data, can you use them for prediction of future tosses.
+
+**Exercise 4.2**
+
+a\) What is your understanding of what Ipsos, the polsters are saying here. Check out page 3, does it make sense?
+
+<https://www.ipsos.com/sites/default/files/2017-03/IpsosPA_CredibilityIntervals.pdf>
+
+b\) Can you see the relationship with this paper?
+
+<https://www.tandfonline.com/doi/pdf/10.1080/01621459.2018.1448823?casa_token=phCtUIGpXcsAAAAA:TnbmBljQ5CaMfCreH_qxMLeIvdEKpJD_tTDPEE0cYK3a_-q0JBHYb3CUqkKHzf2V-gBYW64r5nEfyQ>

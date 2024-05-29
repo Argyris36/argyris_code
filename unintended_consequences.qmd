@@ -6,7 +6,7 @@ editor: visual
 
 ## Background
 
--   Mental health problems are potentially lethal and a leading cause of disability worldwide. Moreover, in some Western societies, mental health problems amongst young people are increasing for reasons yet unknown. This leads justified concerns about how to help those children and generate services that help..
+-   Mental health problems are potentially lethal and a leading cause of disability worldwide. Moreover, in some Western societies, mental health problems amongst young people are increasing for reasons yet unknown. This leads to justified concerns about how to help those children and generate services that help..
 
 -   However, some of the people labelled as having a mental health problem will not have one and some the labels attributed to people's conditions will be the wrong ones. Such errors are inevitable for any form of measurement, not just in psychiatry, but across the sciences. This paper is concerned with the some of the important clinical and public health consequences of misclassifying people as having a disorder when they don't or labelling them with the wrong disorder.
 
@@ -15,6 +15,14 @@ editor: visual
 -   The consequences of mislabelling are manifold and can affect both the individual being mislabelled, e.g. because they receive the wrong treatment, as well as their families and society, e.g. due to the misallocation of resources. Indeed, the rise in prescription rates for e.g. anti-psychotics or anti-depressants in children and adolescents lead to concerns about over- as well as mis-diagnosis.
 
 In this article, we provide a generalisable account of the consequences of over-and/or mis-labelling of mental health problems. We are not seeking to be exhaustive in listing the consequences, but rather to provide a framework for clinicians, researchers and policy-makers to think about the problem. We attempt conceptual refinements by using analogies with other areas of medicine, and introduce formalisms and simulations to quantify the phenomena in question.
+
+## Three forms of problems
+
+The first is the "skewed ratio" effect. Since some important quantities in health outcomes are estimated as ratios, e.g. the risk benefit ratio or the ratio of people to benefit from a psychiatric service over those who won't, a change in the composition of people can have a profound impact on public health.
+
+The second is at the level of professionals, e.g. psychiatrists. If we think of them as Bayesian decision makers, then they will update their priors given new information. If the information in the public sphere is of the type "mental health problems are surging", then the diagnostic process will be skewed.
+
+The third is at the level of the patient. If you are a patient and you are told that you have an ailment that incapacitates you, you are more likely to act as if incapacitated, e.g. avoid. Which in its own right can be damaging.
 
 ## Forms of mislabelling
 
@@ -65,3 +73,19 @@ for the simple condition.
 In Fig. 1, the second branching points on the tree diagram demonstrate the different outcomes for efficacy. The far end of the tree diagram carries the risk-benefit ratios for each group.
 
 Figure 2, uses the formalisms of figure 1 to demonstrate the effects that classification errors can have on the risk-benefit ratio.
+
+-   The Skewed Ratio problem (SERVICE AND POLICY LEVEL)
+
+    a\) Effect on services
+
+b) Risk Benefit Ratio
+
+Many people who do not have it, will all of a sudden have it.
+
+-   Bayesian Spell (CLINICIAN/PROFESSIONAL LEVEL)
+
+Future clinician decisions will be guided by the new information which will lead to maintenance or increase in prevalence.
+
+-   The avoidance problem (PATIENT LEVEL)
+
+If I have X, I should not do Y.

@@ -1,13 +1,15 @@
 ---
 title: "Questions for post-doc position"
 author: "Argyris Stringaris"
-date: "05/12/2022"
+date: "26/04/2024"
 output:
   pdf_document: default
   html_document: default
 ---
 
 ## Please respond to the following questions within the specified time. 
+Note: We hope you will enjoy these questions. We are interested less in the final responses and accuracy of the answer and are more keen to explore the way you think about these problems. We will follow up with a discussion about these problems, so it is probaly not worth simply following chatGPT. 
+
 
 ## Problem 1. 
 Let there be a clinic in which an adverse event to treatment happens with a probability of 1/10.  
@@ -26,8 +28,8 @@ On Monday evening, a boy requests more video-game time of his mother, the mother
 
 a) Would you expect that the boy is more, similarly, or less likely to have a tantrum in the future, say on Tuesday of that week?   b) Can you think of a common computational framework that could help you make predictions about the probablities of tantrums in the future given responses to them?   
 
-## Problem 4. 
-Going back to _Problem 3_, what, if any, are the potential methodological and substantive implications of the vignette and the possible computational approaches for mood in depression. Please respond to the question in no more than two paragraphs.
+b) what, if any, are the potential methodological and substantive implications of the vignette and the possible computational approaches for mood in depression. Please respond to the question in no more than two paragraphs.
+
   
 ## Thank you for your time and effort.
 
