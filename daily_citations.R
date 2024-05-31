@@ -66,11 +66,17 @@ citations_df %>%
   geom_point()+
   ggtitle("number of citations per day so far this year")
 
+avg_citations_per_day <- mean(citations_df$citations_by_days)
+avg_citations_per_day
 citations_df %>%
   ggplot(aes(date, citations_by_days)) +
   geom_point()+
   ggtitle("predicted total number of citations by end of year")+
-  ylim(2500, 3500)
+  ylim(2500, 3500) +
+  geom_hline(yintercept = avg_citations_per_day,colour = "red",  linetype = "dashed")+
+  annotate("text", x = as.Date("2024-05-20"), y = avg_citations_per_day+500, label = 
+             paste0("Average Projected\n Total Citations this Year\n obtained on ", format(Sys.Date(), format="%B %d %Y"), ":\n ",  round(avg_citations_per_day)))
+  
 
 
 
