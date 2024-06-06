@@ -1,0 +1,242 @@
+---
+title: ""
+format: html
+editor: visual
+---
+
+## 
+
+## Πρωτόκολλο Στατιστική Ανάλυση Δεδομένων Μελέτης ΕΙΠΕς
+
+## Ορισμός πληθυσμού
+
+Έστω ένας πληθυσμός $\nu$ του οποίου τα μέλη του έχουν δείκτες από το 1 εώς το $i$.
+
+Αν πρόκειται για τυχαίο δείγμα του πληθυσμού, τότε η πιθανότητα κάθε μέλους του πληθυσμού αυτού να είναι μέρος του δείγματος είναι ίδια με κάθε άλλου μέλους και είναι η ακόλουθη
+
+$$
+p_i = \frac{1}{N} \quad \text{για όλες τις τιμές} \quad i = 1, 2, \ldots, N
+$$ {#eq-1}
+
+όπου $N$ είναι ο συνολικός αριθμός των μελών του δείγματος $\nu$ .
+
+Όμως, θεωρούμε απίθανο να συλλέξουμε τυχαίο δείγμα, αλλά υπολογίζουμε ότι κάποιες ομάδες ειδικευομένων θα είναι πιο πιθανό να συμμετάσχουν από ότι άλλες.
+
+## Ορισμός Δείγματος και Στάθμισής του
+
+Έστω λοιπόν ότι ο πληθυσμός αυτός διαιρείται σε $k$ ομάδες εκ των οποίων μια, η $j$ έχει μέλη $N_j$ με μεγαλύτερες πιθανότητες να συμπεριληφθούν από ότι μέλη του πληθυσμού της παραπληρωματικής ομάδας $l$ που εχει μέλη $N_l$ .
+
+Σε αυτήν την περίπτωση, ισχύει ότι:
+
+$p_{ij} > p_{il}$ , όταν $j \neq l$
+
+όπου $p$ δείχνει την πιθανότητα και $i$ το μέλος της κάθε ομάδας
+
+Για να αποφευχθούν μεροληψίες (biases), δηλαδή συστηματικά λάθη, λόγω αυτής της διαφοράς στην πιθανότητα συμμετοχής, μπορούμε να χρησιμοποιήσουμε την μέθοδο σταθμίσεως με βάρη αντιστρόφως ανάλογα της εκτιμηθείσας πιθανότητας ανταπόκρισης. Αυτό επιτυγχάνεται για βάρη $w_i$ για κάθε μέλος $i$ του δείγματος, έτσι ώστε για παράδειγμα για κάθε μέλος της ομάδας $j$ να προκύπτει βάρος:
+
+$$
+w_{ij} = \frac{1}{p_{ij}}
+$$ {#eq-2}
+
+και αντιστοίχως για την ομάδα $l$ .
+
+Σε περίπτωσή που υπάρχουν περισσότερες των δύο ομάδων και ένα μέλος $i$ του πληθυσμού μπορεί να ανήκει σε περισσότερες της μιας ομαδες, π.χ. την ομάδα $m$ , τότε η πιθανότητα αυτού του μέλους του δείγματος να συμμετάσχει στην μελέτη δίδεται ώς το γινόμενο των πιθανοτήτων αυτών των ομάδων
+
+$$
+p_{ijm} = p_{ij} \times p_{im}
+$$ {#eq-3}
+
+για την περίπτωση που $p_{ij} \perp p_{im}$
+
+Τότε, το αντίστοιχο βάρος για ένα μέλος της ομάδας αυτής υπολογίζεται ως:
+
+$$
+w_{ijm} = \frac{1}{p_{ijm}}
+$$
+
+που αντιστοιχεί σε:
+
+$$
+w_{ijm} = \frac{1}{p_{ij} \times p_{im}}
+$$ {#eq-4}
+
+### Ανάλυση Δεδομένων
+
+Τα δεδομένα θα παρουσιαστούν ως σταθμισμένα ποσοστά απαντήσεων σε κάθε ερώτηση με συνοδά διαστήματα εμπιστοσύνης. Συγκεκριμένα, για ένα δείγμα $(S)$ του πληθυσμού $\nu$ με μέλη από το 1 εώς το $i$ , και βάρος σταθμίσεως για κάθε μέλος του:
+
+$$
+w_i = \frac{1}{p_i}
+$$
+
+τότε το μέσο σταθμισμένο μέσο ποσοστό μιας μεταβλητής $x$ δίδεται ως:
+
+$$
+\hat{P} = \frac{\sum_{i \in S} w_i x_i}{\sum_{i \in S} w_i}
+$$ {#eq-5}
+
+Έστω ότι βρίσκονται τρεις ομάδες, k, l, m, εκάστη με διαφορετική πιθανότητα συμμετοχής των μελών της, τότε το σταθμισμένο μέσο ποσοστό δίδεται ώς:
+
+$$
+\hat{P} = \frac{\sum_{i=1}^{k} x_{i} \times w_i + \sum_{i=1}^{l} x_{i} \times w_i + + \sum_{i=1}^{m} x_{i} \times w_i} {\sum_{i=1} ^{k} w_k +\sum_{i=1} ^{l} w_l + \sum_{i=1} ^{m} w_m}
+$$
+
+Παρακάτω χρησιμοποιούμε παράδειγμα με προσομοίωση για την χρήση της σταθμίσεως.
+
+```{r warning = F, echo = F, message = F}
+
+# I am creating a function to have more flexibility
+ipw_func <- function(k, l, m){
+  pop <- c(k , l , m) # let there be a population made up of three groups
+  pop
+  avg_pop = mean(pop) # this is its true mean
+  
+  avg_pop 
+  
+  # now introduuce missing for l and m
+  n_missing_l <- length(l)*0.5 #
+  n_missing_m <- length(m)*0.3
+  l[1:n_missing_l]<-NA
+  m[1:n_missing_m]<-NA
+  
+  pop_missing <- c(k , l , m)
+  avg_pop_missing = mean(pop_missing, na.rm = T)
+  
+  avg_pop_missing # this estimate is now biased due to missignness
+  
+  
+  #let's create inverse rpobability weights
+  weights_k <- 1/(sum(!is.na(k))/length(k))
+  weights_l <- 1/(sum(!is.na(l))/length(l))
+  weights_m <-  1/(sum(!is.na(m))/length(m))
+  
+  # here I am weighting with them
+  avg_pop_new <- sum (k[!is.na(k)]*weights_k , l[!is.na(l)]*weights_l , m[!is.na(m)]*weights_m)/
+                    sum(weights_k*length(k[!is.na(k)]),weights_l*length(l[!is.na(l)]), weights_m*length(m[!is.na(m)]) )
+  
+  # this is the corrected
+  avg_pop_new 
+  
+  # now I need to see whether correction brings us closer to the real value, it should be 1, i.e. the distance between the weighted and the original shoudl be closer than that between the one with missingness and the original
+  dif_in_best <- which.min(
+    c(abs(avg_pop-avg_pop_new) , abs(avg_pop-avg_pop_missing)))
+    
+  return(dif_in_best)
+}
+set.seed(1974)
+n_sims <- 100
+k<- replicate(n_sims, round(rnorm(10, 5, 2)))
+l<-replicate(n_sims, round(rnorm(10, 10, 2)))
+m<-replicate(n_sims, round(rnorm(10, 8, 2)))
+
+winner <- 0
+
+for(i in 1: ncol(k)){
+  
+  winner[i] <-  ipw_func(k[,i],l[,i],m[,i])
+  
+}
+# 
+paste0("In ",
+length(winner==1)/length(winner)*100, 
+"% of ", 
+n_sims, 
+" simulations, the weighted mean was closest to the true mean of the sample"
+)
+
+```
+
+Για να μπορέσουμε να σταθμίσουμε το δείγμα, θα βασιστούμε σε τρείς μεταβλητές που γνωρίζουμε τα ποσοστά τους επί του συνόλου μέσω πινάκων του Υπουργείου Υγείας για ολόκληρο τον πληθυσμό των ειδικευομένων, και δη: ειδικότητα (π.χ. χειρουργική), φύλο ειδικευομένου, περιοχή (Αθήνα, Θεσσαλονίκη, Αλλού).
+
+## Υπολογισμός Μέσου και Διαστημάτων Εμπιστοσύνης
+
+Το σταθερό σφάλμα του μέσου του δείγματος, $SE_{\hat{P}}$ υπολογίζεται ως:
+
+$$
+SE_{\hat{P}} = \sqrt{\frac{\sum_{i=1}^{N} w_i^2 (x_i - \hat{P})^2}{(\sum_{i=1}^{N} w_i)^2}} 
+$$ {#eq-6}
+
+όπου το διάστημα εμπιστοσύνης της τάξεως του 95%, δηλαδή 100 x (1-α)%, όπου $\alpha = 0.05$ είναι
+
+$$
+\hat{P} \pm Z_{\alpha/2} \times SE_{\hat{P}}
+$$
+
+με το $Z_{0.05/2}$ να είναι ο ουδός (critical value) της κανονικής κατανομής.
+
+## Υπολογισμός με την χρηση λογιστικού μοντέλου
+
+Θα χρησιμοποιήσουμε επίσης την πιό γενική και βολική μέθοδο δημιουργίας τέτοιων βαρών σταθμίσεως (αντιστρόφως αναλόγων της εκτιμηθείσας πιθανότητας ανταπόκρισης) που είναι εκείνη της λογιστικής παλινδρομησης.
+
+Στο παραπάνω παράδειγμα, έστω το δείγμα με μεταβλητες
+
+$X_1, X_2, \ldots, X_p$
+
+με την έκβαση $Υ$
+
+καθώς και με μια μεταβλητή $Μ$ που δείχνει ελλίπουσες τιμές, όπου
+
+-   $Μ_i = 0$ αν η τιμή του $Υ_i$ υπάρχει και
+
+-   $Μ_i = 1$ αν η τιμή του $Υ_i$ λείπει.
+
+Χρησιμοποιούμε το μοντέλο της λογιστικής παλινδρόμησης ως εξής:
+
+$$
+{logit}(P(M_i = 1 \mid X_{1i}, X_{2i}, \ldots, X_{pi})) = \beta_0 + \beta_1 X_{1i} + \beta_2 X_{2i} + \ldots + \beta_p X_{pi} 
+$$ {#eq-7}
+
+όπου το
+
+$$
+{logit}(P) = \ln\left(\frac{P}{1-P}\right)
+$$
+
+είναι η συνάρτηση λογαριθμιστικών διαγωνίων πηλικίων (log odds function) και με $\beta$ συμβολιζονται οι συντελεστές του μοντέλου. Η εξίσωση 7 λύνεται ως εξής
+
+$$
+P(M_i = 1 \mid X_{1i}, X_{2i}, \ldots, X_{pi}) = \frac{1}{1 + e^{-(\beta_0 + \beta_1 X_{1i} + \beta_2 X_{2i} + \ldots + \beta_p X_{pi})}}
+$$
+
+από την οποίαν προκύπτουν οι πιθανότητες $\hat{P}(M_i = 1 \mid X_{1i}, X_{2i}, \ldots, X_{pi})$ μέσω των οποίων μπορουμε να υπολογίσουμε τα βάρη ως εξής:
+
+$$
+w_i = \frac{1}{\hat{P}(M_i = 0 \mid X_{1i}, X_{2i}, \ldots, X_{pi})} = \frac{1}{1 - \hat{P}(M_i = 1 \mid X_{1i}, X_{2i}, \ldots, X_{pi})} 
+$$ {#eq-9}
+
+Αυτά τα βάρη μπορούν μετά να χρησιμοποιηθούν σε άλλα μοντέλα για την μέτρηση των εκβάσεων του Υ.
+
+```{r}
+library(faux)
+# let there be variables y, x1, and x2 that are correlated as follows.
+
+df_sims_logistic <- rnorm_multi(n = 100, # create correlated data
+                  mu = c(0, 20, 20),
+                  sd = c(1, 5, 5),
+                  r = c(0.4, 0.2, 0.2), 
+                  varnames = c("y", "x1", "x2"),
+                  empirical = FALSE)
+
+cor(df_sims_logistic)
+
+
+mod_true <- summary(lm(y ~ x1 + x2, df_sims_logistic))
+
+
+# introduce missingness at 30%
+missingness<- 0.3
+missing_indicator <- rbinom(n, 1, missingness)
+df_sims_logistic$y[missing_indicator == 1] <- NA
+
+mod_missing <- summary(lm(y ~ x1 + x2, df_sims_logistic))
+
+
+# create weights
+df_sims_logistic$missing <- is.na(df_sims_logistic$y)
+missing_model <- glm(missing ~ x1 + x2, data = df_sims_logistic, family = binomial)
+df_sims_logistic$prob_missing <- predict(missing_model, type = "response")
+df_sims_logistic$weight <- ifelse(df_sims_logistic$missing, 0, 1 / (1 - df_sims_logistic$prob_missing))
+
+# estimated weighted modle
+mod_weighted <-summary(lm(y ~ x1 + x2, data = df_sims_logistic, weights = weight))
+
+```

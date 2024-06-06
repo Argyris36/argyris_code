@@ -54,6 +54,7 @@ citations_df$end_date <- rep("2024-12-31",nrow(citations_df))
 citations_df$dates_for_citations <- 365 - as.numeric(as.Date(citations_df$end_date) - as.Date(citations_df$date))  
 
 citations_df$citations_by_days <- citations_df$citations/citations_df$dates_for_citations*365
+citations_df$citations_by_days <- citations_df$citations_by_days
 
 paste("Your number of citations so far for this year, today on", Sys.Date() , "is", last(citations_df$citations))
 paste("Your predicted number of total citations for this year, today on", Sys.Date() , "is", round(
@@ -61,22 +62,50 @@ paste("Your predicted number of total citations for this year, today on", Sys.Da
 
 
 
-citations_df %>%
+plot_increase <- citations_df %>%
   ggplot(aes(date, citations)) +
   geom_point()+
-  ggtitle("number of citations per day so far this year")
+  ggtitle("number of citations this year")+
+  stat_smooth(method = "lm", 
+              formula = y ~ x, 
+              geom = "smooth") +
+  theme_minimal()
 
-avg_citations_per_day <- mean(citations_df$citations_by_days)
-avg_citations_per_day
-citations_df %>%
+running_avg_citations_by_days <- 0
+for(i in 1: length(citations_df$citations_by_days)){
+  
+  running_avg_citations_by_days[i] <-  mean(citations_df$citations_by_days[1:i])
+  
+}
+
+citations_df$running_avg_citations_by_days <- running_avg_citations_by_days 
+
+plot_per_day <- citations_df %>%
   ggplot(aes(date, citations_by_days)) +
   geom_point()+
-  ggtitle("predicted total number of citations by end of year")+
+  ggtitle("predicted number of citations by end of year")+
   ylim(2500, 3500) +
-  geom_hline(yintercept = avg_citations_per_day,colour = "red",  linetype = "dashed")+
-  annotate("text", x = as.Date("2024-05-20"), y = avg_citations_per_day+500, label = 
-             paste0("Average Projected\n Total Citations this Year\n obtained on ", format(Sys.Date(), format="%B %d %Y"), ":\n ",  round(avg_citations_per_day)))
-  
+  geom_hline(yintercept = round(mean(running_avg_citations_by_days)),colour = "red",  linetype = "dashed")+
+  annotate("text", x = as.Date("2024-05-20"), y = round(mean(running_avg_citations_by_days)) +300, label = 
+             paste0("Daily Projected\n Total Citations this Year: ",  
+                    round(mean(running_avg_citations_by_days)))) +
+  ylab("predicted total citations this year") +
+  theme_minimal()
+
+
+
+plot_histogram <- citations_df %>%
+  ggplot(aes(running_avg_citations_by_days)) +
+  geom_histogram()+
+  ggtitle("running average of citations", subtitle = "median in red")+
+  geom_vline(xintercept = round(median(running_avg_citations_by_days)),colour = "red",  linetype = "dashed")+
+  theme_minimal()
+
+
+library(patchwork)
+
+(plot_increase + plot_per_day)/plot_histogram
+
 
 
 
