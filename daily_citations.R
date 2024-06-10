@@ -47,7 +47,7 @@ citations_df <- update_citations_df(citations_df, scholar_id)
 # Save the updated dataframe
 write.csv(citations_df, "citations_df.csv", row.names = FALSE)
 
-
+read.csv("citations_df.csv")
 
 citations_df$end_date <- rep("2024-12-31",nrow(citations_df))
 
