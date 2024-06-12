@@ -1,0 +1,255 @@
+---
+title: "simple_modelling"
+format: html
+editor: visual
+---
+
+## The model
+
+THis is some preliminary code to emulate mood fluctuations in a gambling task. You can simplify to remove choice and simply have some distributions of expectations and outcomes for our task I am frist simulating data and then running the model in brms. You may also want to try running it in Rstan. It is for a single person, obviously, you can run it for many people too, but start iwth one.
+
+I have based this on Hanna's task, ti will be very easy to simplify for our current one, but kept it like this as we may also have decision mkaing in future. Remember in our Keren gambling paper, we have two values with equal probability for the gamble, one high one low values (e.g. \$3 vs \$1 if you gamble and £0.5 if you don't gamble and go for the certain value). Obviously, if your rename your variables, you coudl run this on our data.
+
+The basic model I am running is the following
+
+$$
+H_t = H_{t-1} + \alpha\cdot(O_t - E_t) + beta\cdot W_t
+$$
+
+where, H is the happiness, O the outcome, E the expected value per trial estimated as the mean between the two gambling options and W the weighted cumulative outcome for which below I have used an exponentail decay like this (but you can use different specifications and also freely estimate as discussed.
+
+$$
+W(t) = \sum_{i=1}^{t} e^{-\lambda (t - i)} \cdot O(i)
+$$
+
+```{r}
+
+#let's say 40 trials
+n_trials <- 40
+
+# I generate these values on the basis of uniform distributions, you can change this obviously.
+# remember in our Keren gambling paper, we have two values with equal probability for the gamble, one high one low
+G_high <- runif(n_trials, min = 1, max = 5) 
+G_low <- runif(n_trials, min = -5, max = -1)
+# and a certain option
+C <- runif(n_trials, min = 1, max = 4)
+
+# 
+D <- numeric(n_trials)
+O <- numeric(n_trials)
+H <- numeric(n_trials + 1) # because you need the startng value
+E_G <-numeric(n_trials) 
+
+# this shoudl simulate the way people make a decision-making process 
+for (t in 1:n_trials) {
+  E_G[t] <- (G_high[t] + G_low[t]) / 2 # this is the person just building an average between the gambling option when they see them
+  if (E_G[t] > C[t]) { # if the average of the gambling bigger than certain, gor for gamble
+    D[t] <- 1
+    O[t] <- ifelse(runif(1) < 0.5, G_high[t], G_low[t]) # here just a trick to create the equal probabilities of getting the high or the low
+  } else {
+    D[t] <- 0 # decide zero and give the certain value
+    O[t] <- C[t]
+  }
+
+
+# Parameters for happiness update --- these are plucked out of thin air. Obviously you will get these from your model
+alpha <- 0.5 # 
+beta <- 0.1
+lambda <- 0.1  # Decay rate for exponential forgetting
+
+# Baseline happiness
+H[1] <- 30
+
+
+  
+ # Calculate the weighted cumulative outcome with exponential decay
+  W <- 0
+  for (i in 1:t) {
+    W <- W + O[i] * exp(-lambda * (t - i)) # baseically saying that you accumulate Os weighted by the exponetn--start with the model where you leave this out.
+  }
+
+  H[t + 1] <- H[t] + alpha * (O[t] - C[t]) + beta * W
+}
+
+# Exclude initial happiness for fitting
+H <- H[-1]
+
+# Create a data frame for fitting
+data <- data.frame(
+  trial = 1:n_trials,
+  O = O,
+  C = C,
+  H = H,
+  E = E_G
+)
+
+###NOTE: check the dataframe and plot the values. You will see that i have not done a particularly good job with the choice of values in the 
+# distributions and I get silly happinness values. 
+
+# the per trial PE
+data$diff_OE <- data$O - data$E # 
+
+# recalculating here, could have added in above step, it is basically to get the weighted cumulative outcome
+data$weighted_cumulative_outcome <- numeric(n_trials)
+for (t in 1:n_trials) {
+  W <- 0
+  for (i in 1:t) {
+    W <- W + data$O[i] * exp(-lambda * (t - i))
+  }
+  data$weighted_cumulative_outcome[t] <- W
+}
+
+
+#### All this was just to simualte the data, you will not need it in this form, though I highly recommend you do it.
+
+
+library(brms)
+
+# Define the formula for happiness update
+# get_prior(#look it up it helps you get the priors, you could get these priors by default
+#   H ~ diff_OC + weighted_cumulative_outcome,
+#   data = data,
+#   family = gaussian()
+# )
+
+fit_brms_lin <- brm(
+  H ~ diff_OE + weighted_cumulative_outcome,
+  data = data,
+  family = gaussian(),
+  prior = c(
+    prior(normal(0, 1), class = "b", coef = "diff_OE"),  # using normal priors throughout here, I think that is best, but obviously can discuss and play around
+    prior(normal(0, 1), class = "b", coef = "weighted_cumulative_outcome"), # same here
+    prior(cauchy(0, 2.5), class = "sigma")  # Prior for the error term the Caucy yhas some great properties with heavy tails and is quite robust.
+  ),
+  iter = 2000, #this is for the MCMC
+  chains = 4,
+  seed = 123
+)
+
+fit_brms_lin
+
+# These are now posterior distributions
+plot(fit_brms_lin)
+```
+
+```{r}
+
+#let's say 40 trials
+n_trials <- 40
+
+# I generate these values on the basis of uniform distributions, you can change this obviously.
+# remember in our Keren gambling paper, we have two values with equal probability for the gamble, one high one low
+G_high <- runif(n_trials, min = 1, max = 5) 
+G_low <- runif(n_trials, min = -5, max = -1)
+# and a certain option
+C <- runif(n_trials, min = 1, max = 4)
+
+# 
+D <- numeric(n_trials)
+O <- numeric(n_trials)
+H <- numeric(n_trials + 1) # because you need the startng value
+E_G <-numeric(n_trials) 
+
+# this shoudl simulate the way people make a decision-making process 
+for (t in 1:n_trials) {
+  E_G[t] <- (G_high[t] + G_low[t]) / 2 # this is the person just building an average between the gambling option when they see them
+  if (E_G[t] > C[t]) { # if the average of the gambling bigger than certain, gor for gamble
+    D[t] <- 1
+    O[t] <- ifelse(runif(1) < 0.5, G_high[t], G_low[t]) # here just a trick to create the equal probabilities of getting the high or the low
+  } else {
+    D[t] <- 0 # decide zero and give the certain value
+    O[t] <- C[t]
+  }
+
+
+# Parameters for happiness update --- these are plucked out of thin air. Obviously you will get these from your model
+alpha <- 0.5 # 
+beta <- 0.1
+lambda <- 0.1  # Decay rate for exponential forgetting
+
+# Baseline happiness
+H[1] <- 30
+
+
+  
+ # Calculate the weighted cumulative outcome with exponential decay
+  W <- 0
+  for (i in 1:t) {
+    W <- W + O[i] * exp(-lambda * (t - i)) # baseically saying that you accumulate Os weighted by the exponetn--start with the model where you leave this out.
+  }
+
+  H[t + 1] <- H[t] + alpha * (O[t] - C[t]) + beta * W
+}
+
+# Exclude initial happiness for fitting
+H <- H[-1]
+
+# Create a data frame for fitting
+data <- data.frame(
+  trial = 1:n_trials,
+  O = O,
+  C = C,
+  H = H,
+  E = E_G
+)
+
+###NOTE: check the dataframe and plot the values. You will see that i have not done a particularly good job with the choice of values in the 
+# distributions and I get silly happinness values. 
+
+# the per trial PE
+data$diff_OE <- data$O - data$E # 
+
+# recalculating here, could have added in above step, it is basically to get the weighted cumulative outcome
+data$weighted_cumulative_outcome <- numeric(n_trials)
+for (t in 1:n_trials) {
+  W <- 0
+  for (i in 1:t) {
+    W <- W + mean(data$O[i]) * exp(-lambda * (t - i))
+  }
+  data$weighted_cumulative_outcome[t] <- W
+}
+
+
+#### All this was just to simualte the data, you will not need it in this form, though I highly recommend you do it.
+
+
+library(brms)
+
+# Define the formula for happiness update
+# get_prior(#look it up it helps you get the priors, you could get these priors by default
+#   H ~ diff_OC + weighted_cumulative_outcome,
+#   data = data,
+#   family = gaussian()
+# )
+
+fit_brms_mean <- brm(
+  H ~ diff_OE + weighted_cumulative_outcome,
+  data = data,
+  family = gaussian(),
+  prior = c(
+    prior(normal(0, 1), class = "b", coef = "diff_OE"),  # using normal priors throughout here, I think that is best, but obviously can discuss and play around
+    prior(normal(0, 1), class = "b", coef = "weighted_cumulative_outcome"), # same here
+    prior(cauchy(0, 2.5), class = "sigma")  # Prior for the error term the Caucy yhas some great properties with heavy tails and is quite robust.
+  ),
+  iter = 2000, #this is for the MCMC
+  chains = 4,
+  seed = 123
+)
+
+fit_brms_mean
+
+# These are now posterior distributions
+plot(fit_brms_mean)
+```
+
+```{r}
+fit_brms_loo <- loo(fit_brms)
+fit_brms_waic <- waic(fit_brms)
+fit_brms_lin_loo <- loo(fit_brms_lin)
+fit_brms_lin_waic <- waic(fit_brms_lin)
+fit_brms_mean_loo <- loo(fit_brms_mean)
+fit_brms_mean_waic <- waic(fit_brms_mean)
+loo_compare(fit_brms_loo, fit_brms_lin_loo)
+loo_compare(fit_brms_loo, fit_brms_lin_loo, fit_brms_mean_loo)
+loo_compare(fit_brms_waic, fit_brms_lin_waic, fit_brms_mean_waic)
+```
