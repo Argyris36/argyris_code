@@ -45,7 +45,8 @@ for (t in 1:n_trials) {
   E_G[t] <- (G_high[t] + G_low[t]) / 2 # this is the person just building an average between the gambling option when they see them
   if (E_G[t] > C[t]) { # if the average of the gambling bigger than certain, gor for gamble
     D[t] <- 1
-    O[t] <- ifelse(runif(1) < 0.5, G_high[t], G_low[t]) # here just a trick to create the equal probabilities of getting the high or the low
+    O[t] <- ifelse(runif(1) < 0.5, G_high[t], G_low[t]) # here just 
+  #  a trick to create the equal probabilities of getting the #high or the low
   } else {
     D[t] <- 0 # decide zero and give the certain value
     O[t] <- C[t]
@@ -112,7 +113,7 @@ library(brms)
 #   family = gaussian()
 # )
 
-fit_brms_lin <- brm(
+fit_brms <- brm(
   H ~ diff_OE + weighted_cumulative_outcome,
   data = data,
   family = gaussian(),
@@ -126,109 +127,32 @@ fit_brms_lin <- brm(
   seed = 123
 )
 
-fit_brms_lin
+fit_brms
 
 # These are now posterior distributions
-plot(fit_brms_lin)
+plot(fit_brms)
 ```
 
+## A linear model
+
 ```{r}
-
-#let's say 40 trials
-n_trials <- 40
-
-# I generate these values on the basis of uniform distributions, you can change this obviously.
-# remember in our Keren gambling paper, we have two values with equal probability for the gamble, one high one low
-G_high <- runif(n_trials, min = 1, max = 5) 
-G_low <- runif(n_trials, min = -5, max = -1)
-# and a certain option
-C <- runif(n_trials, min = 1, max = 4)
-
-# 
-D <- numeric(n_trials)
-O <- numeric(n_trials)
-H <- numeric(n_trials + 1) # because you need the startng value
-E_G <-numeric(n_trials) 
-
-# this shoudl simulate the way people make a decision-making process 
-for (t in 1:n_trials) {
-  E_G[t] <- (G_high[t] + G_low[t]) / 2 # this is the person just building an average between the gambling option when they see them
-  if (E_G[t] > C[t]) { # if the average of the gambling bigger than certain, gor for gamble
-    D[t] <- 1
-    O[t] <- ifelse(runif(1) < 0.5, G_high[t], G_low[t]) # here just a trick to create the equal probabilities of getting the high or the low
-  } else {
-    D[t] <- 0 # decide zero and give the certain value
-    O[t] <- C[t]
-  }
-
-
-# Parameters for happiness update --- these are plucked out of thin air. Obviously you will get these from your model
-alpha <- 0.5 # 
-beta <- 0.1
-lambda <- 0.1  # Decay rate for exponential forgetting
-
-# Baseline happiness
-H[1] <- 30
-
-
-  
- # Calculate the weighted cumulative outcome with exponential decay
-  W <- 0
-  for (i in 1:t) {
-    W <- W + O[i] * exp(-lambda * (t - i)) # baseically saying that you accumulate Os weighted by the exponetn--start with the model where you leave this out.
-  }
-
-  H[t + 1] <- H[t] + alpha * (O[t] - C[t]) + beta * W
-}
-
-# Exclude initial happiness for fitting
-H <- H[-1]
-
-# Create a data frame for fitting
-data <- data.frame(
-  trial = 1:n_trials,
-  O = O,
-  C = C,
-  H = H,
-  E = E_G
-)
-
-###NOTE: check the dataframe and plot the values. You will see that i have not done a particularly good job with the choice of values in the 
-# distributions and I get silly happinness values. 
-
-# the per trial PE
-data$diff_OE <- data$O - data$E # 
-
-# recalculating here, could have added in above step, it is basically to get the weighted cumulative outcome
-data$weighted_cumulative_outcome <- numeric(n_trials)
+#let's first define a simple weighted cumulative outcome
 for (t in 1:n_trials) {
   W <- 0
   for (i in 1:t) {
-    W <- W + mean(data$O[i]) * exp(-lambda * (t - i))
+    W <- W + data$O[i]
   }
   data$weighted_cumulative_outcome[t] <- W
 }
 
 
-#### All this was just to simualte the data, you will not need it in this form, though I highly recommend you do it.
-
-
-library(brms)
-
-# Define the formula for happiness update
-# get_prior(#look it up it helps you get the priors, you could get these priors by default
-#   H ~ diff_OC + weighted_cumulative_outcome,
-#   data = data,
-#   family = gaussian()
-# )
-
-fit_brms_mean <- brm(
-  H ~ diff_OE + weighted_cumulative_outcome,
+fit_linear <- brm(
+  H ~ diff_OE + W,
   data = data,
   family = gaussian(),
   prior = c(
     prior(normal(0, 1), class = "b", coef = "diff_OE"),  # using normal priors throughout here, I think that is best, but obviously can discuss and play around
-    prior(normal(0, 1), class = "b", coef = "weighted_cumulative_outcome"), # same here
+    prior(normal(0, 1), class = "b", coef = "O"), # same here
     prior(cauchy(0, 2.5), class = "sigma")  # Prior for the error term the Caucy yhas some great properties with heavy tails and is quite robust.
   ),
   iter = 2000, #this is for the MCMC
@@ -236,20 +160,62 @@ fit_brms_mean <- brm(
   seed = 123
 )
 
-fit_brms_mean
+fit_linear
 
 # These are now posterior distributions
-plot(fit_brms_mean)
+plot(fit_linear)
 ```
+
+## Try out a non-linear model
+
+```{r}
+# Now what I am doing here is going a step further and actually fitting an  #exponential model in brms.
+
+
+# here I define the formula
+brm_formula <- bf(
+  H ~ alpha * (O - C) + beta * O * exp(-lambda * trial),  # I specify it is epxonential, as in my data generating formalisms
+  alpha ~ 1, # the specification of 1 here is like in lme, but it doesn't mean intercept in the usual sense, simply that it is not dependent on other covariates.
+  beta ~ 1, 
+  lambda ~ 1,
+  nl = TRUE  # tell it this is a non-linear model
+)
+
+#  priors for the non-linear parameters, may need to rethink
+priors <- c(
+  prior(normal(0, 10), nlpar = "alpha"),  # Prior for alpha
+  prior(normal(0, 10), nlpar = "beta"),   # Prior for beta
+  prior(normal(0, 1), nlpar = "lambda"),  # Prior for lambda
+  prior(cauchy(0, 2.5), class = "sigma")  # Prior for the error term
+)
+
+# now fit it. as you can see I did separate parts here.
+fit_nonlinear <- brm(
+  formula = brm_formula,
+  data = data,
+  family = gaussian(),
+  prior = priors,
+  iter = 4000, # increased to ensure covergence
+  chains = 4,
+  warmup = 2000, # increased warm up as I had some errors
+  seed = 123,
+  control = list(adapt_delta = 0.95, max_treedepth = 15) # this too
+)
+
+# Print the results
+print(fit_nonlinear)
+```
+
+## 
+
+```{}
+```
+
+## model comparison using leave one out validation
 
 ```{r}
 fit_brms_loo <- loo(fit_brms)
-fit_brms_waic <- waic(fit_brms)
-fit_brms_lin_loo <- loo(fit_brms_lin)
-fit_brms_lin_waic <- waic(fit_brms_lin)
-fit_brms_mean_loo <- loo(fit_brms_mean)
-fit_brms_mean_waic <- waic(fit_brms_mean)
-loo_compare(fit_brms_loo, fit_brms_lin_loo)
-loo_compare(fit_brms_loo, fit_brms_lin_loo, fit_brms_mean_loo)
-loo_compare(fit_brms_waic, fit_brms_lin_waic, fit_brms_mean_waic)
+fit_nonlin_loo <- loo(fit_nonlinear)
+loo_compare(fit_brms_loo, fit_nonlin_loo)
+
 ```
