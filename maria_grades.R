@@ -1,8 +1,13 @@
 library(tidyverse)
 library(dplyr)
 library(tidyr)
-maria_grades <- read.csv("~/Downloads/Maria_term_marks.xlsx - Sheet1 (3).csv")
+#maria_grades <- read.excel("Maria_term_marks.xlsx")
+maria_grades <- read.csv("~/argyris_code/Maria_term_marks.csv")
 
+# correct an error 
+maria_grades[maria_grades$Term == "Lent_2024","maths_r" ] <- 5
+maria_grades[maria_grades$Term == "Lent_2024","science_r" ] <- 3
+maria_grades[maria_grades$Term == "Summer 2024","maths_r" ] <- 3 # see Ms McKercher's email 
 
 
 maria_grades_long <-
@@ -98,9 +103,9 @@ maria_grades_long %>%
         plot.title = element_text(size = 14))+
   scale_y_continuous(breaks = c(2,3,4,5),labels = function(x) ifelse(x == 2, "improvement needed", ifelse(x == 3, "satisfactory", 
                                                                                                           ifelse(x == 4, "good", ifelse(x == 5, "very good", as.character(x))))) ) +
- xlim("Michaelmas_2023", 
-                                           "Michaelmas_2024", 
-                                           "Lent_2024")+
+ xlim( 
+                                           "Michaelmas_2023", 
+                                           "Lent_2024", "Summer 2024")+
   facet_wrap(~subject)
 
 
