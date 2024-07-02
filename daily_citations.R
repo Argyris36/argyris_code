@@ -46,6 +46,10 @@ if (file.exists("citations_df.csv")) {
 # Update the dataframe with the latest citation count for today
 citations_df <- update_citations_df(citations_df, scholar_id)
 
+# correct some errors
+citations_df[43,]$citations <- 1372
+citations_df[44,]$citations <- 1395
+
 # Save the updated dataframe
 write.csv(citations_df, "citations_df.csv", row.names = FALSE)
 
