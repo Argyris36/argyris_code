@@ -102,7 +102,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readxl)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>eipes_try <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"~/Downloads/ΕΡΕΥΝΑ ΓΙΑ ΤΗΝ ΙΑΤΡΙΚΗ ΠΑΙΔΕΙΑ ΚΑΙ ΕΡΓΑΣΙΑ (ΕΙΠΕς) (Απαντήσεις).xlsx"</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>eipes_try <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"~/Downloads/ΕΡΕΥΝΑ ΓΙΑ ΤΗΝ ΙΑΤΡΙΚΗ ΠΑΙΔΕΙΑ ΚΑΙ ΕΡΓΑΣΙΑ (ΕΙΠΕς) (Απαντήσεις) (6).xlsx"</span>)</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>eipes_try <span class="ot">&lt;-</span> eipes_try[<span class="sc">!</span><span class="fu">is.na</span>(eipes_try<span class="sc">$</span><span class="st">`</span><span class="at">Χρονική σήμανση</span><span class="st">`</span>),]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -110,7 +110,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># data collected so far.</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(eipes_try)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 139  57</code></pre>
+<pre><code>[1] 223  57</code></pre>
 </div>
 </div>
 <p>Gender composition</p>
@@ -120,14 +120,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Non binary   Αρσενικό     Θηλυκό 
-         1         43         95 </code></pre>
+         1         83        139 </code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Percentage</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">prop.table</span>(<span class="fu">table</span>(eipes_try<span class="sc">$</span><span class="st">`</span><span class="at">Φύλο?</span><span class="st">`</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
  Non binary    Αρσενικό      Θηλυκό 
-0.007194245 0.309352518 0.683453237 </code></pre>
+0.004484305 0.372197309 0.623318386 </code></pre>
 </div>
 </div>
 <p>Age composition</p>
@@ -135,7 +135,7 @@ Non binary   Αρσενικό     Θηλυκό
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Mean Age</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(eipes_try<span class="sc">$</span>Ηλικία)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 31.22302</code></pre>
+<pre><code>[1] 30.7713</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Age Histogram</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(eipes_try<span class="sc">$</span>Ηλικία)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -154,13 +154,13 @@ Non binary   Αρσενικό     Θηλυκό
 <div class="cell-output cell-output-stdout">
 <pre><code>
            Ειδικευόμενος/η Προπτυχιακός Φοιτητής/τρια 
-                       131                          8 </code></pre>
+                       211                         12 </code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">prop.table</span>(<span class="fu">table</span>(eipes_try<span class="sc">$</span><span class="st">`</span><span class="at">Σε τι κατηγορία ανήκετε ;</span><span class="st">`</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
            Ειδικευόμενος/η Προπτυχιακός Φοιτητής/τρια 
-                0.94244604                 0.05755396 </code></pre>
+                0.94618834                 0.05381166 </code></pre>
 </div>
 </div>
 <p>Type of Specialty</p>
@@ -170,57 +170,59 @@ Non binary   Αρσενικό     Θηλυκό
 <div class="cell-output cell-output-stdout">
 <pre><code>
                               ΑΙΜΑΤΟΛΟΓΙΑ 
-                                        1 
+                                        2 
                               ΑΚΤΙΝΟΛΟΓΙΑ 
-                                        9 
+                                       11 
                             ΑΛΛΕΡΓΙΟΛΟΓΙΑ 
                                         1 
                           ΑΝΑΙΣΘΗΣΙΟΛΟΓΙΑ 
-                                        2 
+                                        5 
                          ΓΑΣΤΡΕΝΤΕΡΟΛΟΓΙΑ 
-                                        2 
+                                        8 
                            ΓΕΝΙΚΗ ΙΑΤΡΙΚΗ 
-                                        3 
-              ΔΕΡΜΑΤΟΛΟΓΙΑ-ΑΦΡΟΔΙΣΙΟΛΟΓΙΑ 
-                                        9 
-                      ΕΣΩΤΕΡΙΚΗ ΠΑΘΟΛΟΓΙΑ 
                                         4 
+              ΔΕΡΜΑΤΟΛΟΓΙΑ-ΑΦΡΟΔΙΣΙΟΛΟΓΙΑ 
+                                       11 
+                      ΕΣΩΤΕΡΙΚΗ ΠΑΘΟΛΟΓΙΑ 
+                                        6 
 ΙΑΤΡΙΚΗ ΒΙΟΠΑΘΟΛΟΓΙΑ/ΕΡΓΑΣΤΗΡΙΑΚΗ ΙΑΤΡΙΚΗ 
                                         5 
        ΙΑΤΡΙΚΗ ΕΡΓΑΣΙΑΣ ΚΑΙ ΠΕΡΙΒΑΛΛΟΝΤΟΣ 
                                         1 
                               ΚΑΡΔΙΟΛΟΓΙΑ 
-                                       11 
+                                       14 
                ΜΑΙΕΥΤΙΚΗ ΚΑΙ ΓΥΝΑΙΚΟΛΟΓΙΑ 
-                                        1 
+                                        2 
                                ΝΕΥΡΟΛΟΓΙΑ 
-                                       12 
+                                       18 
                          ΝΕΥΡΟΧΕΙΡΟΥΡΓΙΚΗ 
-                                        5 
-                               ΝΕΦΡΟΛΟΓΙΑ 
                                         6 
+                               ΝΕΦΡΟΛΟΓΙΑ 
+                                       11 
             ΟΡΘΟΠΑΙΔΙΚΗ ΚΑΙ ΤΡΑΥΜΑΤΟΛΟΓΙΑ 
-                                        1 
+                                        4 
                                 ΟΥΡΟΛΟΓΙΑ 
                                         1 
                              ΟΦΘΑΛΜΟΛΟΓΙΑ 
-                                        3 
+                                        5 
                      ΠΑΘΟΛΟΓΙΚΗ ΑΝΑΤΟΜΙΚΗ 
                                         1 
                               ΠΑΙΔΙΑΤΡΙΚΗ 
-                                       12 
+                                       17 
              ΠΝΕΥΜΟΝΟΛΟΓΙΑ - ΦΥΜΑΤΙΟΛΟΓΙΑ 
-                                        1 
+                                        3 
                               ΡΕΥΜΑΤΟΛΟΠΑ 
-                                        1 
+                                        3 
+                              ΧΕΙΡΟΥΡΓΙΚΗ 
+                                        4 
                        ΧΕΙΡΟΥΡΓΙΚΗ ΠΑΙΔΩΝ 
-                                        1 
+                                        2 
                                ΨΥΧΙΑΤΡΙΚΗ 
-                                       31 
+                                       52 
             ΨΥΧΙΑΤΡΙΚΗ ΠΑΙΔΙΟΥ ΚΑΙ ΕΦΗΒΟΥ 
-                                        6 
+                                       11 
                       ΩΤΟΡΙΝΟΛΑΡΥΓΓΟΛΟΓΙΑ 
-                                        1 </code></pre>
+                                        3 </code></pre>
 </div>
 </div>
 <p>Location of speciality</p>
@@ -230,7 +232,7 @@ Non binary   Αρσενικό     Θηλυκό
 <div class="cell-output cell-output-stdout">
 <pre><code>
       Αθήνα       Αλλού Θεσσαλονίκη 
-         81          18          32 </code></pre>
+        123          42          46 </code></pre>
 </div>
 </div>
 <p>Data collected by date</p>
@@ -275,7 +277,7 @@ Non binary   Αρσενικό     Θηλυκό
 <span id="cb19-38"><a href="#cb19-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>()<span class="sc">+</span></span>
 <span id="cb19-39"><a href="#cb19-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"EIPES: numbers completed per day and time"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 2 rows containing missing values or values outside the scale range
+<pre><code>Warning: Removed 1 row containing missing values or values outside the scale range
 (`geom_col()`).</code></pre>
 </div>
 <div class="cell-output-display">

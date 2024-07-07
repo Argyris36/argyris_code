@@ -11,7 +11,7 @@ A very quick summary of some basics
 ```{r warning = F, message = F}
 library(tidyverse)
 library(readxl)
-eipes_try <- read_excel("~/Downloads/ΕΡΕΥΝΑ ΓΙΑ ΤΗΝ ΙΑΤΡΙΚΗ ΠΑΙΔΕΙΑ ΚΑΙ ΕΡΓΑΣΙΑ (ΕΙΠΕς) (Απαντήσεις).xlsx")
+eipes_try <- read_excel("~/Downloads/ΕΡΕΥΝΑ ΓΙΑ ΤΗΝ ΙΑΤΡΙΚΗ ΠΑΙΔΕΙΑ ΚΑΙ ΕΡΓΑΣΙΑ (ΕΙΠΕς) (Απαντήσεις) (9).xlsx")
 
 eipes_try <- eipes_try[!is.na(eipes_try$`Χρονική σήμανση`),]
 
@@ -64,9 +64,14 @@ prop.table(table(eipes_try$`Σε τι κατηγορία ανήκετε ;`))
 Type of Specialty
 
 ```{r}
-
+library(kableExtra)
 # Type of Speciality
-table(eipes_try$`Ειδικότητα που έχετε επιλέξει?`)
+by_specialty <- data.frame(table(eipes_try$`Ειδικότητα που έχετε επιλέξει?`))
+colnames(by_specialty) <- c("specialty", "n")
+by_specialty$percentage <- round(by_specialty$n/sum(by_specialty$n),2)
+openxlsx::  write.xlsx(by_specialty, "by_specialty.xlsx")
+
+knitr::kable(by_specialty)
 
 
 ```
@@ -120,5 +125,22 @@ df_count_per_day_and_time_long <- data.frame(
 df_count_per_day_and_time_long %>% 
   ggplot(aes(date, counts, fill = time_day)) +
   geom_col()+
-  ggtitle("EIPES: numbers completed per day and time")
+  ggtitle("EIPES: numbers completed per day and time")+
+  theme(axis.text.x = element_text(face = "bold", color = "black",
+size = 10, angle = 45))
+  
 ```
+
+
+
+```{r}
+prop.table(table(eipes_try$`Συμφωνείτε με το να υπάρχουν εξετάσεις για την έναρξη της ειδικότητας?...13`))
+
+prop.table(table(eipes_try$`Πόση εμπιστοσύνη έχετε ότι το Υπουργείο Υγείας μπορεί να διασφαλίσει το αδιάβλητο εξετάσεων?...16`))
+
+prop.table(table(eipes_try$`Γενικώς πόσο ευχαριστημένος/η είστε από την ειδικότητα που έχετε επιλέξει?`))
+
+prop.table(table(eipes_try$`Ειδικεύεστε σε?` ))
+
+```
+
