@@ -11,7 +11,11 @@ A very quick summary of some basics
 ```{r warning = F, message = F}
 library(tidyverse)
 library(readxl)
-eipes_try <- read_excel("~/Downloads/ΕΡΕΥΝΑ ΓΙΑ ΤΗΝ ΙΑΤΡΙΚΗ ΠΑΙΔΕΙΑ ΚΑΙ ΕΡΓΑΣΙΑ (ΕΙΠΕς) (Απαντήσεις) (10).xlsx")
+```
+
+
+```{r warning = F, message = F}
+eipes_try <- read_excel("~/Downloads/ΕΡΕΥΝΑ ΓΙΑ ΤΗΝ ΙΑΤΡΙΚΗ ΠΑΙΔΕΙΑ ΚΑΙ ΕΡΓΑΣΙΑ (ΕΙΠΕς) (Απαντήσεις) (13).xlsx")
 
 eipes_try <- eipes_try[!is.na(eipes_try$`Χρονική σήμανση`),]
 
@@ -20,9 +24,9 @@ eipes_try <- eipes_try[!is.na(eipes_try$`Χρονική σήμανση`),]
 ```{r}
 
 # data collected so far.
+eipes_try <- eipes_try[eipes_try$`Σε τι κατηγορία ανήκετε ;`== "Ειδικευόμενος/η",]
+
 dim(eipes_try)
-
-
 
 
 ```
@@ -31,9 +35,13 @@ Gender composition
 
 ```{r}
 # Numbers Gender
-table(eipes_try$`Φύλο?`)
+counts_gender <- table(eipes_try$`Φύλο?`)
 # Percentage
-prop.table(table(eipes_try$`Φύλο?`))
+gender_tab <- prop.table(table(eipes_try$`Φύλο?`))
+
+barplot(gender_tab,main = "Φύλο", col = "skyblue" )
+bp_gender <- barplot(gender_tab,main = "Φύλο", col = "skyblue",ylim = c(0, max(gender_tab) + 0.05))
+text(bp_gender, gender_tab, labels = paste0(counts_gender, " (", round(location * 100, 1), "%)"), pos = 3, cex = 0.8, col = "black")
 
 
 ```
@@ -43,10 +51,10 @@ Age composition
 ```{r}
 
 # Mean Age
-mean(eipes_try$Ηλικία)
+summary(eipes_try$Ηλικία)
 
 # Age Histogram
-hist(eipes_try$Ηλικία)
+hist(eipes_try$Ηλικία, main = "Ηλικία" , col = "skyblue", xlab = "")
 
 
 ```
@@ -80,7 +88,12 @@ Location of speciality
 
 ```{r}
 # Where being specialised
-table(eipes_try$`Κάνετε ειδικότητα στην?`)
+counts_location <- table(eipes_try$`Κάνετε ειδικότητα στην?`)
+location <- prop.table(table(eipes_try$`Κάνετε ειδικότητα στην?`))
+
+bp <- barplot(location, main = "Πού Κάνεις Ειδικότητα" , col = "skyblue",ylim = c(0, max(location) + 0.05))
+text(bp, location, labels = paste0(counts_location, " (", round(location * 100, 1), "%)"), pos = 3, cex = 0.8, col = "black")
+
 ```
 
 Data collected by date
@@ -106,28 +119,44 @@ count_per_day_and_time <- tapply(eipes_try$am_pm, list(as.Date(eipes_try$date), 
 df_count_per_day_and_time <- data.frame(count_per_day_and_time)
 df_count_per_day_and_time$date <-rownames(df_count_per_day_and_time)
 
-df_count_per_day_and_time_long <- data.frame( 
-  
-  date = c(df_count_per_day_and_time$date ,
-       df_count_per_day_and_time$date), 
-  counts= c(df_count_per_day_and_time$AM,
-                   df_count_per_day_and_time$PM), 
-  
-  time_day = c(rep("AM", length(df_count_per_day_and_time$AM)),
-               rep("PM", length(df_count_per_day_and_time$AM))
-  )
-       
-)
+
+df_count_per_day_and_time$AM[is.na(df_count_per_day_and_time$AM)] <- 0 # need to do this for base plot
+
+counts_matrix <- as.matrix(df_count_per_day_and_time[, c("AM", "PM")]) # base prefers a matrix
+rownames(counts_matrix) <- as.character(df_count_per_day_and_time$date)
+
+barplot(t(counts_matrix), 
+        beside = FALSE, 
+        col = c("skyblue", "steelblue"), 
+        main = "Daily Counts for AM and PM", 
+        xlab = "", 
+        ylab = "Counts", 
+        legend.text = c("AM", "PM"),
+        args.legend = list(x = "top", bty = "n"),
+        las = 2, # Rotate x-axis labels
+        cex.names = 0.8)
 
 
 
+# df_count_per_day_and_time_long <- data.frame( 
+#   
+#   date = c(df_count_per_day_and_time$date ,
+#        df_count_per_day_and_time$date), 
+#   counts= c(df_count_per_day_and_time$AM,
+#                    df_count_per_day_and_time$PM), 
+#   
+#   time_day = c(rep("AM", length(df_count_per_day_and_time$AM)),
+#                rep("PM", length(df_count_per_day_and_time$AM))
+#   )
+#        
+# )
 
-df_count_per_day_and_time_long %>% 
-  ggplot(aes(date, counts, fill = time_day)) +
-  geom_col()+
-  ggtitle("EIPES: numbers completed per day and time")+
-  theme(axis.text.x = element_text(face = "bold", color = "black",
-size = 10, angle = 45))
+# df_count_per_day_and_time_long %>% 
+#   ggplot(aes(date, counts, fill = time_day)) +
+#   geom_col()+
+#   ggtitle("EIPES: numbers completed per day and time")+
+#   theme(axis.text.x = element_text(face = "bold", color = "black",
+# size = 10, angle = 45))
   
 ```
 
@@ -138,9 +167,60 @@ prop.table(table(eipes_try$`Συμφωνείτε με το να υπάρχουν
 
 prop.table(table(eipes_try$`Πόση εμπιστοσύνη έχετε ότι το Υπουργείο Υγείας μπορεί να διασφαλίσει το αδιάβλητο εξετάσεων?...16`))
 
+
+contingency_table <- table(
+  eipes_try$`Συμφωνείτε με το να υπάρχουν εξετάσεις για την έναρξη της ειδικότητας?...13`, 
+  eipes_try$`Πόση εμπιστοσύνη έχετε ότι το Υπουργείο Υγείας μπορεί να διασφαλίσει το αδιάβλητο εξετάσεων?...16`
+)
+
+contingency_table[categories_order]
+
+contingency_table_with_margins <- addmargins(contingency_table)
+categories_order <- c('Καθόλου', 'Λίγο', 'Αρκετά', 'Πολύ', 'Πάρα πολύ')
+chisq.test(contingency_table)
+
+contingency_matrix <- as.matrix(contingency_table)
+
+# Create a color palette
+colors <- colorRampPalette(c("white", "steelblue"))(100)
+
+# Plot the heatmap
+heatmap(
+  contingency_matrix, 
+  col = colors, 
+  scale = "none", 
+  margins = c(10, 10),
+  xlab = "εξετάσεις για την έναρξη της ειδικότητας?",
+  ylab = "εμπιστοσύνη sτο Υπουργείο Υγείας για εξετάσεις?",
+  main = "Εξετάσεις και Εμπιστοσύνη",
+  cexRow = 0.8,
+  cexCol = 0.8
+)
+
+
+
+
+
+percentage_table_with_margins
+
+
 prop.table(table(eipes_try$`Γενικώς πόσο ευχαριστημένος/η είστε από την ειδικότητα που έχετε επιλέξει?`))
 
 prop.table(table(eipes_try$`Ειδικεύεστε σε?` ))
+
+
+prop_table <- prop.table(table(eipes_try$`Πόσο σκέφτεστε να μετακομίσετε στο εξωτερικό μετά την ειδικότητα?`))
+
+
+categories_order <- c('Καθόλου', 'Λίγο', 'Αρκετά', 'Πολύ', 'Πάρα πολύ')
+prop_table <- prop_table[categories_order]
+
+barplot(prop_table,  main =  "Πόσο σκέφτεστε να μετακομίσετε στο εξωτερικό μετά την ειδικότητα?",col = "skyblue" )
+
+
+
+#col = "skyblue",
+
 
 ```
 
