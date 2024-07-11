@@ -1,0 +1,702 @@
+---
+title: "First draft of results from Arts on Prescription"
+author: "Argyris Stringaris"
+date: "2024-04-06"
+output: html_document
+---
+
+```{r echo = FALSE, warning = FALSE, message=FALSE}
+#import data
+library(readxl)
+# received from Ms Katasafadou and Ms Theodoridou on 11th July 2023 an excel archive termed Q_EXTRACT_09.07.2024.xlsx, stored locally as
+# "~/Downloads/Q_EXTRACT_09.07.2024.xlsx" and then moved here
+# Note: there are fewer missing data than in the early preliminary analysis that I had sent around. Spoke with Ms Theodoridou, her team was very assiduous in chasing therapists to ensure completion. 
+#
+qs_pol_syn <- read_excel("qs_pol_syn.xlsx")
+#View(qs_pol_syn)
+```
+
+![](overview_slide_pol_syn.jpg)
+
+![](schematic_change_in_dep.jpg)
+
+## Number of Participants
+
+```{r echo = FALSE, warning = FALSE, message=FALSE}
+# excluded participants who had not been randomised or minors as per variable in the dataset indicated in the email that was sent to me by Ms Katasafadou
+qs_pol_syn <- qs_pol_syn[qs_pol_syn$`ΕΞΑΙΡΕΙΤΑΙ ΑΠΟ ΤΗΝ ΚΥΡΙΑ ΕΡΕΥΝΑ`== "ΟΧΙ", ]
+print(paste("Our total number of participants is", length(unique(qs_pol_syn$`ΤΑΥΤΟΤΗΤΑ ΑΣΘΕΝΗ`))))
+
+
+```
+
+## Which Trimester
+
+As I understand it, people are allocated to a trimester, that is, randomised to either the first or second trimester. This how many people we have per trimester
+
+```{r echo = FALSE, warning = FALSE, message=FALSE}
+knitr::kable(table(qs_pol_syn$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`), col.names =  c("trimester", "n"))
+```
+
+## Gender Distribution
+
+As shown in the table below, the majority are women
+
+```{r echo = FALSE, message = FALSE, message=FALSE}
+qs_pol_syn$gender <- qs_pol_syn$ΦΥΛΟ 
+library(tidyverse)
+qs_pol_syn <- 
+  qs_pol_syn %>% 
+mutate(gender = recode (gender,
+"ΑΡΡΕΝ" = "male",
+"ΘΗΛΥ" = "female",
+"ΑΛΛΟ" = "other"
+))
+#table(qs_pol_syn$gender)
+knitr:: kable(round(proportions(table(qs_pol_syn$gender))*100,1), col.names = c("gender", "%"))
+
+```
+
+Here you can also see that the distribution is quite smooth across the two trimesters, i.e. the randomisation seems to work
+
+```{r echo = FALSE, warning = FALSE, message=FALSE}
+
+tabulate_func <- function(x){
+  
+  round(proportions(table(x))*100,1)
+  
+}
+
+tapply(qs_pol_syn$gender, qs_pol_syn$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`, tabulate_func)
+
+
+```
+
+## Age Distribution
+
+\`
+
+```{r echo = FALSE, message = FALSE, message=FALSE}
+qs_pol_syn$age_intake <- 2024 - qs_pol_syn$`ΕΤΟΣ ΓΕΝΝΗΣΗΣ`
+print(paste("The mean age is", mean(qs_pol_syn$age_intake, na.rm = TRUE), "(sd = ", round(sd(qs_pol_syn$age_intake, na.rm = TRUE),2), ")"))
+hist(qs_pol_syn$age_intake)
+```
+
+Here you can also see that the ages are very similar across the two trimester groups, i.e. our randomised groups
+
+```{r echo = FALSE, warning = FALSE, message=FALSE}
+rbind(
+  mean = tapply(qs_pol_syn$age_intake, qs_pol_syn$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`, mean, na.rm = T),
+sd = tapply(qs_pol_syn$age_intake, qs_pol_syn$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`, sd, na.rm = T)
+)
+
+```
+
+## Art Sites
+
+This is were the treatment is taking place
+
+```{r echo = FALSE, message = FALSE, message=FALSE}
+#table(qs_pol_syn$`ΚΑΤΗΓΟΡΙΑ ΤΕΧΝΗΣ`)
+knitr:: kable(round(proportions(table(qs_pol_syn$`ΚΑΤΗΓΟΡΙΑ ΤΕΧΝΗΣ`))*100, 2), col.names = 
+                c("art site", "%"))
+```
+
+## Diagnoses
+
+We will need to condense some diagnostic categories. Let's discuss how best to do.
+
+```{r echo = FALSE, message = FALSE, message=FALSE}
+knitr:: kable(round(proportions(table(qs_pol_syn$Διάγνωση))*100, 2), col.names = c("diagnosis", "%"))
+```
+
+## Anxiety as measured by the GAD-7
+
+The GAD-7 scores are well-behaved but we are missing about a third of them, as you can see below.
+
+We have most of the missing values in the 2nd trimester which is worrying.
+
+```{r echo = FALSE, message = FALSE, message=FALSE}
+gad_labels <- paste0("gad_", 1:7)
+
+gad_df_1 <- qs_pol_syn[, c("T1/1","T1/2", "T1/3", "T1/4", "T1/5", "T1/6", "T1/7")]
+colnames(gad_df_1) <- gad_labels
+
+recode_fun <- function(x) {
+  recode(x, "ΚΑΘΟΛΟΥ" = 0, 
+         "ΜΕΡΙΚΕΣ ΜΕΡΕΣ" = 1, 
+         "ΠΕΡΙΣΣΟΤΕΡΕΣ ΑΠΟ ΤΙΣ ΜΙΣΕΣ ΜΕΡΕΣ" = 2, 
+         "ΣΧΕΔΟΝ ΚΑΘΕ ΜΕΡΑ" = 3
+)
+
+}
+
+
+gad_df_1 <- gad_df_1 %>%
+  mutate_at(vars(starts_with("gad_")), recode_fun)   
+
+
+
+gad_df_1$gad_total_score_1 <- rowSums(gad_df_1)
+
+print(paste("We are missing n = ", sum(is.na(gad_df_1$gad_total_score_1)), "out of", 
+            length(gad_df_1$gad_total_score_1), "which amounts to ", round(sum(is.na(gad_df_1$gad_total_score_1))/length(gad_df_1$gad_total_score_1)*100, 1),
+            "%"))
+
+find_missing <- function(x){
+  (sum(is.na(x))/length(x))*100
+}
+
+print("Here are the relative proportions of people missing GAD-7 per trimester allocation")
+tapply(gad_df_1$gad_total_score_1,qs_pol_syn$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`, find_missing )
+
+
+hist(gad_df_1$gad_total_score_1,  main = "GAD-7 total score distribution Time 1", xlab ="GAD-7 score")
+
+
+gad_cutoffs <- c(0, 4, 9, 14, 15)
+labels_gad_cutoffs <- c("minimal anxiety", "mild anxiety", "moderate anxiety", "severe severe")
+gad_df_1$gad_category_1 <- cut(gad_df_1$gad_total_score_1, breaks = gad_cutoffs, labels = labels_gad_cutoffs)
+props_cat_gad_7_1 <- data.frame(round(proportions(table(gad_df_1$gad_category_1))*100, 2))
+
+props_cat_gad_7 %>% 
+  ggplot(aes(x = Var1, y = Freq))+
+  geom_col()+
+  xlab("Severity Level")+
+  ylab("Percentage")+
+  ggtitle("Anxiety Severity Time 1")
+
+```
+
+```{r}
+gad_labels <- paste0("gad_", 1:7)
+
+gad_df_2 <- qs_pol_syn[, c("T2/1","T2/2", "T2/3", "T2/4", "T2/5", "T2/6", "T2/7")]
+colnames(gad_df_2) <- gad_labels
+
+recode_fun <- function(x) {
+  recode(x, "ΚΑΘΟΛΟΥ" = 0, 
+         "ΜΕΡΙΚΕΣ ΜΕΡΕΣ" = 1, 
+         "ΠΕΡΙΣΣΟΤΕΡΕΣ ΑΠΟ ΤΙΣ ΜΙΣΕΣ ΜΕΡΕΣ" = 2, 
+         "ΣΧΕΔΟΝ ΚΑΘΕ ΜΕΡΑ" = 3
+)
+
+}
+
+
+gad_df_2 <- gad_df_2 %>%
+  mutate_at(vars(starts_with("gad_")), recode_fun)   
+
+
+
+gad_df_2$gad_total_score_2 <- rowSums(gad_df_2)
+
+print(paste("We are missing n = ", sum(is.na(gad_df_2$gad_total_score_2)), "out of", 
+            length(gad_df_2$gad_total_score_2), "which amounts to ", round(sum(is.na(gad_df_2$gad_total_score_2))/length(gad_df_2$gad_total_score_2)*100, 1),
+            "%"))
+
+find_missing <- function(x){
+  (sum(is.na(x))/length(x))*100
+}
+
+print("Here are the relative proportions of people missing GAD-7 per trimester allocation")
+tapply(gad_df_2$gad_total_score_2,qs_pol_syn$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`, find_missing )
+
+
+hist(gad_df_2$gad_total_score_2,  main = "GAD-7 total score distribution Time 2", xlab ="GAD-7 score")
+
+
+gad_cutoffs <- c(0, 4, 9, 14, 15)
+labels_gad_cutoffs <- c("minimal anxiety", "mild anxiety", "moderate anxiety", "severe severe")
+gad_df_2$gad_category_2 <- cut(gad_df_2$gad_total_score_2, breaks = gad_cutoffs, labels = labels_gad_cutoffs)
+props_cat_gad_7_2 <- data.frame(round(proportions(table(gad_df_2$gad_category_2))*100, 2))
+
+props_cat_gad_7 %>% 
+  ggplot(aes(x = Var1, y = Freq))+
+  geom_col()+
+  xlab("Severity Level")+
+  ylab("Percentage")+
+  ggtitle("Anxiety Severity Time 2")
+
+```
+
+```{r}
+gad_labels <- paste0("gad_", 1:7)
+
+gad_df_3 <- qs_pol_syn[, c("T3/1","T3/2", "T3/3", "T3/4", "T3/5", "T3/6", "T3/7")]
+colnames(gad_df_3) <- gad_labels
+
+recode_fun <- function(x) {
+  recode(x, "ΚΑΘΟΛΟΥ" = 0, 
+         "ΜΕΡΙΚΕΣ ΜΕΡΕΣ" = 1, 
+         "ΠΕΡΙΣΣΟΤΕΡΕΣ ΑΠΟ ΤΙΣ ΜΙΣΕΣ ΜΕΡΕΣ" = 2, 
+         "ΣΧΕΔΟΝ ΚΑΘΕ ΜΕΡΑ" = 3
+)
+
+}
+
+
+gad_df_3 <- gad_df_3 %>%
+  mutate_at(vars(starts_with("gad_")), recode_fun)   
+
+
+
+gad_df_3$gad_total_score_3 <- rowSums(gad_df_3)
+
+print(paste("We are missing n = ", sum(is.na(gad_df_3$gad_total_score_3)), "out of", 
+            length(gad_df_3$gad_total_score_3), "which amounts to ", round(sum(is.na(gad_df_3$gad_total_score_3))/length(gad_df_3$gad_total_score_3)*100, 1),
+            "%"))
+
+find_missing <- function(x){
+  (sum(is.na(x))/length(x))*100
+}
+
+print("Here are the relative proportions of people missing GAD-7 per trimester allocation")
+tapply(gad_df_3$gad_total_score_3,qs_pol_syn$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`, find_missing )
+
+
+hist(gad_df_3$gad_total_score_3,  main = "GAD-7 total score distribution Time 3", xlab ="GAD-7 score")
+
+
+gad_cutoffs <- c(0, 4, 9, 14, 15)
+labels_gad_cutoffs <- c("minimal anxiety", "mild anxiety", "moderate anxiety", "severe severe")
+gad_df_3$gad_category_3 <- cut(gad_df_3$gad_total_score_3, breaks = gad_cutoffs, labels = labels_gad_cutoffs)
+props_cat_gad_7_3 <- data.frame(round(proportions(table(gad_df_3$gad_category_3))*100, 2))
+
+props_cat_gad_7 %>% 
+  ggplot(aes(x = Var1, y = Freq))+
+  geom_col()+
+  xlab("Severity Level")+
+  ylab("Percentage")+
+  ggtitle("Anxiety Severity Time 3")
+```
+
+## Depression as measured by the PHQ-9
+
+```{r echo = FALSE, message = FALSE, message=FALSE}
+phq_labels <- paste0("phq_", 1:9)
+
+phq_df_1 <- qs_pol_syn[, c("T1/9","T1/10", "T1/11", "T1/12", "T1/13", "T1/14", "T1/15",
+                         "T1/16",
+                         "T1/17"
+                         )]
+colnames(phq_df_1) <- phq_labels
+
+
+phq_df_1 <- phq_df_1 %>%
+  mutate_at(vars(starts_with("phq_")), recode_fun)   
+
+
+phq_df_1$phq_total_score_1 <- rowSums(phq_df_1)
+
+print(paste("We are missing n = ", sum(is.na(phq_df_1$phq_total_score_1)), "out of", 
+            length(phq_df_1$phq_total_score_1), "which amounts to ", round(sum(is.na(phq_df_1$phq_total_score_1))/length(phq_df_1$phq_total_score_1)*100, 1),
+            "%"))
+
+
+print("Here are the relative proportions of people missing PHQ-9 per trimester allocation")
+tapply(phq_df_1$phq_total_score_1,qs_pol_syn$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`, find_missing )
+
+hist(phq_df_1$phq_total_score_1, main = "PHQ-9 total score distribution", xlab ="PHQ-9 score")
+
+phq_cutoffs <- c(0, 4, 9, 14, 19, 27)
+labels_phq_cutoffs <- c("none", "mild", "moderate", "moderately severe", "severe")
+phq_df_1$phq_category_1 <- cut(phq_df_1$phq_total_score_1, breaks = phq_cutoffs, labels = labels_phq_cutoffs)
+props_cat_phq_9_1 <- data.frame(round(proportions(table(phq_df_1$phq_category_1))*100,2))
+
+props_cat_phq_9_1 %>% 
+  ggplot(aes(x = Var1, y = Freq))+
+  geom_col()+
+  xlab("Severity Level")+
+  ylab("Percentage")+
+  ggtitle("Depression Severity")
+```
+
+```{r}
+phq_labels <- paste0("phq_", 1:9)
+
+phq_df_2 <- qs_pol_syn[, c("T2/9","T2/10", "T2/11", "T2/12", "T2/13", "T2/14", "T2/15",
+                         "T2/16",
+                         "T2/17"
+                         )]
+colnames(phq_df_2) <- phq_labels
+
+
+phq_df_2 <- phq_df_2 %>%
+  mutate_at(vars(starts_with("phq_")), recode_fun)   
+
+
+phq_df_2$phq_total_score_2 <- rowSums(phq_df_2)
+
+print(paste("We are missing n = ", sum(is.na(phq_df_2$phq_total_score_2)), "out of", 
+            length(phq_df_2$phq_total_score_2), "which amounts to ", round(sum(is.na(phq_df_2$phq_total_score_2))/length(phq_df_2$phq_total_score_2)*100, 1),
+            "%"))
+
+
+print("Here are the relative proportions of people missing PHQ-9 per trimester allocation")
+tapply(phq_df_2$phq_total_score_2,qs_pol_syn$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`, find_missing )
+
+hist(phq_df_2$phq_total_score_2, main = "PHQ-9 total score distribution T2", xlab ="PHQ-9 score")
+
+phq_cutoffs <- c(0, 4, 9, 14, 19, 27)
+labels_phq_cutoffs <- c("none", "mild", "moderate", "moderately severe", "severe")
+phq_df_2$phq_category_2 <- cut(phq_df_2$phq_total_score_2, breaks = phq_cutoffs, labels = labels_phq_cutoffs)
+props_cat_phq_9_2 <- data.frame(round(proportions(table(phq_df_2$phq_category_2))*100,2))
+
+props_cat_phq_9_2 %>% 
+  ggplot(aes(x = Var1, y = Freq))+
+  geom_col()+
+  xlab("Severity Level")+
+  ylab("Percentage")+
+  ggtitle("Depression Severity T2")
+```
+
+```{r}
+phq_labels <- paste0("phq_", 1:9)
+
+phq_df_3 <- qs_pol_syn[, c("T3/9","T3/10", "T3/11", "T3/12", "T3/13", "T3/14", "T3/15",
+                         "T3/16",
+                         "T3/17"
+                         )]
+colnames(phq_df_3) <- phq_labels
+
+
+phq_df_3 <- phq_df_3 %>%
+  mutate_at(vars(starts_with("phq_")), recode_fun)   
+
+
+phq_df_3$phq_total_score_3 <- rowSums(phq_df_3)
+
+print(paste("We are missing n = ", sum(is.na(phq_df_3$phq_total_score_3)), "out of", 
+            length(phq_df_3$phq_total_score_3), "which amounts to ", round(sum(is.na(phq_df_3$phq_total_score_3))/length(phq_df_3$phq_total_score_3)*100, 1),
+            "%"))
+
+
+print("Here are the relative proportions of people missing PHQ-9 per trimester allocation")
+tapply(phq_df_3$phq_total_score_3,qs_pol_syn$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`, find_missing )
+
+hist(phq_df_3$phq_total_score_3, main = "PHQ-9 total score distribution T3", xlab ="PHQ-9 score")
+
+phq_cutoffs <- c(0, 4, 9, 14, 19, 27)
+labels_phq_cutoffs <- c("none", "mild", "moderate", "moderately severe", "severe")
+phq_df_3$phq_category_3 <- cut(phq_df_3$phq_total_score_3, breaks = phq_cutoffs, labels = labels_phq_cutoffs)
+props_cat_phq_9_3 <- data.frame(round(proportions(table(phq_df_3$phq_category_3))*100,2))
+
+props_cat_phq_9_3 %>% 
+  ggplot(aes(x = Var1, y = Freq))+
+  geom_col()+
+  xlab("Severity Level")+
+  ylab("Percentage")+
+  ggtitle("Depression Severity T3")
+```
+
+## Relationship between anxiety and depression
+
+This is mainly a plausibility check and as you can see the two scores are strongly correlated.
+
+```{r echo = FALSE, warning = FALSE, message=FALSE}
+
+gad_phq_df_1 <- data.frame(cbind(gad_df_1, phq_df_1))
+cor.test(gad_phq_df_1$gad_total_score_1, gad_phq_df_1$phq_total_score)
+
+gad_phq_df_1 %>% 
+  ggplot(aes(x = gad_total_score_1, y = phq_total_score_1))+
+  geom_point()+
+  stat_smooth(method = "lm", 
+              formula = y ~ x, 
+              geom = "smooth") +
+  ggtitle("Association between Anxiety and Depression")+
+  xlab("GAD-7 score") +
+ ylab("PHQ-9 score")
+
+```
+
+## GAD-7 between trimester groups
+
+The means and sds look very close, but the missingness is different
+
+```{r echo = FALSE, warning = FALSE, message=FALSE}
+full_df_pol_syn <- cbind(qs_pol_syn,gad_df_1, phq_df_1)  
+
+
+mean_sd_na_func <- function(x){
+  
+  means = round(mean(x, na.rm = T),2)
+ std = round(sd(x, na.rm = T),2)
+ proportion_NAs =   round(sum(is.na(x))/length(x)*100)
+ 
+ return(paste0("The mean is ", means," (sd = ", std,") and there are missing ",
+              sum(is.na(x)), " out of ", length(x), " (", 
+               proportion_NAs, " %)"))
+  
+}
+
+tapply(full_df_pol_syn$gad_total_score_1, qs_pol_syn$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`, mean_sd_na_func)
+
+```
+
+## PHQ-9 between trimester groups
+
+Same as in anxiety, the means and sds look very close, but the missingness is different
+
+```{r echo = FALSE, warning = FALSE, message=FALSE}
+tapply(full_df_pol_syn$phq_total_score_1, qs_pol_syn$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`, mean_sd_na_func)
+```
+
+## Relationship between GAD and PDQ in each trimester group
+
+The pattern is overall quite similar, but as you can see, in the 2nd trimester, we are missing lots of people on the top right hand corner, i.e. it seems that the more severe ones are leaving the study if allocated to the 2nd trimester.
+
+```{r echo = FALSE, warning = FALSE, message=FALSE}
+full_df_pol_syn %>% 
+  ggplot(aes(x = gad_total_score_1, y = phq_total_score_1))+
+  geom_point()+
+  stat_smooth(method = "lm", 
+              formula = y ~ x, 
+              geom = "smooth") +
+  ggtitle("Association between Anxiety and Depression")+
+  xlab("GAD-7 score") +
+ ylab("PHQ-9 score")+
+  facet_wrap(~ `ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`)
+```
+
+## Create overall dataset
+
+Bring together the datasets to create an overalllong one
+
+```{r}
+full_df_pol_syn_1 <- cbind(qs_pol_syn,gad_df_1, phq_df_1)  
+names(full_df_pol_syn_1) <- gsub("score_1$", "score", names(full_df_pol_syn_1))
+names(full_df_pol_syn_1) <- gsub("category_1$", "category", names(full_df_pol_syn_1))
+full_df_pol_syn_2 <- cbind(qs_pol_syn, gad_df_2, phq_df_2)  
+names(full_df_pol_syn_2) <- gsub("score_2$", "score", names(full_df_pol_syn_2))
+names(full_df_pol_syn_2) <- gsub("category_2$", "category", names(full_df_pol_syn_2))
+full_df_pol_syn_3 <- cbind(qs_pol_syn,gad_df_3, phq_df_3)  
+names(full_df_pol_syn_3) <- gsub("score_3$", "score", names(full_df_pol_syn_3))
+names(full_df_pol_syn_3) <- gsub("category_3$", "category", names(full_df_pol_syn_3))
+
+full_df_pol_syn_long <- rbind(full_df_pol_syn_1, full_df_pol_syn_2, full_df_pol_syn_3)
+time_var <- rep(c("T_1", "T_2", "T_3"), each = nrow(full_df_pol_syn))
+full_df_pol_syn_long <- cbind(full_df_pol_syn_long, time_var)
+
+```
+
+## Compare two groups over time via density graphs
+
+```{r}
+full_df_pol_syn_long %>% 
+  ggplot(aes(phq_total_score, colour = `ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`))+
+  geom_density(size = 1.5, position = "identity", binwidth = 1)+
+  facet_wrap(~ time_var,ncol = 1)+
+  labs(y = "Proportion", x = "PHQ Total Score") +
+   scale_color_brewer(palette="Paired")+
+  theme_minimal()
+```
+
+## PHQ results graphed and estimated
+
+```{r}
+
+
+phq_over_time <- full_df_pol_syn_long %>% 
+  filter(!is.na(gad_total_score))%>% 
+  group_by(time_var ,`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`) %>% 
+  summarise(n = n(), avg = mean(phq_total_score, na.rm = T), std = sd(phq_total_score, na.rm = T)              )
+phq_over_time$se <- phq_over_time$std/sqrt(phq_over_time$n)
+
+
+phq_over_time %>% 
+  ggplot(aes(time_var, avg, group =`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`, colour =`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ` ))+
+  geom_errorbar(aes(ymin=avg-se, ymax=avg+se), width=.1, 
+    position=position_dodge(0.05))+
+  geom_line()+
+geom_point()+
+   scale_color_brewer(palette="Paired")+theme_minimal()+
+  ggtitle("PHQ-9 total score across time")+
+  ylab("Mean Score (+/- SE)")+
+  theme_minimal()
+
+
+#keep only T3 scores for each group, PHQ
+phq_for_t_test_3 <- data.frame(cbind(a = full_df_pol_syn_long[full_df_pol_syn_long$time_var == "T_3" & 
+                       full_df_pol_syn_long$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ` == "1ο Τρίμηνο", ]$phq_total_score, 
+b = full_df_pol_syn_long[full_df_pol_syn_long$time_var == "T_3" & 
+                       full_df_pol_syn_long$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ` == "2ο Τρίμηνο", ]$phq_total_score))
+
+t.test(phq_for_t_test_3$a,phq_for_t_test_3$b)
+
+
+
+# run an anova
+test_aov <- aov(
+  full_df_pol_syn_long$phq_total_score ~ full_df_pol_syn_long$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`*full_df_pol_syn_long$time_var
+  
+)
+summary(test_aov)
+
+# run an lme
+library(lme4)
+test_lme <- lmer(phq_total_score ~ `ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`*time_var + (1|`ΤΑΥΤΟΤΗΤΑ ΑΣΘΕΝΗ`), data = full_df_pol_syn_long )
+summary(test_lme)
+confint(test_lme)
+
+```
+
+## GAD results graphed and estimated
+
+```{r}
+gad_over_time <- full_df_pol_syn_long %>% 
+  filter(!is.na(gad_total_score))%>% 
+  group_by(time_var ,`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`) %>% 
+  summarise(n = n(), avg = mean(gad_total_score, na.rm = T), std = sd(gad_total_score, na.rm = T)              )
+gad_over_time$se <- gad_over_time$std/sqrt(gad_over_time$n)
+
+
+
+gad_over_time %>% 
+  ggplot(aes(time_var, avg, group =`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`, colour =`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ` ))+
+  geom_errorbar(aes(ymin=avg-se, ymax=avg+se), width=.1, 
+    position=position_dodge(0.05))+
+  geom_line()+
+geom_point()+
+   scale_color_brewer(palette="Paired")+theme_minimal()+
+  ggtitle("GAD-9 total score across time")+
+  ylab("Mean Score (+/- SE)")
+
+
+#keep only T3 scores for each group, GAD
+gad_for_t_test_3 <- data.frame(cbind(a = full_df_pol_syn_long[full_df_pol_syn_long$time_var == "T_3" & 
+                       full_df_pol_syn_long$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ` == "1ο Τρίμηνο", ]$gad_total_score, 
+b = full_df_pol_syn_long[full_df_pol_syn_long$time_var == "T_3" & 
+                       full_df_pol_syn_long$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ` == "2ο Τρίμηνο", ]$gad_total_score))
+
+t.test(gad_for_t_test_3$a,gad_for_t_test_3$b)
+
+
+# run an anova
+test_aov <- aov(
+  full_df_pol_syn_long$gad_total_score ~ full_df_pol_syn_long$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`*full_df_pol_syn_long$time_var
+  
+)
+summary(test_aov)
+
+# run an lme
+library(lme4)
+test_lme <- lmer(gad_total_score ~ `ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`*time_var + (1|`ΤΑΥΤΟΤΗΤΑ ΑΣΘΕΝΗ`), data = full_df_pol_syn_long )
+summary(test_lme)
+
+
+```
+
+## PHQ with Last Observation Carried Forward
+
+```{r}
+full_df_pol_syn_long_locf <- full_df_pol_syn_long %>%
+  arrange(`ΤΑΥΤΟΤΗΤΑ ΑΣΘΕΝΗ`, time_var)
+
+# Apply LOCF to fill in missing values
+full_df_pol_syn_long_lofc <- full_df_pol_syn_long_locf %>%
+  group_by(`ΤΑΥΤΟΤΗΤΑ ΑΣΘΕΝΗ`) %>%
+  fill(phq_total_score, .direction = "down")
+
+
+phq_over_time <- full_df_pol_syn_long_lofc %>% 
+  filter(!is.na(gad_total_score))%>% 
+  group_by(time_var ,`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`) %>% 
+  summarise(n = n(), avg = mean(phq_total_score, na.rm = T), std = sd(phq_total_score, na.rm = T)              )
+phq_over_time$se <- phq_over_time$std/sqrt(phq_over_time$n)
+
+
+phq_over_time %>% 
+  ggplot(aes(time_var, avg, group =`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`, colour =`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ` ))+
+  geom_errorbar(aes(ymin=avg-se, ymax=avg+se), width=.1, 
+    position=position_dodge(0.05))+
+  geom_line()+
+geom_point()+
+   scale_color_brewer(palette="Paired")+theme_minimal()+
+  ggtitle("PHQ-9 total score across time")+
+  ylab("Mean Score (+/- SE)")+
+  theme_minimal()
+
+
+#keep only T3 scores for each group, PHQ
+phq_for_t_test_3 <- data.frame(cbind(a = full_df_pol_syn_long_lofc[full_df_pol_syn_long_lofc$time_var == "T_3" & 
+                       full_df_pol_syn_long_lofc$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ` == "1ο Τρίμηνο", ]$phq_total_score, 
+b = full_df_pol_syn_long_lofc[full_df_pol_syn_long_lofc$time_var == "T_3" & 
+                       full_df_pol_syn_long_lofc$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ` == "2ο Τρίμηνο", ]$phq_total_score))
+
+t.test(phq_for_t_test_3$a,phq_for_t_test_3$b)
+
+
+
+# run an anova
+test_aov <- aov(
+  full_df_pol_syn_long_lofc$phq_total_score ~ full_df_pol_syn_long_lofc$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`*full_df_pol_syn_long_lofc$time_var
+  
+)
+summary(test_aov)
+
+# run an lme
+library(lme4)
+test_lme <- lmer(phq_total_score ~ `ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`*time_var + (1|`ΤΑΥΤΟΤΗΤΑ ΑΣΘΕΝΗ`), data = full_df_pol_syn_long_lofc )
+summary(test_lme)
+broom.mixed:: tidy(test_lme)
+anova(test_lme)
+confint(test_lme)
+
+```
+
+## GAD with last observation carried forward
+
+```{r}
+full_df_pol_syn_long_locf <- full_df_pol_syn_long %>%
+  arrange(`ΤΑΥΤΟΤΗΤΑ ΑΣΘΕΝΗ`, time_var)
+
+# Apply LOCF to fill in missing values
+full_df_pol_syn_long_lofc <- full_df_pol_syn_long_locf %>%
+  group_by(`ΤΑΥΤΟΤΗΤΑ ΑΣΘΕΝΗ`) %>%
+  fill(gad_total_score, .direction = "down")
+
+gad_over_time <- full_df_pol_syn_long_lofc %>% 
+  filter(!is.na(gad_total_score))%>% 
+  group_by(time_var ,`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`) %>% 
+  summarise(n = n(), avg = mean(gad_total_score, na.rm = T), std = sd(gad_total_score, na.rm = T)              )
+gad_over_time$se <- gad_over_time$std/sqrt(gad_over_time$n)
+
+
+
+gad_over_time %>% 
+  ggplot(aes(time_var, avg, group =`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`, colour =`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ` ))+
+  geom_errorbar(aes(ymin=avg-se, ymax=avg+se), width=.1, 
+    position=position_dodge(0.05))+
+  geom_line()+
+geom_point()+
+   scale_color_brewer(palette="Paired")+theme_minimal()+
+  ggtitle("GAD-9 total score across time")+
+  ylab("Mean Score (+/- SE)")
+
+
+#keep only T3 scores for each group, GAD
+gad_for_t_test_3 <- data.frame(cbind(a = full_df_pol_syn_long_lofc[full_df_pol_syn_long_lofc$time_var == "T_3" & 
+                       full_df_pol_syn_long_lofc$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ` == "1ο Τρίμηνο", ]$gad_total_score, 
+b = full_df_pol_syn_long_lofc[full_df_pol_syn_long_lofc$time_var == "T_3" & 
+                       full_df_pol_syn_long_lofc$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ` == "2ο Τρίμηνο", ]$gad_total_score))
+
+t.test(gad_for_t_test_3$a,gad_for_t_test_3$b)
+
+
+# run an anova
+test_aov <- aov(
+  full_df_pol_syn_long_lofc$gad_total_score ~ full_df_pol_syn_long_lofc$`ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`*full_df_pol_syn_long_lofc$time_var
+  
+)
+summary(test_aov)
+broom:: tidy(test_aov)
+
+# run an lme
+library(lme4)
+test_lme <- lmer(gad_total_score ~ `ΤΡΙΜΗΝΟ ΑΣΘΕΝΗ`*time_var + (1|`ΤΑΥΤΟΤΗΤΑ ΑΣΘΕΝΗ`), data = full_df_pol_syn_long_lofc )
+summary(test_lme)
+broom.mixed:: tidy(test_lme)
+confint(test_lme)
+```

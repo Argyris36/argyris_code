@@ -15,7 +15,7 @@ library(readxl)
 
 
 ```{r warning = F, message = F}
-eipes_try <- read_excel("~/Downloads/ΕΡΕΥΝΑ ΓΙΑ ΤΗΝ ΙΑΤΡΙΚΗ ΠΑΙΔΕΙΑ ΚΑΙ ΕΡΓΑΣΙΑ (ΕΙΠΕς) (Απαντήσεις) (13).xlsx")
+eipes_try <- read_excel("~/Downloads/ΕΡΕΥΝΑ ΓΙΑ ΤΗΝ ΙΑΤΡΙΚΗ ΠΑΙΔΕΙΑ ΚΑΙ ΕΡΓΑΣΙΑ (ΕΙΠΕς) (Απαντήσεις) (14).xlsx")
 
 eipes_try <- eipes_try[!is.na(eipes_try$`Χρονική σήμανση`),]
 
@@ -39,9 +39,9 @@ counts_gender <- table(eipes_try$`Φύλο?`)
 # Percentage
 gender_tab <- prop.table(table(eipes_try$`Φύλο?`))
 
-barplot(gender_tab,main = "Φύλο", col = "skyblue" )
-bp_gender <- barplot(gender_tab,main = "Φύλο", col = "skyblue",ylim = c(0, max(gender_tab) + 0.05))
-text(bp_gender, gender_tab, labels = paste0(counts_gender, " (", round(location * 100, 1), "%)"), pos = 3, cex = 0.8, col = "black")
+
+bp_gender <- barplot(gender_tab,main = "Φύλο", col = "skyblue",ylab = "ποσοστό", ylim = c(0, max(gender_tab) + 0.05))
+text(bp_gender, gender_tab, labels = paste0(counts_gender), pos = 3, cex = 0.8, col = "black")
 
 
 ```
@@ -51,12 +51,20 @@ Age composition
 ```{r}
 
 # Mean Age
-summary(eipes_try$Ηλικία)
+mean_age <- mean(eipes_try$Ηλικία)
+sd_age <- sd(eipes_try$Ηλικία)
+text_label <- paste("μέση ηλικία =", round(mean_age, 2), "(", round(sd_age, 2), ")")
+
 
 # Age Histogram
-hist(eipes_try$Ηλικία, main = "Ηλικία" , col = "skyblue", xlab = "")
-
-
+hist_gender <-  hist(eipes_try$Ηλικία, main = "Ηλικία" , col = "skyblue", xlab = "", 
+                     ylab = "συχνότητα")
+text(x = mean(range(hist_gender$breaks)), 
+     y = max(hist_gender$counts-10), 
+     labels = text_label, 
+     pos = 3, 
+     cex = 1, 
+     col = "black")
 ```
 
 How many are Trainees vs students
@@ -91,8 +99,8 @@ Location of speciality
 counts_location <- table(eipes_try$`Κάνετε ειδικότητα στην?`)
 location <- prop.table(table(eipes_try$`Κάνετε ειδικότητα στην?`))
 
-bp <- barplot(location, main = "Πού Κάνεις Ειδικότητα" , col = "skyblue",ylim = c(0, max(location) + 0.05))
-text(bp, location, labels = paste0(counts_location, " (", round(location * 100, 1), "%)"), pos = 3, cex = 0.8, col = "black")
+bp <- barplot(location, main = "Πού Κάνεις Ειδικότητα" , col = "skyblue", ylab = "ποσοστό", ylim = c(0, max(location) + 0.05))
+text(bp, location, labels = paste0(counts_location), pos = 3, cex = 0.8, col = "black")
 
 ```
 
@@ -128,10 +136,10 @@ rownames(counts_matrix) <- as.character(df_count_per_day_and_time$date)
 barplot(t(counts_matrix), 
         beside = FALSE, 
         col = c("skyblue", "steelblue"), 
-        main = "Daily Counts for AM and PM", 
+      main = paste("Ημερήσιος Αριθμός Συμμετεχόντων\n Σύνολο n = ", nrow((eipes_try))),
         xlab = "", 
-        ylab = "Counts", 
-        legend.text = c("AM", "PM"),
+        ylab = "Αριθμός Συμμετεχόντων", 
+        legend.text = c("πρωί", "απόγευμα"),
         args.legend = list(x = "top", bty = "n"),
         las = 2, # Rotate x-axis labels
         cex.names = 0.8)
