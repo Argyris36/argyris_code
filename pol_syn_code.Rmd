@@ -134,7 +134,6 @@ qs_pol_syn <- qs_pol_syn %>%
 
 ### note communciation between Eleni Theodoridou, Nikos STefanis, Vicky Efthymiou and myself on email this morning 31st July 2024. The randomised people are 382. I am going to be working on them now. 
 
-nrow(test)
 
 ```
 
@@ -230,7 +229,7 @@ knitr:: kable(round(proportions(table(qs_pol_syn$art_site))*100, 2), col.names =
 We will need to condense some diagnostic categories. Let's discuss how best to do.
 
 ```{r echo = FALSE, message = FALSE, message=FALSE}
-knitr:: kable(round(proportions(table(qs_pol_syn$diagnosis))*100, 2), col.names = c("diagnosis", "%"))
+round(proportions(table(qs_pol_syn$diagnosis))*100, 2)
 ```
 
 ## Anxiety as measured by the GAD-7
@@ -666,15 +665,168 @@ qs_pol_syn_long$time_point <- as.factor(qs_pol_syn_long$time_point)
 qs_pol_syn_long$patient_group <- as.factor(qs_pol_syn_long$patient_group)
 ```
 
-### Run LME 
+## check missingness
 
 ```{r}
-lme_intercept <- lm(phq_total_score ~ time_point*patient_group + (1|pt_id),  data = qs_pol_syn_long)
-summary(lme_intercept)
+library(naniar)
+vis_miss(qs_pol_syn_long)
+gg_miss_upset(qs_pol_syn_long)
+
+### Looking at what predicts missingness
+missing_model <- glm(is.na(phq_total_score) ~ time_point + patient_group+ gender + age_intake, family = binomial, data = qs_pol_syn_long)
+summary(missing_model)
+# it does not seem to be related to patient group at all, but is with age
+```
+
+## Plot outcomes
+
+```{r}
+
+# first create the summary stats (done above, but repeating here from long)
+# the outcome variables
+outcome_vars <- c("phq_total_score", "gad_total_score", "wembs_total_score")
 
 
-lme_intercept_slope <- lm(phq_total_score ~ time_point*patient_group + (1+ time_point|pt_id),  data = qs_pol_syn_long_for_imp)
-summary(lme_intercept)
+scores_over_time <- list()
+
+# Loop through the outcome variables
+for (i in outcome_vars) {
+  # Dynamically filter, group, and summarize the data using [[ operator
+  scores_over_time[[i]] <- qs_pol_syn_long %>%
+    #filter(!is.na(.data[[i]])) %>%
+    group_by(time_point, patient_group) %>%
+    summarise(
+      n = n(),
+      avg = mean(.data[[i]], na.rm = TRUE),
+      std = sd(.data[[i]], na.rm = TRUE),
+      missing = sum(is.na(.data[[i]])),
+      .groups = 'drop'  # To avoid a warning about `summarise` using grouping
+    ) %>%
+    mutate(se = std / sqrt(n))  # Calculate standard error
+}
+
+
+scores_over_time
+
+
+####IMPORTANT: NOTE THAT WE DO HAVE DIFFERENTIAL ATTRITION AT BASELINE with more people missing for the waitlist group.
+
+library(ggplot2)
+#plots for missingness
+plots_missing_data_over_time <- list()
+for (i in outcome_vars) {
+plots_miss[[i]] <- scores_over_time[[i]] %>% 
+    ggplot(aes(time_point, missing, fill = patient_group)) +
+             geom_col()+
+  ggtitle(names(scores_over_time[i]))
+
+  
+}
+plots_missing_data_over_time
+# plot attrition over time
+
+# plots for distributions
+plots_distributions_over_time <- list()
+for (i in outcome_vars) {
+plots_distributions_over_time[[i]] <- qs_pol_syn_long %>% 
+  ggplot(aes(patient_group, .data[[i]], fill = patient_group))+
+  geom_violin(alpha = 0.5) +
+  geom_dotplot(binaxis = "y",
+               stackdir = "center",
+               dotsize = 0.5)+
+  ggtitle(names(qs_pol_syn_long[i]))+
+  facet_wrap(~time_point)
+}
+plots_distributions_over_time
+
+
+# line plots
+plots_scores_over_time <- list()
+for(i in outcome_vars){
+plots_scores_over_time[[i]] <- scores_over_time[[i]] %>% 
+  ggplot(aes(time_point, avg, group = patient_group, colour =patient_group ))+
+  geom_errorbar(aes(ymin=avg-se, ymax=avg+se), width=.1, 
+    position=position_dodge(0.05))+
+  geom_line()+
+geom_point()+
+   scale_color_brewer(palette="Paired")+theme_minimal()+
+  ggtitle(names(scores_over_time[i]))+
+  ylab("Mean Score (+/- SE)")+
+  theme_minimal()
+}
+plots_scores_over_time
+```
+
+### Run LME
+
+```{r}
+library(lme4)
+library(lmerTest)
+# change pt_id to factor
+qs_pol_syn_long$pt_id <- as.factor(qs_pol_syn_long$pt_id)
+
+outcome_vars <- c("phq_total_score", "gad_total_score", "wembs_total_score")
+
+
+lme_intercept_models <- list()
+lme_intercept_models_summaries <- list()
+for(i in outcome_vars){
+formula_intercept <- as.formula(paste(i, "~ time_point * patient_group + (1 | pt_id)"))
+lme_intercept_models[[i]] <- lmer(formula_intercept,  data = qs_pol_syn_long)
+lme_intercept_models_summaries[[i]] <- summary(lme_intercept_models[[i]])
+#names(lme_intercept_models) <- outcome_vars
+}
+
+# check models
+lme_intercept_models_summaries
+
+
+
+
+### here is the model for random slopes
+# it does not converge unfortunately.
+lme_intercept_slope <- lmer(phq_total_score ~ time_point*patient_group + (0+ time_point|pt_id),  data = qs_pol_syn_long)
+summary(lme_intercept_slope)
+
+```
+
+## Run LME with time as continuous and covariates
+
+```{r}
+library(lme4)
+library(lmerTest)
+# change pt_id to factor
+qs_pol_syn_long$pt_id <- as.factor(qs_pol_syn_long$pt_id)
+
+# specify time variable as continuous 
+qs_pol_syn_long$time <- as.integer(qs_pol_syn_long$time_point)
+
+outcome_vars <- c("phq_total_score", "gad_total_score", "wembs_total_score")
+
+
+lme_intercept_models_cont <- list()
+lme_intercept_models_summaries_cont <- list()
+for(i in outcome_vars){
+formula_intercept_cont <- as.formula(paste(i, "~ time * patient_group + 
+                                           gender + age_intake +
+                                           art_type +
+                                           diagnosis +
+                                        place_residence+
+                                        live_with_others+
+                                           (1 | pt_id)"))
+lme_intercept_models_cont[[i]] <- lmer(formula_intercept_cont,  data = qs_pol_syn_long)
+lme_intercept_models_summaries_cont[[i]] <- summary(lme_intercept_models_cont[[i]])
+#names(lme_intercept_models) <- outcome_vars
+}
+
+# check models
+lme_intercept_models_summaries_cont
+
+
+
+
+
+
 ```
 
 ## Multiple imputation
@@ -682,54 +834,51 @@ summary(lme_intercept)
 ### Preparation of variables for MI
 
 ```{r}
-#Let's do multiple imputation of the long dataset
-
-# first some data wrangling to prepare the variables
-# according to https://arxiv.org/pdf/2404.06967 
-# cluster variable needs to be an integer
-# here I am replacing the original 
-pt_id_mapping <- qs_pol_syn_long %>%
-  select(pt_id) %>%
-  distinct() %>%
-  mutate(pt_id_int = row_number())
-
-qs_pol_syn_long <- qs_pol_syn_long %>%
-  left_join(pt_id_mapping, by = "pt_id") #%>%
-#  select(-pt_id) %>%
-#  rename(pt_id = pt_id_int)
-
-
-
-
-
-
-```
-
-### Prepare the model for MI
-
-```{r}
 # create smaller dataset
+# I am leaving out diagnosis as we have too few and it will be difficult for the 
+# imp to cope with
+# I am also only using time art type and not site as they are collinear
 qs_pol_syn_long_for_imp <- qs_pol_syn_long %>%
   dplyr:: select(
-"pt_id_int.x", "art_site", "art_type", "gender", "patient_group", "diagnosis", 
+"pt_id", "art_type", "gender", "patient_group", 
 "place_residence", "live_with_others", "phq_total_score", "gad_total_score", 
-"wembs_total_score", "time_point", "age_intake"
-  ) %>% 
-  mutate(pt_id = pt_id_int.x)  %>% 
-  select(-pt_id_int.x) #%>%
-#  rename(pt_id = pt_id_int)
+"wembs_total_score", "time", "age_intake"
+)
+
+
+# also need to turn pt id to integer
+ pt_id_mapping <- qs_pol_syn_long_for_imp %>%
+   select(pt_id) %>%
+   distinct() %>%
+   mutate(pt_id_int = row_number())# 
+ qs_pol_syn_long_for_imp <- qs_pol_syn_long_for_imp %>%
+   left_join(pt_id_mapping, by = "pt_id") %>%
+  select(-pt_id) %>%
+  rename(pt_id = pt_id_int)
+
+class(qs_pol_syn_long_for_imp$pt_id)
 ```
 
-### 
+## MI model with random intercept and constraints on min and max values
 
 ```{r}
-### Attempt 1 Too Slow
-
 library(mice)
-library(miceadds)
+library(dplyr)
+
+# Define the custom imputation function with bounds for 2l.norm
+bounded_2l_norm <- function(y, ry, x, type, lower_bound, upper_bound, ...) {
+  imputed_values <- mice.impute.2l.norm(y, ry, x, type, ...)
+  imputed_values <- pmin(pmax(imputed_values, lower_bound), upper_bound)
+  return(imputed_values)
+}
+
+# Define specific custom functions for each outcome variable
+mice.impute.bounded_2l_norm_phq <- function(y, ry, x, type, ...) bounded_2l_norm(y, ry, x, type, 0, 27, ...)
+mice.impute.bounded_2l_norm_gad <- function(y, ry, x, type, ...) bounded_2l_norm(y, ry, x, type, 0, 21, ...)
+mice.impute.bounded_2l_norm_wembs <- function(y, ry, x, type, ...) bounded_2l_norm(y, ry, x, type, 14, 70, ...)
 
 # Define the predictors
-predictors <- c("art_site", "art_type", "gender", "patient_group", "diagnosis", 
+predictors <- c("art_type", "gender", "patient_group",  
                 "place_residence", "live_with_others", "age_intake", 
                 "time_point")
 
@@ -749,232 +898,182 @@ for (var in valid_predictors) {
   pred_matrix[var, ] <- 1
 }
 
-# Ensure 'pt_id' and 'patient_id' are not imputed
+# Ensure 'pt_id' is not imputed
 pred_matrix["pt_id", ] <- 0
 
-
-# Specify methods for imputation using miceadds
+# Specify methods for imputation
 methods <- make.method(qs_pol_syn_long_for_imp)
 
-# Specify multilevel imputation with random slopes for the outcome variables
-methods["phq_total_score"] <- "2l.pan"
-methods["gad_total_score"] <- "2l.pan"
-methods["wembs_total_score"] <- "2l.pan"
+# Specify the custom imputation method for each outcome variable
+methods["phq_total_score"] <- "bounded_2l_norm_phq"
+methods["gad_total_score"] <- "bounded_2l_norm_gad"
+methods["wembs_total_score"] <- "bounded_2l_norm_wembs"
 
-# Custom function for imputation with miceadds
-miceadds_impute_pan <- function(y, ry, x, type, ...) {
-  # Specify 'pt_id' as the level-2 predictor
-  type <- rep(1, ncol(x) + 1)  # Default to level-1 predictor
-  type[which(colnames(x) == "pt_id")] <- 2  # Set 'pt_id' as the level-2 predictor
+# Run the multiple imputation with custom method
+imputed_data <- mice(
+  qs_pol_syn_long_for_imp, 
+  m = 25, 
+  maxit = 25, 
+  method = methods, 
+  predictorMatrix = pred_matrix, 
+  seed = 1974 
+)
+
+
+
+```
+
+## Check imputation quality
+
+```{r}
+imputed_datasets <- complete(imputed_data, "all")
+sum(is.na(imputed_datasets[[1]]$phq_total_score))
+range(imputed_datasets[[1]]$phq_total_score)
+
+# Check the imputed data
+summary(imputed_data)
+
+# Trace plots to check convergence
+plot(imputed_data)
+
+# Density plots to compare observed and imputed values
+#densityplot(imputed_data, ~ phq_total_score + gad_total_score + wembs_total_score)
+
+# Descriptive statistics for observed and imputed values
+observed_data <- qs_pol_syn_long_for_imp[complete.cases(qs_pol_syn_long_for_imp), ]
+imputed_data_long <- complete(imputed_data, action = "long")
+observed_summary <- summary(observed_data)
+imputed_summary <- summary(imputed_data_long)
+
+print("Observed Data Summary")
+print(observed_summary)
+print("Imputed Data Summary")
+print(imputed_summary)
+
+# Scatter plot of observed vs imputed values
+stripplot(imputed_data, pch = 20, cex = 1.2)
+
+
+# XY plots for imputed vs observed values
+mice::xyplot(imputed_data, phq_total_score ~ gad_total_score | .imp, pch = 20, cex = 1.2)
+
+
+summary(complete(imputed_data, action = "long"))
+
+stripplot(imputed_data, pch = 20, cex = 1.2)
+
+```
+
+## LME model for imputed data
+
+```{r}
+library(mice)
+library(lme4)
+library(broom.mixed)  # For tidying model output
+
+# Define the outcome variables
+outcome_vars <- c("phq_total_score", "gad_total_score", "wembs_total_score")
+
+# Initialize lists to store models and their summaries
+lme_intercept_models_cont <- list()
+lme_intercept_models_summaries_cont <- list()
+p_values <- 0
+
+# Extract each imputed dataset
+imputed_datasets_list <- complete(imputed_data, "all")
+
+# Fit and pool the models for each outcome variable
+for (i in outcome_vars) {
+  models <- list()
   
-  # Specify 'time_point' as the random slope
-  if ("time_point" %in% colnames(x)) {
-    type[which(colnames(x) == "time_point")] <- 3  # Set 'time_point' as random slope
+  formula_intercept_cont <- as.formula(paste(i, "~ time * patient_group + 
+                                             gender + age_intake +
+                                             art_type +
+                                             place_residence +
+                                             live_with_others +
+                                             (1 | pt_id)"))
+  
+  for (j in seq_along(imputed_datasets_list)) {
+    # Fit the model on the j-th imputed dataset
+    models[[j]] <- lmer(formula_intercept_cont, data = imputed_datasets_list[[j]])
+  }
+  
+  # Pool the results
+  pooled <- pool(models)
+  
+  # Store the pooled summary
+  lme_intercept_models_cont[[i]] <- models
+  lme_intercept_models_summaries_cont[[i]] <- summary(pooled)
+ # p_values[i] <- lme_intercept_models_summaries_cont[[i]]$p.value
+}
+
+
+
+
+
+```
+
+## Bayesian model with imputed data
+
+```{r}
+
+custom_priors <- c(
+  set_prior("normal(0, 10)", class = "b"),  # Population-level effects
+  set_prior("cauchy(0, 2)", class = "sd"),  # Group-level SD
+  set_prior("student_t(3, 0, 2.5)", class = "sigma") # Residual standard deviation
+)
+
+
+brm(phq_total_score~ time * patient_group + 
+                                             gender + age_intake +
+                                             art_type +
+                                             place_residence +
+                                             live_with_others +
+                                             (1+ time | pt_id), data =  imputed_datasets_list[[1]],,
+   prior = custom_priors,
+   chains = 4, cores = 4, iter = 15000,
+   control = list(adapt_delta = 0.999, max_treedepth = 20)
+                                             )
+                                             
+```
+
+```{r}
+custom_priors <- c(
+  set_prior("normal(0, 10)", class = "b"),  # Population-level effects
+  set_prior("cauchy(0, 2)", class = "sd"),  # Group-level SD
+  set_prior("student_t(3, 0, 2.5)", class = "sigma") # Residual standard deviation
+)
+
+# Fit and pool the models for each outcome variable
+for (i in outcome_vars) {
+models_formula_int_and_slope_cont <- list()
+  
+  formula_int_and_slope_cont <- as.formula(paste(i, "~ time * patient_group + 
+                                             gender + age_intake +
+                                             art_type +
+                                             place_residence +
+                                             live_with_others +
+                                             (1+ time | pt_id)"))
+  
+  for (j in seq_along(imputed_datasets_list)) {
+    # Fit the model on the j-th imputed dataset
+    models_formula_int_and_slope_cont[[j]] <- brm(formula_int_and_slope_cont, data = imputed_datasets_list[[j]], 
+                       ,
+  family = gaussian(),
+  prior = custom_priors,
+  chains = 4, cores = 4, iter = 10000,
+  control = list(adapt_delta = 0.99, max_treedepth = 15))
   }
 
-  miceadds::mice_impute_pan(y, ry, x, type = type, random_slope = TRUE, ...)
 }
 
-# Run the multiple imputation with custom method
-imputed_data <- mice(
-  qs_pol_syn_long_for_imp, 
-  m = 5, 
-  maxit = 50, 
-  method = methods, 
-  predictorMatrix = pred_matrix, 
-  seed = 123,
-  visitSequence = "monotone", # Optional: specify visit sequence
-  imputationFunction = list(
-    phq_total_score = miceadds_impute_pan,
-    gad_total_score = miceadds_impute_pan,
-    wembs_total_score = miceadds_impute_pan
-  )
-)
 
-# Check the imputed data
-summary(imputed_data)
-
-# Obtain the completed data set after imputation
-completed_data <- complete(imputed_data, action = "long")
-
-# View the completed data
-head(completed_data)
-
-```
-
-```{r}
-
-### Attempt 2 Too Slow
-# Define the predictors
-predictors <- c("art_site", "art_type", "gender", "patient_group", "diagnosis", 
-                 "place_residence", "live_with_others", "age_intake", 
-                "time_point")
-
-# Check that all predictors are in the dataframe
-valid_predictors <- predictors[predictors %in% colnames(qs_pol_syn_long_for_imp)]
-
-# Create a predictor matrix
-pred_matrix <- make.predictorMatrix(qs_pol_syn_long_for_imp)
-
-# Specify which variables should be used as predictors for each other variable
-pred_matrix[, "pt_id"] <- -2 # Specify 'pt_id' as the grouping (cluster) variable for multilevel imputation
-pred_matrix["pt_id", ] <- 0  # Ensure 'pt_id' is not used to predict other variables
-
-# Ensure all valid predictors are used to predict the outcome variables
-for (var in valid_predictors) {
-  pred_matrix[, var] <- 1
-  pred_matrix[var, ] <- 1
-}
-
-# Ensure 'pt_id' and 'patient_id' are not imputed
-pred_matrix["pt_id", ] <- 0
-
-
-# Specify methods for imputation using miceadds
-methods <- make.method(qs_pol_syn_long_for_imp)
-
-# Specify multilevel imputation with random intercepts for the outcome variables
-methods["phq_total_score"] <- "2l.pan"
-methods["gad_total_score"] <- "2l.pan"
-methods["wembs_total_score"] <- "2l.pan"
-
-# Custom function for imputation with miceadds
-miceadds_impute_pan <- function(y, ry, x, type, ...) {
-  # Specify 'pt_id' as the level-2 predictor
-  type <- rep(1, ncol(x) + 1)  # Default to level-1 predictor
-  type[which(colnames(x) == "pt_id")] <- 2  # Set 'pt_id' as the level-2 predictor
-
-  miceadds::mice_impute_pan(y, ry, x, type = type, random_slope = FALSE, ...)
-}
-
-# Run the multiple imputation with custom method
-imputed_data <- mice(
-  qs_pol_syn_long_for_imp, 
-  m = 5, 
-  maxit = 50, 
-  method = methods, 
-  predictorMatrix = pred_matrix, 
-  seed = 123,
-  visitSequence = "monotone", # Optional: specify visit sequence
-  imputationFunction = list(
-    phq_total_score = miceadds_impute_pan,
-    gad_total_score = miceadds_impute_pan,
-    wembs_total_score = miceadds_impute_pan
-  )
-)
-
-# Check the imputed data
-summary(imputed_data)
-
-# Obtain the completed data set after imputation
-completed_data <- complete(imputed_data, action = "long")
-
-# View the completed data
-head(completed_data)
-```
-
-```{r}
-### Attempt 3 Too Slow
-# create smaller dataset
-qs_pol_syn_long_for_imp <- qs_pol_syn_long %>%
-  dplyr:: select(
-"pt_id_int", "art_site", "art_type", "gender", "patient_group", "diagnosis", 
-"place_residence", "live_with_others", "phq_total_score", "gad_total_score", 
-"wembs_total_score", "time_point", "age_intake"
-  ) %>% 
-  mutate(pt_id = pt_id_int)  %>% 
-  select(-pt_id_int) #%>%
-#  rename(pt_id = pt_id_int)
-
-# apparently pt_id needs to be a factor
-#qs_pol_syn_long_for_imp$pt_id <- as.factor(qs_pol_syn_long_for_imp$pt_id)
-
-# library(mice)
-# library(miceadds)
-# library(future)
-# library(future.apply)
- library(parallel)
-
-
-# Define the predictors
-predictors <- c("art_site", "art_type", "gender", "patient_group", "diagnosis", 
-                 "place_residence", "live_with_others", "age_intake", 
-                "time_point")
-
-# Check that all predictors are in the dataframe
-valid_predictors <- predictors[predictors %in% colnames(qs_pol_syn_long_for_imp)]
-
-# Create a predictor matrix
-pred_matrix <- make.predictorMatrix(qs_pol_syn_long_for_imp)
-
-# Specify which variables should be used as predictors for each other variable
-pred_matrix[, "pt_id"] <- -2 # Specify 'pt_id' as the grouping (cluster) variable for multilevel imputation
-pred_matrix["pt_id", ] <- 0  # Ensure 'pt_id' is not used to predict other variables
-
-# Ensure all valid predictors are used to predict the outcome variables
-for (var in valid_predictors) {
-  pred_matrix[, var] <- 1
-  pred_matrix[var, ] <- 1
-}
-
-# Ensure 'pt_id' and 'patient_id' are not imputed
-pred_matrix["pt_id", ] <- 0
-
-
-# Specify methods for imputation using miceadds
-methods <- make.method(qs_pol_syn_long_for_imp)
-
-# Specify multilevel imputation with random intercepts for the outcome variables
-methods["phq_total_score"] <- "2l.pan"
-methods["gad_total_score"] <- "2l.pan"
-methods["wembs_total_score"] <- "2l.pan"
-
-# Custom function for imputation with miceadds
-miceadds_impute_pan <- function(y, ry, x, type, ...) {
-  # Specify 'pt_id' as the level-2 predictor
-  type <- rep(1, ncol(x) + 1)  # Default to level-1 predictor
-  type[which(colnames(x) == "pt_id")] <- 2  # Set 'pt_id' as the level-2 predictor
-
-  miceadds::mice_impute_pan(y, ry, x, type = type, random_slope = FALSE, ...)
-}
-
-# Detect the number of available cores
-num_cores <- detectCores()
-
-# Set up parallel processing, leaving one core free
-plan(multisession, workers = num_cores - 1)
-
-# Print the number of workers being used
-print(paste("Using", num_cores - 1, "workers for parallel processing"))
-
-# Helper function for parallel processing with MICE
-future_mice <- function(..., future.globals = TRUE) {
-  future.apply::future_lapply(1:5, function(i) mice(..., seed = i), future.globals = future.globals)
-}
-
-# Example use of the future_mice function
-imputed_data_list <- future_mice(
-  qs_pol_syn_long_for_imp, 
-  m = 5, 
-  maxit = 10,  # Reduced from 50 to 10 for speed
-  method = methods, 
-  predictorMatrix = pred_matrix, 
-  visitSequence = "monotone",
-  imputationFunction = list(
-    phq_total_score = miceadds_impute_pan,
-    gad_total_score = miceadds_impute_pan,
-    wembs_total_score = miceadds_impute_pan
-  )
-)
-
-# Combine the imputed datasets
-imputed_data <- mice::complete(imputed_data_list, action = "long")
-
-# Check the imputed data
-summary(imputed_data)
-
-# View the completed data
-head(imputed_data)
+# Summary of the model
+# summary(brms_model_phq_imp)
+# broom.mixed:: tidy(brms_model_phq_imp)
+# 
+# # Plot the results
+# plot(brms_model_phq_imp)
 ```
 
 \############################### UP TO HERE \###################
